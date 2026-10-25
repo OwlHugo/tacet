@@ -18,8 +18,7 @@ export function useAudioDrop(onImported: (id: string) => void, onError: (message
       setOver(false)
       const [file] = audioFiles(e.dataTransfer.files)
       if (!file) return onError('Drop a .wav, .m4a or .mp3 file.')
-      // A failed import is broadcast as the recorder's error state, which the record button shows.
-      void api.importAudio(file).then(onImported, () => undefined)
+      void api.importAudio(file).then(onImported, (e: Error) => onError(e.message))
     },
   }
   return { over, handlers }
