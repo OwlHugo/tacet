@@ -259,7 +259,11 @@ const controller = recordingController({
   onRecorded: (rec, tracks) =>
     void processRecording(rec, tracks)
       .catch((e: unknown) =>
-        setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) }),
+        setState({
+          kind: 'error',
+          message: e instanceof Error ? e.message : String(e),
+          cause: 'pipeline',
+        }),
       )
       .finally(() => config.TACET_AUTORECORD && setTimeout(() => app.quit(), 500)),
 })

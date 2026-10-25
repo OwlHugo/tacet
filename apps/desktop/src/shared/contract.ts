@@ -58,7 +58,12 @@ export type RecorderState =
       /** An import has no audio to save, so its steps start at transcribing. */
       readonly source: 'recording' | 'import'
     }
-  | { readonly kind: 'error'; readonly message: string }
+  | {
+      readonly kind: 'error'
+      readonly message: string
+      /** `capture`: nothing could be recorded (microphone or screen permission); `pipeline`: recorded, then failed. */
+      readonly cause: 'capture' | 'pipeline'
+    }
 
 export interface MeetingSummary {
   readonly id: string

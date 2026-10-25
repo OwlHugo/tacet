@@ -66,7 +66,7 @@ describe('recordingController', () => {
     const stopping = t.c.toggle()
     t.c.closed()
     await stopping
-    expect(t.state()).toMatchObject({ kind: 'error' })
+    expect(t.state()).toMatchObject({ kind: 'error', cause: 'capture' })
     expect(t.recorded).toEqual([])
   })
 
@@ -76,7 +76,7 @@ describe('recordingController', () => {
     await t.c.toggle()
     expect(t.sent).toHaveLength(1)
     t.c.failed('no devices')
-    expect(t.state()).toEqual({ kind: 'error', message: 'no devices' })
+    expect(t.state()).toEqual({ kind: 'error', message: 'no devices', cause: 'capture' })
     await t.c.toggle()
     expect(t.sent).toHaveLength(2)
   })

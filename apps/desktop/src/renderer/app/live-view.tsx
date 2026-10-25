@@ -199,12 +199,9 @@ export function LiveItem(props: { state: Live; active: boolean; onOpen: () => vo
   )
 }
 
-/** Permissions live in the system settings, not in Tacet's: sending the user to Settings would not help. */
-const isPermission = (message: string) =>
-  /microphone and screen recording permissions/i.test(message)
-
 function FailedView({ state, onSettings }: { state: Failed; onSettings: () => void }) {
-  const permission = isPermission(state.message)
+  // Permissions live in the system settings, not in Tacet's: sending the user to Settings would not help.
+  const permission = state.cause === 'capture'
   return (
     <section className="live" role="alert">
       <h2 className="live-title">No notes for this meeting</h2>

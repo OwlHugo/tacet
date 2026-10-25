@@ -92,7 +92,7 @@ describe('audioImporter', () => {
   })
 
   it('rejects with a pipeline failure and puts the recorder back to idle', async () => {
-    const t = setup({ kind: 'error', message: 'old' }, async () => {
+    const t = setup({ kind: 'error', message: 'old', cause: 'pipeline' }, async () => {
       throw new Error('ffmpeg: invalid data')
     })
     await expect(t.importAudio('/x.mp3')).rejects.toThrow('ffmpeg: invalid data')
@@ -102,7 +102,7 @@ describe('audioImporter', () => {
   it('refuses a path that does not resolve to a file without touching the state', async () => {
     let ran = false
     const t = setup(
-      { kind: 'error', message: 'ffmpeg: invalid data' },
+      { kind: 'error', message: 'ffmpeg: invalid data', cause: 'pipeline' },
       async () => {
         ran = true
         return 'x'
