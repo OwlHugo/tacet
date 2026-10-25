@@ -73,6 +73,7 @@ const log = (...a: unknown[]) => console.log('[tacet]', ...a)
 const settingsFile = () => join(app.getPath('userData'), 'settings.json')
 
 let settings: Settings
+let defaults: Settings
 let state: RecorderState = { kind: 'idle' }
 let tray: Tray | undefined
 let mainWindow: BrowserWindow | undefined
@@ -316,7 +317,7 @@ const summaries = (): MeetingSummary[] =>
 function updateSettings(next: Settings): Settings {
   const shortcutChanged = next.shortcut !== settings.shortcut
   settings = next
-  saveSettings(settingsFile(), settings)
+  saveSettings(settingsFile(), settings, defaults)
   if (shortcutChanged) registerShortcut()
   updateTray()
   return settings
@@ -412,7 +413,7 @@ app.on('window-all-closed', () => undefined)
 app.on('will-quit', () => globalShortcut.unregisterAll())
 
 void app.whenReady().then(() => {
-  const defaults = defaultSettings(app.getPath('documents'), defaultModel(pipelineEnv().modelsDir))
+  defaults = defaultSettings(app.getPath('documents'), defaultModel(pipelineEnv().modelsDir))
   const saved = loadSettings(settingsFile(), defaults)
   settings = config.TACET_OUTPUT_DIR ? { ...saved, outputDir: config.TACET_OUTPUT_DIR } : saved
   app.dock?.hide()

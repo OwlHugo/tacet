@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -13,8 +13,26 @@ describe('settings', () => {
     const f = file()
     expect(loadSettings(f, defaults)).toEqual(defaults)
     expect(defaults.whisperModel).toBe('large-v3-turbo')
-    saveSettings(f, { ...defaults, llmModel: 'llama3.2' })
-    expect(loadSettings(f, defaults).llmModel).toBe('llama3.2')
+    saveSettings(f, { ...defaults, llmModel: 'llama3.2', whisperModel: 'small' }, defaults)
+    expect(loadSettings(f, defaults)).toEqual({
+      ...defaults,
+      llmModel: 'llama3.2',
+      whisperModel: 'small',
+    })
+  })
+
+  it('writes only what differs from the defaults, so a better default model still applies', () => {
+    const f = file()
+    saveSettings(f, { ...defaults, language: 'pt' }, defaults)
+    expect(JSON.parse(readFileSync(f, 'utf8'))).toEqual({ version: 2, language: 'pt' })
+    const base = defaultSettings('/docs', 'base')
+    expect(loadSettings(f, base)).toEqual({ ...base, language: 'pt' })
+  })
+
+  it('ignores the model in a file from before version 2, where it was the old default written back', () => {
+    const f = file()
+    writeFileSync(f, JSON.stringify({ ...defaultSettings('/docs', 'base'), language: 'pt' }))
+    expect(loadSettings(f, defaults)).toEqual({ ...defaults, language: 'pt' })
   })
 
   it('ignores a settings file that no longer validates', () => {
