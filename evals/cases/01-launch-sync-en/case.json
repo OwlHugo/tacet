@@ -51,6 +51,7 @@
   ],
   "expected_actions": [["pricing", "page"], ["release", "notes"], ["crash", "reports"]],
   "expected_due": [
+    { "task": ["pricing", "page"], "due": "before that" },
     {
       "task": ["release", "notes"],
       "due": "thursday"

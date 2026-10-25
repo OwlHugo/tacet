@@ -47,13 +47,25 @@ describe('checkDeadlines', () => {
     expect(r).toEqual({ right: 1, total: 2, wrong: [] })
   })
 
+  it('lists a deadline on a task the script gives none', () => {
+    const r = checkDeadlines(minutes('by Thursday'), [{ task: ['pricing', 'page'], due: 'friday' }])
+    expect(r).toEqual({
+      right: 0,
+      total: 1,
+      wrong: ['Send the release notes: "by Thursday", expected no deadline'],
+    })
+  })
+
   it('needs every keyword of the task and every word of the deadline', () => {
     const r = checkDeadlines(minutes('by Thursday'), [
-      { task: ['release', 'venue'], due: 'thursday' },
       { task: ['release', 'notes'], due: 'thursday morning' },
     ])
     expect(r.right).toBe(0)
     expect(r.wrong).toEqual(['Send the release notes: "by Thursday", expected "thursday morning"'])
+    const other = checkDeadlines(minutes('by Thursday'), [
+      { task: ['release', 'venue'], due: 'thursday' },
+    ])
+    expect(other.wrong).toEqual(['Send the release notes: "by Thursday", expected no deadline'])
   })
 
   it('lists a task whose deadline is not the expected one', () => {

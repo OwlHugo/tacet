@@ -10,7 +10,10 @@ export interface DeadlineReport {
   /** Expected deadlines found on the right task. */
   readonly right: number
   readonly total: number
-  /** Tasks that carry a deadline other than the script's. A missing deadline is not listed here. */
+  /**
+   * Tasks with a deadline the script does not give them: another deadline than the one said, or
+   * one on a task the script has no deadline for. A missing deadline is not listed here.
+   */
   readonly wrong: readonly string[]
 }
 
@@ -19,20 +22,22 @@ const holds = (due: string, expected: string) => {
   return words(expected).every((w) => said.has(w))
 }
 
+const isTask = (keywords: readonly string[], a: Minutes['actionItems'][number]) =>
+  keywords.every((k) => coverage(k, `${a.task} ${a.quote}`) === 1)
+
 /**
- * Independent of groundMinutes: for every deadline in the script, the task it belongs to must be in
- * the minutes with a `due` holding the expected words.
+ * Independent of groundMinutes: every deadline in the script must reach its task with the words
+ * that were said, and no other task may carry a deadline.
  */
 export function checkDeadlines(minutes: Minutes, expected: readonly ExpectedDue[]): DeadlineReport {
   let right = 0
   const wrong: string[] = []
-  for (const e of expected) {
-    const task = minutes.actionItems.find((a) =>
-      e.task.every((k) => coverage(k, `${a.task} ${a.quote}`) === 1),
-    )
-    if (task?.due === undefined) continue
-    if (holds(task.due, e.due)) right++
-    else wrong.push(`${task.task}: "${task.due}", expected "${e.due}"`)
+  for (const a of minutes.actionItems) {
+    if (a.due === undefined) continue
+    const e = expected.find((x) => isTask(x.task, a))
+    if (e === undefined) wrong.push(`${a.task}: "${a.due}", expected no deadline`)
+    else if (holds(a.due, e.due)) right++
+    else wrong.push(`${a.task}: "${a.due}", expected "${e.due}"`)
   }
   return { right, total: expected.length, wrong }
 }

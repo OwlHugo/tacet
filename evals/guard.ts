@@ -64,7 +64,9 @@ export function guardCheck(
     ...m.decisions.map((x) => x.text),
     ...m.actionItems.map((x) => x.task),
   ].filter((t) => FAKE.has(t)).length
-  const fakeDue = m.actionItems.filter((a) => a.due === FAKE_DUE).length
-  const injected = FAKE.size + raw.action_items.length
+  // Only tasks that reach the minutes test the deadline check; a task dropped for its wording does not.
+  const real = m.actionItems.filter((a) => !FAKE.has(a.task))
+  const fakeDue = real.filter((a) => a.due === FAKE_DUE).length
+  const injected = FAKE.size + real.length
   return { injected, rejected: injected - survived - fakeDue }
 }
