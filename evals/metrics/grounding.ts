@@ -10,7 +10,8 @@ export interface GroundingReport {
 
 /**
  * Independent check, written apart from groundMinutes: an item is grounded only if it cites real
- * segments, its timestamp is the start of the first one, and its quote is in them.
+ * segments, its timestamp is the start of the first one, its quote is in them, and (for tasks) its
+ * owner is a track of this transcript, a name that was said, or nobody.
  */
 export function checkGrounding(
   minutes: Minutes,
@@ -25,6 +26,7 @@ export function checkGrounding(
       quote: d.quote || d.text,
       segments: d.segments,
       at: d.at,
+      owner: 'Unassigned',
     })),
     ...minutes.actionItems.map((a) => ({
       kind: 'action',
@@ -32,8 +34,16 @@ export function checkGrounding(
       quote: a.quote || a.task,
       segments: a.segments,
       at: a.at,
+      owner: a.owner,
     })),
   ]
+  const speakers = new Set(transcript.segments.map((s) => s.speaker))
+  const spoken = transcript.segments.map((s) => s.text).join(' ')
+  // An owner is a track that exists in this transcript, a name that was said, or nobody.
+  // "Speaker" (one mixed track) says nothing about who spoke, so it is never an owner.
+  const ownerGrounded = (owner: string) =>
+    owner === 'Unassigned' ||
+    (owner !== 'Speaker' && (speakers.has(owner) || coverage(owner, spoken) === 1))
   const ungrounded = items.filter((it) => {
     const segs = it.segments.map((id) => byId.get(id))
     const text = segs.map((s) => s?.text ?? '').join(' ')
@@ -41,7 +51,8 @@ export function checkGrounding(
       segs.length > 0 &&
       segs.every((s) => s !== undefined) &&
       Math.abs((segs[0]?.start ?? -1) - it.at) < 0.001 &&
-      coverage(it.quote, text) >= 0.6
+      coverage(it.quote, text) >= 0.6 &&
+      ownerGrounded(it.owner)
     return !ok
   })
   const expectedFound = expectedActions.filter((keywords) =>
