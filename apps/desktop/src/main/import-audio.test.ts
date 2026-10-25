@@ -67,7 +67,10 @@ describe('audioImporter', () => {
   it('runs the pipeline and goes back to idle', async () => {
     const t = setup({ kind: 'idle' }, async (p) => `id:${p}`)
     await expect(t.importAudio('/x.wav')).resolves.toBe('id:/x.wav')
-    expect(t.seen.map((s) => s.kind)).toEqual(['processing', 'idle'])
+    expect(t.seen).toEqual([
+      { kind: 'processing', stage: 'transcribing', source: 'import' },
+      { kind: 'idle' },
+    ])
   })
 
   it('refuses while recording or processing and leaves that state alone', async () => {
