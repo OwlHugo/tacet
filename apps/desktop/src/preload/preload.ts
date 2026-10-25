@@ -24,8 +24,15 @@ const api = {
   revealMeeting: (id: string): Promise<void> => ipcRenderer.invoke('meetings:reveal', id),
   search: (q: string): Promise<SearchHit[]> => ipcRenderer.invoke('meetings:search', q),
   /** Transcribe a dropped file. Resolves with the new meeting id. */
-  importAudio: (file: File): Promise<string> =>
-    ipcRenderer.invoke('meetings:import', webUtils.getPathForFile(file)),
+  importAudio: (file: File): Promise<string> => {
+    // Attachments dragged from a mail app or a web page have a name but no file on disk.
+    const path = webUtils.getPathForFile(file)
+    return path === ''
+      ? Promise.reject(
+          new Error(`${file.name} is not a file on disk yet: save it, then drop it here.`),
+        )
+      : ipcRenderer.invoke('meetings:import', path)
+  },
   /** Pick a file with the native dialog. Resolves with the new meeting id, or undefined if cancelled. */
   importAudioDialog: (): Promise<string | undefined> =>
     ipcRenderer.invoke('meetings:import-dialog'),
