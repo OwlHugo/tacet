@@ -55,7 +55,7 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 - **Two tracks, no driver.** Your microphone and the system audio are recorded as separate files. System audio uses Chromium's loopback capture: ScreenCaptureKit on macOS 13+, WASAPI on Windows, the PulseAudio/PipeWire monitor on Linux. No BlackHole, no Loopback.app.
 - **Me / Others.** Each track is transcribed separately, so speaker labels come for free. Mic echo of the speakers is detected and removed when you are not using headphones.
 - **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms (see the eval).
-- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word in the task's own words (or in the reply right after it), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
+- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word on a line that only this task cites and that names at most one person (a missing deadline is preferred to a wrong one), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
 - **Global shortcut** `⌘⇧M` / `Ctrl+Shift+M` to start and stop from anywhere.
@@ -75,9 +75,9 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 | 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.08 | 18.69 | 4/4 | 3/3 | 2/2 |
 | **Total** | 138.2s | **5.2%** | **100%** | | **1.6** | 26.2 | **15/15** | 90.0% | 7/7 |
 
-Hallucination guard: **35/35** fabricated items rejected (four made-up items citing real line ids are injected into every case, a deadline nobody said is pinned on every real task, and each deadline that was said is moved onto another task of the same meeting).
+Hallucination guard: **43/43** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
 
-With `large-v3-turbo` (the default when it is downloaded), the WER drops to **3.1%** overall (0.0% / 3.4% / 5.7% / 3.5%) at 8.5 s per audio minute, and the Portuguese case finds both tasks ("como fornecedor" is heard right). Grounded items stay 15/15 and the guard rejects 25/25; deadlines right are 6/7, none wrong.
+With `large-v3-turbo` (the default when it is downloaded), the WER drops to **3.1%** overall (0.0% / 3.4% / 5.7% / 3.5%) at 8.0 s per audio minute, and the Portuguese case finds both tasks ("como fornecedor" is heard right). Grounded items stay 15/15 and the guard rejects 38/38; deadlines right are 6/7, none wrong.
 
 What the columns mean:
 
