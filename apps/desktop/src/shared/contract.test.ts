@@ -4,8 +4,15 @@ import { INVOKE } from './contract.ts'
 const importPath = INVOKE['meetings:import']
 
 describe('meetings:import contract', () => {
-  it('accepts absolute paths to wav, m4a and mp3 files', () => {
-    for (const p of ['/Users/me/call.wav', '/tmp/x/memo.M4A', 'C:\\Users\\me\\talk.mp3'])
+  it('accepts absolute POSIX, Windows drive and UNC paths to wav, m4a and mp3 files', () => {
+    for (const p of [
+      '/Users/me/call.wav',
+      '/tmp/x/memo.M4A',
+      '/a/../b.wav',
+      'C:\\Users\\me\\talk.mp3',
+      'C:/Users/me/talk.mp3',
+      '\\\\server\\share\\reuniao.wav',
+    ])
       expect(importPath.parse([p])).toEqual([p])
   })
 
@@ -13,8 +20,11 @@ describe('meetings:import contract', () => {
     for (const args of [
       ['call.wav'],
       ['../call.wav'],
+      ['C:call.wav'],
+      ['\\\\server.wav'],
       ['/tmp/notes.txt'],
       ['/tmp/a.wav.exe'],
+      ['/tmp/a.ogg'],
       ['/tmp/a.wav', 1],
       [],
     ])

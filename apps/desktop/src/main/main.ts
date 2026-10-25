@@ -14,8 +14,8 @@ import {
   systemPreferences,
   Tray,
 } from 'electron'
+import { IMPORT_EXTENSIONS } from '../shared/audio-files.ts'
 import {
-  IMPORT_EXTENSIONS,
   INVOKE,
   type MeetingSummary,
   RECORDER,
@@ -24,6 +24,7 @@ import {
 } from '../shared/contract.ts'
 import { EVENTS } from '../shared/events.ts'
 import { config } from './config.ts'
+import { audioImporter, resolveImportPath } from './import-audio.ts'
 import {
   importedMeeting,
   locateWhisper,
@@ -200,26 +201,22 @@ async function processRecording(
   }
 }
 
-/** Same pipeline as a recording, from a file on disk. The IPC caller gets the error, the UI shows it. */
-async function importAudio(path: string): Promise<string> {
-  if (state.kind !== 'idle' && state.kind !== 'error')
-    throw new Error('Wait for the current meeting to finish.')
-  const input = importedMeeting(path)
-  setState({ kind: 'processing', stage: 'transcribing' })
-  const { meeting, notePath } = await runPipeline(
-    { ...input, date: new Date() },
-    settings,
-    pipelineEnv(),
-    (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
-  ).catch((e: unknown) => {
-    setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) })
-    throw e
-  })
-  log('imported', path, '->', notePath)
-  setState({ kind: 'idle' })
-  broadcast(EVENTS.meetingsChanged)
-  return meeting.id
-}
+const importer = audioImporter({
+  getState: () => state,
+  setState,
+  run: async (path) => {
+    const { meeting, notePath } = await runPipeline(
+      { ...importedMeeting(path), date: new Date() },
+      settings,
+      pipelineEnv(),
+      (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
+    )
+    log('imported', path, '->', notePath)
+    broadcast(EVENTS.meetingsChanged)
+    return meeting.id
+  },
+})
+const importAudio = (raw: string) => importer(resolveImportPath(raw, process.platform))
 
 const controller = recordingController({
   recorder,
@@ -324,7 +321,7 @@ function wireIpc(): void {
       filters: [{ name: 'Audio', extensions: [...IMPORT_EXTENSIONS] }],
     })
     const [file] = r.filePaths
-    return r.canceled || !file ? undefined : importAudio(INVOKE['meetings:import'].parse([file])[0])
+    return r.canceled || !file ? undefined : importAudio(file)
   })
   handle('settings:get', INVOKE['settings:get'], DEV, () => settings)
   handle('settings:set', INVOKE['settings:set'], DEV, (patch) =>

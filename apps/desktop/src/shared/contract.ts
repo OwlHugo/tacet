@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { IMPORT_EXTENSIONS_LABEL, isImportableAudio } from './audio-files.ts'
 
 /**
  * IPC contract between the renderer (untrusted, like an HTTP body) and the main process.
@@ -11,12 +12,16 @@ export type Track = z.infer<typeof TrackSchema>
 /** Meeting ids are UUIDs: they become file names, so nothing else gets through. */
 const MeetingIdSchema = z.uuid()
 
-/** Audio files the user can import: an absolute path to a .wav, .m4a or .mp3. */
-export const IMPORT_EXTENSIONS = ['wav', 'm4a', 'mp3'] as const
+/**
+ * A file to import, as the preload gets it from `webUtils.getPathForFile`: an absolute POSIX path,
+ * a Windows drive path (C:\ or C:/) or a UNC share (\\server\share\...). The main process
+ * resolves and normalizes it and checks it is a file before reading it.
+ */
 const ImportPathSchema = z
   .string()
-  .regex(/^(\/|[A-Za-z]:\\)/, 'expected an absolute path')
-  .regex(/\.(wav|m4a|mp3)$/i, 'expected a .wav, .m4a or .mp3 file')
+  .max(4096)
+  .regex(/^(\/|[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+[\\/])/, 'expected an absolute path')
+  .refine(isImportableAudio, `expected a ${IMPORT_EXTENSIONS_LABEL} file`)
 
 /** Electron accelerator such as CommandOrControl+Shift+M. */
 const AcceleratorSchema = z
