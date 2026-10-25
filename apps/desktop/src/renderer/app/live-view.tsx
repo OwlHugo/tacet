@@ -200,7 +200,7 @@ export function LiveItem(props: { state: Live; active: boolean; onOpen: () => vo
 }
 
 function FailedView({ state, onSettings }: { state: Failed; onSettings: () => void }) {
-  // Permissions live in the system settings, not in Tacet's: sending the user to Settings would not help.
+  // Devices and permissions live in the system, not in Tacet's settings: sending the user there would not help.
   const permission = state.cause === 'capture'
   return (
     <section className="live" role="alert">
@@ -208,8 +208,9 @@ function FailedView({ state, onSettings }: { state: Failed; onSettings: () => vo
       <p className="live-error">{state.message}</p>
       {permission ? (
         <p className="muted">
-          Allow Tacet in the system settings ({IS_MAC ? 'Privacy & Security' : 'privacy settings'}),
-          then record again with the button on the left.
+          Check that a microphone is connected and that Tacet is allowed in the system settings (
+          {IS_MAC ? 'Privacy & Security' : 'privacy settings'}), then record again with the button
+          on the left.
         </p>
       ) : (
         <>
