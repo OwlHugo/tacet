@@ -153,10 +153,13 @@ describe('groundMinutes', () => {
       segments: TRANSCRIPT.segments.map((s, i) => ({
         ...s,
         speaker: 'Speaker',
-        text: i === 3 ? 'Next speaker please, I will send the release notes' : s.text,
+        text:
+          i === 3
+            ? 'Next speaker please, a 1 minute update: I will send the release notes'
+            : s.text,
       })),
     }
-    for (const label of ['Speaker', 'speaker', ' SPEAKER '])
+    for (const label of ['Speaker', 'speaker', ' SPEAKER ', 'Speaker A', 'speaker 1'])
       expect(
         groundMinutes(
           one('Send the release notes', label, 'I will send the release notes', [3]),

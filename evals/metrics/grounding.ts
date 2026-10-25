@@ -45,7 +45,7 @@ export function checkGrounding(
   const TRACK_LABELS = new Set(['me', 'others', 'speaker'])
   const ownerGrounded = (owner: string) =>
     owner === 'Unassigned' ||
-    (TRACK_LABELS.has(owner.trim().toLowerCase())
+    (TRACK_LABELS.has(owner.trim().toLowerCase()) || /\bspeaker\b/i.test(owner)
       ? owner !== 'Speaker' && speakers.has(owner)
       : speakers.has(owner) || coverage(owner, spoken) === 1)
   const ungrounded = items.filter((it) => {
