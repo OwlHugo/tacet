@@ -1,4 +1,11 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -211,5 +218,21 @@ describe('MeetingLibrary', () => {
     lib.save({ ...MEETING, title: 'Retro' })
     expect(lib.save({ ...MEETING, title: 'retro' }).endsWith('1430 retro.md')).toBe(true)
     expect(md(lib)).toEqual(['2026-10-24 1430 retro.md'])
+  })
+
+  it('ignores folders and broken links named like notes', () => {
+    const lib = library()
+    mkdirSync(join(lib.folder, 'Projeto.md'))
+    symlinkSync(join(lib.folder, 'missing.md'), join(lib.folder, 'ref.md'))
+    expect(lib.save(MEETING).endsWith('1430 Beta launch sync.md')).toBe(true)
+  })
+
+  it('adopts an old note whose date has no milliseconds', () => {
+    const lib = library()
+    const at = { ...MEETING, date: '2026-10-24T17:30:00Z' }
+    const path = lib.save(at)
+    writeFileSync(path, readFileSync(path, 'utf8').replace(/tacet_id: .*\n/, ''))
+    expect(lib.save({ ...at, title: 'Renamed' }).endsWith(' Renamed.md')).toBe(true)
+    expect(md(lib)).toHaveLength(1)
   })
 })

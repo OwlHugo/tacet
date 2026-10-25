@@ -5,6 +5,7 @@ import {
   readFileSync,
   realpathSync,
   renameSync,
+  statSync,
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
@@ -90,8 +91,14 @@ export class MeetingLibrary {
     if (!existsSync(this.folder)) return new Map()
     const byDate = new Map<string, string[]>()
     for (const x of all) byDate.set(x.date, [...(byDate.get(x.date) ?? []), x.id])
-    for (const f of readdirSync(this.folder).filter((x) => x.endsWith('.md'))) {
-      const path = join(this.folder, f)
+    // Only regular files: a folder named "x.md" or a broken symlink in the vault is not a note.
+    const notes = readdirSync(this.folder, { withFileTypes: true }).filter(
+      (d) =>
+        d.name.endsWith('.md') &&
+        statSync(join(this.folder, d.name), { throwIfNoEntry: false })?.isFile(),
+    )
+    for (const { name } of notes) {
+      const path = join(this.folder, name)
       const owner = noteOwner(readFileSync(path, 'utf8'))
       const ids =
         owner === undefined ? [] : 'id' in owner ? [owner.id] : (byDate.get(owner.date) ?? [])
