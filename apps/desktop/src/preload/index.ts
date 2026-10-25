@@ -24,7 +24,7 @@ const api: TacetApi = {
   revealMeeting: (id) => ipcRenderer.invoke('meetings:reveal', id),
   health: () => ipcRenderer.invoke('health'),
   recorder: {
-    onStart: (cb) => on<[{ id: string }]>('rec:start', cb),
+    onStart: (cb) => on<[{ id: string; fakeMic?: Uint8Array }]>('rec:start', cb),
     onStop: (cb) => on('rec:stop', cb),
     open: (track: Track, rate: number) => ipcRenderer.send('rec:open', track, rate),
     chunk: (track: Track, data: Float32Array) => ipcRenderer.send('rec:chunk', track, data),

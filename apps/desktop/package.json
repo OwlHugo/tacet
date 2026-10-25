@@ -18,10 +18,8 @@
     "fetch-whisper": "node scripts/fetch-whisper.mjs",
     "dist": "pnpm run build && pnpm run fetch-whisper && electron-builder --publish never"
   },
-  "dependencies": {
-    "@tacet/core": "workspace:^"
-  },
   "devDependencies": {
+    "@tacet/core": "workspace:^",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

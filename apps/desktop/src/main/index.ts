@@ -14,7 +14,7 @@ import {
 } from 'electron';
 import { MeetingStore, ollamaAvailable, ollamaModels, processMeeting, resolveWhisperBinary, type Track as CoreTrack } from '@tacet/core';
 import { randomUUID } from 'node:crypto';
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Health, MeetingSummary, RecorderState, Settings, Track } from '../shared/ipc';
 import { trayIcons } from './icons';
@@ -25,11 +25,13 @@ import { loadSettings, saveSettings } from './settings';
 // Windows through WASAPI loopback, Linux through the PulseAudio/PipeWire monitor.
 const features = ['MacLoopbackAudioForScreenShare', 'MacSckSystemAudioLoopbackOverride', 'PulseaudioLoopbackForScreenShare'];
 app.commandLine.appendSwitch('enable-features', features.join(','));
-if (process.env.TACET_FAKE_MIC) {
-  // Test hook: feed the microphone from a WAV file (used by the e2e script and CI).
-  app.commandLine.appendSwitch('use-fake-device-for-media-stream');
-  app.commandLine.appendSwitch('use-file-for-fake-audio-capture', process.env.TACET_FAKE_MIC);
-}
+// Electron 39+ defaults to the Core Audio tap path on macOS 14.2+, which needs a separate
+// "System Audio Recording" grant that unbundled builds never get. ScreenCaptureKit works with the
+// regular Screen Recording permission, so prefer it unless TACET_CATAP=1.
+if (process.platform === 'darwin' && !process.env.TACET_CATAP) app.commandLine.appendSwitch('disable-features', 'MacCatapLoopbackAudioForScreenShare');
+// Test hook (e2e script): TACET_FAKE_MIC=file.wav replaces the microphone with that file.
+// System audio is still captured for real through loopback.
+const FAKE_MIC = process.env.TACET_FAKE_MIC;
 
 const AUTORECORD = Number(process.env.TACET_AUTORECORD ?? 0);
 const log = (...a: unknown[]) => console.log('[tacet]', ...a);
@@ -114,6 +116,10 @@ function showMain() {
   });
 }
 
+function forwardConsole(win: BrowserWindow, name: string) {
+  win.webContents.on('console-message', (e) => log(`${name}:`, e.message));
+}
+
 function createRecorder() {
   recorderWindow = new BrowserWindow({
     show: false,
@@ -121,6 +127,7 @@ function createRecorder() {
     height: 100,
     webPreferences: { preload, sandbox: false, contextIsolation: true, backgroundThrottling: false },
   });
+  forwardConsole(recorderWindow, 'recorder');
   void load(recorderWindow, 'recorder');
 }
 
@@ -137,7 +144,8 @@ async function startRecording() {
   const id = randomUUID();
   current = new RecordingSession(id, store().audioDir(id));
   setState({ kind: 'starting' });
-  recorderWindow!.webContents.send('rec:start', { id });
+  const fakeMic = FAKE_MIC ? new Uint8Array(readFileSync(FAKE_MIC)) : undefined;
+  recorderWindow!.webContents.send('rec:start', { id, fakeMic });
 }
 
 async function stopRecording() {
@@ -313,6 +321,8 @@ app.whenReady().then(() => {
   updateTray();
   registerShortcut();
   log(`ready, notes go to ${settings.outputDir}, shortcut ${settings.shortcut}`);
+  if (process.platform !== 'linux')
+    log('permissions', { microphone: systemPreferences.getMediaAccessStatus('microphone'), screen: systemPreferences.getMediaAccessStatus('screen') });
   if (AUTORECORD) recorderWindow?.webContents.once('did-finish-load', () => void startRecording());
   else if (!process.env.TACET_HIDDEN) showMain();
 });

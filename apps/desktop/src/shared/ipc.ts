@@ -52,7 +52,7 @@ export interface TacetApi {
   health(): Promise<Health>;
   /** Recorder side: used by the capture code living in the same renderer. */
   recorder: {
-    onStart(cb: (opts: { id: string }) => void): () => void;
+    onStart(cb: (opts: { id: string; fakeMic?: Uint8Array }) => void): () => void;
     onStop(cb: () => void): () => void;
     open(track: Track, sampleRate: number): void;
     chunk(track: Track, data: Float32Array): void;

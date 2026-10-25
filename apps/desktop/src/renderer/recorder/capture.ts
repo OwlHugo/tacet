@@ -57,7 +57,20 @@ async function tap(stream: MediaStream, track: Track, onChunk: (t: Track, d: Flo
   };
 }
 
-export async function captureMic(onChunk: (t: Track, d: Float32Array) => void): Promise<Capture> {
+/** Test hook: play a WAV into a MediaStream so the e2e run has a known "microphone". */
+async function fileStream(bytes: Uint8Array): Promise<MediaStream> {
+  const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
+  const buffer = await ctx.decodeAudioData(bytes.slice().buffer);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const dest = ctx.createMediaStreamDestination();
+  src.connect(dest);
+  src.start();
+  return dest.stream;
+}
+
+export async function captureMic(onChunk: (t: Track, d: Float32Array) => void, fake?: Uint8Array): Promise<Capture> {
+  if (fake) return tap(await fileStream(fake), 'mic', onChunk);
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
   });
@@ -83,7 +96,10 @@ export async function captureSystem(platform: string, onChunk: (t: Track, d: Flo
       t.stop();
       display.removeTrack(t);
     });
-    if (!display.getAudioTracks().length) throw new Error('System audio track is not available on this system.');
+    const audio = display.getAudioTracks()[0];
+    if (!audio) throw new Error('System audio track is not available on this system.');
+    console.log('[capture] system track', audio.label, audio.readyState, JSON.stringify(audio.getSettings()));
+    audio.addEventListener('ended', () => console.log('[capture] system track ended'));
     stream = display;
   }
   return tap(stream, 'system', onChunk);
