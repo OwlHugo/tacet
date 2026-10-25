@@ -316,6 +316,31 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]).toMatchObject({ due: 'até quarta-feira', segments: [0, 1], at: 0 })
     })
 
+    it('needs the deadline said as one phrase, not its words scattered over the line', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        language: 'en',
+        segments: [
+          {
+            id: 0,
+            start: 0,
+            end: 4,
+            speaker: 'Me',
+            text: 'I will send the release notes, by the way Thursday is a holiday.',
+          },
+        ],
+      }
+      const due = (d: string) =>
+        groundMinutes(
+          one('Send the release notes', 'Me', 'I will send the release notes', [0], d),
+          t,
+          't',
+        ).actionItems[0]?.due
+      expect(due('by Thursday')).toBeUndefined()
+      expect(due('Thursday')).toBe('Thursday')
+      expect(due('—')).toBeUndefined()
+    })
+
     it('needs every word of the deadline: "sexta-feira" is not "sexta"', () => {
       const r = groundMinutes(
         one('Rever o deploy', 'Me', 'o deploy fica pra sexta', [2], 'sexta-feira'),

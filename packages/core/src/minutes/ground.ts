@@ -204,9 +204,10 @@ const coreLine = (quote: string, lines: Lines): Segment =>
   lines.reduce((best, s) => (coverage(quote, s.text) > coverage(quote, best.text) ? s : best))
 
 /**
- * A deadline is kept only if every word of it was said in the task's own line, or in a cited line
- * right next to it that is not another task's line ("Can you do it?" / "Yes, by Wednesday"); that
- * line then joins the citation. A deadline said for the next task never moves onto this one.
+ * A deadline is kept only if it was said word for word (accents and punctuation aside) in the task's
+ * own line, or in a cited line right next to it that is not another task's line ("Can you do it?" /
+ * "Yes, by Wednesday"); that line then joins the citation. A deadline said for the next task never
+ * moves onto this one.
  */
 function groundDue(
   c: Candidate,
@@ -218,8 +219,9 @@ function groundDue(
   if (!text) return { lines: c.lines }
   const near = new Set(index.around([c.core]).map((s) => s.id))
   const evidence = index.pick(c.raw.segments).filter((s) => near.has(s.id) && !taskLines.has(s.id))
-  const said = new Set(words(textOf([c.core, ...evidence])))
-  if (words(text).every((w) => said.has(w))) {
+  const phrase = ` ${words(text).join(' ')} `
+  const saidIn = (s: Segment) => ` ${words(s.text).join(' ')} `.includes(phrase)
+  if (phrase.trim() !== '' && [c.core, ...evidence].some(saidIn)) {
     const extra = evidence.filter((s) => !c.lines.includes(s))
     const joined: [Segment, ...Segment[]] = [...c.lines, ...extra]
     return { due: text, lines: joined.sort((a, b) => a.id - b.id) }
