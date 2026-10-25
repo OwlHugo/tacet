@@ -49,6 +49,8 @@ nsis:
   oneClick: true
 linux:
   target: [AppImage]
+  # The package is "@tacet/desktop"; without this the binary would be named "@tacetdesktop".
+  executableName: tacet
   category: Office
   icon: build/icon.png
 publish: null
