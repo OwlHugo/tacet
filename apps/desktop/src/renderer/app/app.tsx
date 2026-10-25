@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
 import { ipcErrorMessage, shortcutLabel } from './format.ts'
 import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
+import { isActive, LiveView } from './live-view.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
 import { RecordButton } from './record-button.tsx'
@@ -88,6 +89,11 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
   const [importMessage, setImportMessage] = useState<string>()
+  // Opening a meeting while recording shows it; stopping or a new recording brings the live panel back.
+  const [browsing, setBrowsing] = useState(false)
+  useEffect(() => {
+    if (state.kind === 'starting' || state.kind === 'processing') setBrowsing(false)
+  }, [state.kind])
   // A new recording or import replaces whatever the last import said. Only the start of one: the end
   // of an import is the same transition that delivers its own error, which must stay on screen.
   useEffect(() => {
@@ -104,8 +110,8 @@ export function App() {
     },
     onError: (e: unknown) => setImportMessage(ipcErrorMessage(e)),
   }
-  const busy =
-    state.kind === 'processing' || state.kind === 'starting' || state.kind === 'recording'
+  const busy = isActive(state)
+  const live = busy && !browsing
   // Like the button: while a meeting is recording or processing, dropping is not offered at all.
   const drop = useAudioDrop(importCallbacks, busy)
 
@@ -139,6 +145,7 @@ export function App() {
   }, [selected])
 
   const open = (id: string, at?: number) => {
+    setBrowsing(true)
     setSelected(id)
     setFocus(at)
     setQuery('')
@@ -165,7 +172,7 @@ export function App() {
           {query.trim() ? (
             <SearchResults hits={hits} onOpen={open} />
           ) : (
-            <MeetingList meetings={meetings} selected={selected} onOpen={open} />
+            <MeetingList meetings={meetings} selected={live ? undefined : selected} onOpen={open} />
           )}
         </nav>
         <footer className="sidebar-foot">
@@ -187,6 +194,8 @@ export function App() {
             onChange={setSettings}
             onClose={() => setShowSettings(false)}
           />
+        ) : live ? (
+          <LiveView state={state} shortcut={settings?.shortcut} />
         ) : meeting ? (
           <MeetingView meeting={meeting} focus={focus} onRenamed={renamed(meeting.id)} />
         ) : (

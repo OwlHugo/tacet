@@ -126,6 +126,9 @@ code {
   border-color: rgba(245, 181, 68, 0.4);
   color: var(--amber);
 }
+.record.recording:hover:not(:disabled) {
+  background: rgba(245, 181, 68, 0.22);
+}
 .record.recording kbd {
   border-color: rgba(245, 181, 68, 0.35);
   color: var(--amber);
@@ -578,4 +581,165 @@ h3 {
   border-radius: 5px;
   border: 3px solid transparent;
   background-clip: padding-box;
+}
+
+/* Live panel: recording and processing */
+.live {
+  margin: auto;
+  width: min(420px, 100% - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 80px;
+}
+.live-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.live-clock {
+  margin: -8px 0 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 44px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.meters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.meter {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.meter-name {
+  font-size: 13px;
+  color: var(--text);
+}
+.meter-name small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.meter-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.meter-bar i {
+  display: block;
+  height: 100%;
+  background: var(--violet);
+  transform-origin: left;
+  transition: transform 180ms linear;
+}
+.meter.off .meter-name {
+  color: var(--text-3);
+}
+.live-warning {
+  margin: 0;
+  font-size: 12px;
+  color: var(--amber);
+}
+.live-stop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(245, 181, 68, 0.4);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-weight: 600;
+}
+.live-stop:hover {
+  background: rgba(245, 181, 68, 0.22);
+}
+.live .live-stop kbd {
+  margin-left: auto;
+  border-color: rgba(245, 181, 68, 0.35);
+  color: var(--amber);
+}
+.live-square {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--amber);
+}
+.live .muted {
+  margin: 0;
+  font-size: 12px;
+}
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--text-3);
+}
+.steps li.now {
+  color: var(--text);
+  font-weight: 600;
+}
+.steps li.done {
+  color: var(--text-2);
+}
+.step-mark {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+}
+.steps li.now .step-mark {
+  border-color: var(--violet);
+  background: var(--violet);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.steps li.done .step-mark {
+  border-color: var(--violet);
+  background: transparent;
+  position: relative;
+}
+.steps li.done .step-mark::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 3px;
+  height: 6px;
+  border: solid var(--violet);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
 }
