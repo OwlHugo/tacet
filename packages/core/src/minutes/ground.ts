@@ -190,48 +190,57 @@ function groundDecisions(
 
 type Action = Minutes['actionItems'][number]
 
+/** A task that passed grounding, before its deadline is checked. */
+interface Candidate {
+  readonly raw: RawMinutes['action_items'][number]
+  readonly task: string
+  readonly lines: Lines
+  /** The cited line that carries the quote best: the line the task was said on. */
+  readonly core: Segment
+}
+
+/** The line among `lines` that supports `quote` best, the first one on a tie. */
+const coreLine = (quote: string, lines: Lines): Segment =>
+  lines.reduce((best, s) => (coverage(quote, s.text) > coverage(quote, best.text) ? s : best))
+
 /**
- * A deadline is kept only if every word of it was said in the line that carries the task's quote,
- * or in a cited line right next to it ("Can you do it?" / "Yes, by Wednesday"), which then joins the
- * citation. A deadline said elsewhere in the meeting belongs to something else.
+ * A deadline is kept only if every word of it was said in the task's own line, or in a cited line
+ * right next to it that is not another task's line ("Can you do it?" / "Yes, by Wednesday"); that
+ * line then joins the citation. A deadline said for the next task never moves onto this one.
  */
 function groundDue(
-  due: string,
-  quote: string,
-  task: string,
-  lines: Lines,
-  cited: readonly number[],
+  c: Candidate,
+  otherTasks: ReadonlySet<number>,
   index: TranscriptIndex,
   rejected: Rejected[],
 ): { readonly due?: string; readonly lines: Lines } {
-  const text = due.trim()
-  if (!text) return { lines }
-  const core = lines.reduce((best, s) =>
-    coverage(quote, s.text) > coverage(quote, best.text) ? s : best,
-  )
-  const near = new Set(index.around([core]).map((s) => s.id))
-  const evidence = index.pick(cited).filter((s) => near.has(s.id))
-  const said = new Set(words(textOf([core, ...evidence])))
+  const text = c.raw.due.trim()
+  if (!text) return { lines: c.lines }
+  const near = new Set(index.around([c.core]).map((s) => s.id))
+  const evidence = index
+    .pick(c.raw.segments)
+    .filter((s) => near.has(s.id) && (s.id === c.core.id || !otherTasks.has(s.id)))
+  const said = new Set(words(textOf([c.core, ...evidence])))
   if (words(text).every((w) => said.has(w))) {
-    const extra = evidence.filter((s) => !lines.includes(s))
-    const joined: [Segment, ...Segment[]] = [...lines, ...extra]
+    const extra = evidence.filter((s) => !c.lines.includes(s))
+    const joined: [Segment, ...Segment[]] = [...c.lines, ...extra]
     return { due: text, lines: joined.sort((a, b) => a.id - b.id) }
   }
   rejected.push({
     kind: 'action',
-    text: `${task}: ${text}`,
+    text: `${c.task}: ${text}`,
     reason: 'deadline not said in the cited lines',
   })
-  return { lines }
+  return { lines: c.lines }
 }
 
-function groundActions(
+function groundTasks(
   raw: RawMinutes,
   index: TranscriptIndex,
   threshold: number,
   rejected: Rejected[],
-) {
-  const kept: Action[] = []
+): Candidate[] {
+  const kept: Candidate[] = []
   for (const t of raw.action_items) {
     const task = t.task.trim()
     if (!task) continue
@@ -250,18 +259,33 @@ function groundActions(
         task,
         kept.map((x) => x.task),
       )
-    ) {
-      const d = groundDue(t.due, source, task, a.lines, t.segments, index, rejected)
-      kept.push({
-        task,
-        owner: resolveOwner(t.owner, a.lines, index),
-        ...(d.due === undefined ? {} : { due: d.due }),
-        quote: t.quote.trim(),
-        ...cite(d.lines),
-      })
-    }
+    )
+      kept.push({ raw: t, task, lines: a.lines, core: coreLine(source, a.lines) })
   }
-  return byTime(kept)
+  return kept
+}
+
+function groundActions(
+  raw: RawMinutes,
+  index: TranscriptIndex,
+  threshold: number,
+  rejected: Rejected[],
+): Action[] {
+  const tasks = groundTasks(raw, index, threshold, rejected)
+  const cores = tasks.map((c) => c.core.id)
+  return byTime(
+    tasks.map((c) => {
+      const others = new Set(cores.filter((id) => id !== c.core.id))
+      const d = groundDue(c, others, index, rejected)
+      return {
+        task: c.task,
+        owner: resolveOwner(c.raw.owner, c.lines, index),
+        ...(d.due === undefined ? {} : { due: d.due }),
+        quote: c.raw.quote.trim(),
+        ...cite(d.lines),
+      }
+    }),
+  )
 }
 
 /**

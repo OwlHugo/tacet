@@ -378,6 +378,57 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]).toMatchObject({ due: 'até quarta-feira', segments: [0, 1], at: 0 })
     })
 
+    it('never moves the deadline of one task onto the next one cited with it', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        language: 'en',
+        segments: [
+          {
+            id: 0,
+            start: 0,
+            end: 4,
+            speaker: 'Others',
+            text: 'I will prepare the offer letter and send it to legal on Wednesday.',
+          },
+          {
+            id: 1,
+            start: 4.5,
+            end: 8,
+            speaker: 'Me',
+            text: 'And I will schedule a reference call with her last manager.',
+          },
+        ],
+      }
+      const r = groundMinutes(
+        {
+          summary: [],
+          decisions: [],
+          action_items: [
+            {
+              task: 'Prepare the offer letter',
+              owner: 'Others',
+              due: 'on Wednesday',
+              quote: 'I will prepare the offer letter',
+              segments: [0],
+            },
+            {
+              task: 'Schedule a reference call',
+              owner: 'Me',
+              due: 'on Wednesday',
+              quote: 'I will schedule a reference call',
+              segments: [0, 1],
+            },
+          ],
+        },
+        t,
+        't',
+      )
+      expect(r.actionItems.map((a) => [a.task, a.due])).toEqual([
+        ['Prepare the offer letter', 'on Wednesday'],
+        ['Schedule a reference call', undefined],
+      ])
+    })
+
     it('does not use an uncited neighbour as evidence', () => {
       const r = groundMinutes(
         one(
