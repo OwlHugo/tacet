@@ -22,6 +22,8 @@ electronFuses:
   enableEmbeddedAsarIntegrityValidation: true
   onlyLoadAppFromAsar: true
   grantFileProtocolExtraPrivileges: false
+  # Flipping fuses edits the Electron binary; without a fresh ad-hoc signature Apple Silicon kills it.
+  resetAdHocDarwinSignature: true
 mac:
   category: public.app-category.productivity
   target:
