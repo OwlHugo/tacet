@@ -1,7 +1,7 @@
 import type { Meeting, SearchHit } from '@tacet/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
-import { shortcutLabel } from './format.ts'
+import { importError, shortcutLabel } from './format.ts'
 import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
@@ -87,15 +87,28 @@ export function App() {
   const [health, setHealth] = useState<Health>()
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
-  const [dropError, setDropError] = useState<string>()
+  const [importMessage, setImportMessage] = useState<string>()
+  const latest = useRef(state)
+  latest.current = state
+  // A new recording or import replaces whatever the last import said.
+  useEffect(() => {
+    if (state.kind === 'starting' || state.kind === 'processing') setImportMessage(undefined)
+  }, [state.kind])
   const searchRef = useRef<HTMLInputElement>(null)
   const hits = useSearch(query)
-  const imported = (id: string) => {
-    setDropError(undefined)
-    setShowSettings(false)
-    setSelected(id)
+  const importCallbacks = {
+    onStart: () => setImportMessage(undefined),
+    onImported: (id: string) => {
+      setShowSettings(false)
+      setSelected(id)
+    },
+    // The main process broadcasts the error state before the import rejects; read the latest one.
+    onError: (e: unknown) => {
+      const now = latest.current
+      setImportMessage(importError(e, now.kind === 'error' ? now.message : undefined))
+    },
   }
-  const drop = useAudioDrop(imported, setDropError)
+  const drop = useAudioDrop(importCallbacks)
   const busy =
     state.kind === 'processing' || state.kind === 'starting' || state.kind === 'recording'
 
@@ -143,8 +156,8 @@ export function App() {
       <aside className="sidebar">
         <div className="drag" />
         <RecordButton state={state} shortcut={settings?.shortcut} />
-        <ImportButton disabled={busy} onImported={imported} />
-        {dropError && <p className="record-sub error">{dropError}</p>}
+        <ImportButton disabled={busy} {...importCallbacks} />
+        {importMessage && <p className="record-sub error">{importMessage}</p>}
         <SearchBox
           value={query}
           onChange={setQuery}

@@ -29,3 +29,18 @@ export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 /** Dropped files Tacet can transcribe, by extension. */
 export const audioFiles = <F extends { readonly name: string }>(files: Iterable<F>): F[] =>
   [...files].filter((f) => isImportableAudio(f.name))
+
+/** "Error invoking remote method 'meetings:import': Error: ffmpeg failed" -> "ffmpeg failed". */
+export const ipcErrorMessage = (e: unknown): string =>
+  (e instanceof Error ? e.message : String(e))
+    .replace(/^Error invoking remote method '[^']+': /, '')
+    .replace(/^(?:[A-Za-z]*Error: )+/, '')
+
+/**
+ * What to show under the import button when an import fails. A pipeline failure already shows as the
+ * recorder's error state with the same text, so it is not repeated.
+ */
+export const importError = (e: unknown, recorderError: string | undefined): string | undefined => {
+  const message = ipcErrorMessage(e)
+  return message === recorderError ? undefined : message
+}

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { audioFiles, capitalize, duration, shortcutLabel } from './format.ts'
+import {
+  audioFiles,
+  capitalize,
+  duration,
+  importError,
+  ipcErrorMessage,
+  shortcutLabel,
+} from './format.ts'
 
 describe('format', () => {
   it('shows short durations in seconds and longer ones in minutes', () => {
@@ -21,5 +28,24 @@ describe('format', () => {
       'memo.m4a',
       'talk.mp3',
     ])
+  })
+
+  it('strips the Electron IPC prefix from error messages', () => {
+    const ipc = new Error(
+      "Error invoking remote method 'meetings:import': Error: ffmpeg: invalid data",
+    )
+    expect(ipcErrorMessage(ipc)).toBe('ffmpeg: invalid data')
+    expect(ipcErrorMessage(new Error("Error invoking remote method 'x': TypeError: bad"))).toBe(
+      'bad',
+    )
+    expect(ipcErrorMessage(new Error('plain'))).toBe('plain')
+    expect(ipcErrorMessage('a string')).toBe('a string')
+  })
+
+  it('does not repeat an import error the recorder state already shows', () => {
+    const e = new Error("Error invoking remote method 'meetings:import': Error: ffmpeg failed")
+    expect(importError(e, 'ffmpeg failed')).toBeUndefined()
+    expect(importError(e, undefined)).toBe('ffmpeg failed')
+    expect(importError(new Error('Drop a .wav file.'), 'older error')).toBe('Drop a .wav file.')
   })
 })
