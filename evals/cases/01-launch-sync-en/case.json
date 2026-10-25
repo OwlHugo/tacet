@@ -49,18 +49,5 @@
       "start": 26.66
     }
   ],
-  "expected_actions": [
-    [
-      "pricing",
-      "page"
-    ],
-    [
-      "release",
-      "notes"
-    ],
-    [
-      "crash",
-      "reports"
-    ]
-  ]
+  "expected_actions": [["pricing", "page"], ["release", "notes"], ["crash", "reports"]]
 }

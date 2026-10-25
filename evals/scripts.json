@@ -6,12 +6,27 @@
     "voices": { "Me": "Samantha", "Others": "Daniel" },
     "lines": [
       { "speaker": "Others", "text": "Morning everyone. The only topic today is the beta launch." },
-      { "speaker": "Me", "text": "I think the build is stable enough. We should ship the beta on Friday." },
-      { "speaker": "Others", "text": "Agreed, we ship on Friday. Maria will update the pricing page before that." },
-      { "speaker": "Me", "text": "Great. I will send the release notes to the whole team by Thursday." },
-      { "speaker": "Others", "text": "We also decided to drop the dark mode toggle from this release." },
+      {
+        "speaker": "Me",
+        "text": "I think the build is stable enough. We should ship the beta on Friday."
+      },
+      {
+        "speaker": "Others",
+        "text": "Agreed, we ship on Friday. Maria will update the pricing page before that."
+      },
+      {
+        "speaker": "Me",
+        "text": "Great. I will send the release notes to the whole team by Thursday."
+      },
+      {
+        "speaker": "Others",
+        "text": "We also decided to drop the dark mode toggle from this release."
+      },
       { "speaker": "Me", "text": "Fine by me. Carlos can you check the crash reports on Windows?" },
-      { "speaker": "Others", "text": "Sure, I will look at the Windows crash reports tomorrow morning." }
+      {
+        "speaker": "Others",
+        "text": "Sure, I will look at the Windows crash reports tomorrow morning."
+      }
     ],
     "expected_actions": [["pricing", "page"], ["release", "notes"], ["crash", "reports"]]
   },
@@ -21,10 +36,19 @@
     "language": "en",
     "voices": { "Me": "Samantha", "Others": "Daniel" },
     "lines": [
-      { "speaker": "Me", "text": "Let's review the backend hiring loop. We have three candidates left." },
-      { "speaker": "Others", "text": "The second candidate did really well on the system design interview." },
+      {
+        "speaker": "Me",
+        "text": "Let's review the backend hiring loop. We have three candidates left."
+      },
+      {
+        "speaker": "Others",
+        "text": "The second candidate did really well on the system design interview."
+      },
       { "speaker": "Me", "text": "Then the decision is to make her an offer this week." },
-      { "speaker": "Others", "text": "Okay. I will prepare the offer letter and send it to legal on Wednesday." },
+      {
+        "speaker": "Others",
+        "text": "Okay. I will prepare the offer letter and send it to legal on Wednesday."
+      },
       { "speaker": "Me", "text": "And I will schedule a reference call with her last manager." }
     ],
     "expected_actions": [["offer", "letter"], ["reference", "call"]]
@@ -37,9 +61,15 @@
     "lines": [
       { "speaker": "Others", "text": "Bom dia. Vamos fechar o escopo da próxima sprint." },
       { "speaker": "Me", "text": "Eu acho que o login com Google precisa entrar nessa sprint." },
-      { "speaker": "Others", "text": "Concordo. Então fica decidido que o login com Google entra." },
+      {
+        "speaker": "Others",
+        "text": "Concordo. Então fica decidido que o login com Google entra."
+      },
       { "speaker": "Me", "text": "Eu vou escrever os testes do fluxo de pagamento até sexta." },
-      { "speaker": "Others", "text": "E o Pedro vai revisar o contrato com o fornecedor de hospedagem." }
+      {
+        "speaker": "Others",
+        "text": "E o Pedro vai revisar o contrato com o fornecedor de hospedagem."
+      }
     ],
     "expected_actions": [["testes", "pagamento"], ["contrato", "fornecedor"]]
   }

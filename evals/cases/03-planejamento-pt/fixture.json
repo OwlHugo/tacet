@@ -1,0 +1,73 @@
+{
+  "whisperModel": "base",
+  "llmModel": "qwen2.5:7b",
+  "transcript": {
+    "segments": [
+      {
+        "start": 0.5,
+        "end": 4.1,
+        "speaker": "Others",
+        "text": "Bom dia. Vamos fechar o escopo da próxima Sprint.",
+        "id": 0
+      },
+      {
+        "start": 5.1000000000000005,
+        "end": 8.88,
+        "speaker": "Me",
+        "text": "Eu acho que o login com Google precisa entrar nessa sprint.",
+        "id": 1
+      },
+      {
+        "start": 9.5,
+        "end": 13.52,
+        "speaker": "Others",
+        "text": "Concordo. Então fica decidido o que eu loje incomprou ali entra.",
+        "id": 2
+      },
+      {
+        "start": 14.52,
+        "end": 18.38,
+        "speaker": "Me",
+        "text": "Eu vou escrever os testes do fluxo de pagamento até sexta.",
+        "id": 3
+      },
+      {
+        "start": 19,
+        "end": 22.66,
+        "speaker": "Others",
+        "text": "E o Pedro vai revisar o contrato como for necedor de hospedagem.",
+        "id": 4
+      }
+    ],
+    "duration": 22.66,
+    "language": "pt",
+    "model": "base"
+  },
+  "raw": {
+    "summary": [
+      {
+        "text": "A equipe decidiu incluir o login com Google na próxima Sprint e confirmou que o Me vai escrever os testes do fluxo de pagamento até sexta-feira.",
+        "segments": [1, 2, 3]
+      },
+      {
+        "text": "O Pedro foi mencionado para revisar o contrato relacionado à hospedagem, mas não há decisão formal sobre isso.",
+        "segments": [4]
+      }
+    ],
+    "decisions": [
+      {
+        "text": "Incluir o login com Google na próxima Sprint.",
+        "quote": "Concordo. Então fica decidido o que eu loje incomprou ali entra.",
+        "segments": [2]
+      }
+    ],
+    "action_items": [
+      {
+        "task": "Escrever os testes do fluxo de pagamento até sexta-feira.",
+        "owner": "Me",
+        "quote": "Eu vou escrever os testes do fluxo de pagamento até sexta.",
+        "segments": [3]
+      }
+    ]
+  }
+}

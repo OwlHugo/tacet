@@ -39,14 +39,5 @@
       "start": 19.01
     }
   ],
-  "expected_actions": [
-    [
-      "testes",
-      "pagamento"
-    ],
-    [
-      "contrato",
-      "fornecedor"
-    ]
-  ]
+  "expected_actions": [["testes", "pagamento"], ["contrato", "fornecedor"]]
 }
