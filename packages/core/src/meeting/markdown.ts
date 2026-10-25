@@ -12,6 +12,14 @@ function section(title: string, items: readonly string[], empty: string): string
   return [`## ${title}`, '', ...(items.length > 0 ? items : [empty]), '']
 }
 
+const OWNER = /^---\n(?:.*\n)*?tacet_id: (".*")\n(?:.*\n)*?---\n/
+
+/** The meeting id a note was written for, from its frontmatter; undefined for any other file. */
+export function noteOwner(markdown: string): string | undefined {
+  const quoted = OWNER.exec(markdown)?.[1]
+  return quoted === undefined ? undefined : String(JSON.parse(quoted))
+}
+
 /** Obsidian Markdown: YAML frontmatter, a block id on every transcript line, timestamps linking to them. */
 export function toMarkdown(m: Meeting): string {
   const front = [
@@ -24,6 +32,7 @@ export function toMarkdown(m: Meeting): string {
     ...(m.minutes ? [`llm: ${m.minutes.model}`] : []),
     'tags: [meeting, tacet]',
     'tacet: 1',
+    `tacet_id: ${JSON.stringify(m.id)}`,
     '---',
     '',
     `# ${m.title}`,

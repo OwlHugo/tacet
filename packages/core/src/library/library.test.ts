@@ -141,4 +141,29 @@ describe('MeetingLibrary', () => {
       '2026-10-24 1430 Retro.md',
     ])
   })
+
+  it('never overwrites a note it did not write, even when the other .json is unreadable', () => {
+    const lib = library()
+    const first = lib.save(MEETING)
+    writeFileSync(join(lib.folder, '.tacet', 'm1.json'), '{ truncated')
+    const again = { ...MEETING, id: 'm2abcdef9' }
+    const second = lib.save(again)
+    expect(second.endsWith('1430 Beta launch sync m2abcdef.md')).toBe(true)
+    expect(readFileSync(first, 'utf8')).toContain('tacet_id: "m1"')
+    // a note the user wrote by hand under the same name is left alone too
+    const handmade = lib.notePath({ ...MEETING, id: 'h', title: 'Retro' })
+    writeFileSync(handmade, '# my notes\n')
+    const retro = lib.save({ ...MEETING, id: 'retro0001', title: 'Retro' })
+    expect(retro.endsWith('1430 Retro retro000.md')).toBe(true)
+    expect(readFileSync(handmade, 'utf8')).toBe('# my notes\n')
+  })
+
+  it('re-saves its own note in place, also one written before notes carried their id', () => {
+    const lib = library()
+    const path = lib.save(MEETING)
+    writeFileSync(path, readFileSync(path, 'utf8').replace(/tacet_id: .*\n/, ''))
+    expect(lib.save({ ...MEETING, timings: { transcribeSeconds: 2 } })).toBe(path)
+    expect(readFileSync(path, 'utf8')).toContain('tacet_id: "m1"')
+    expect(readdirSync(lib.folder).filter((f) => f.endsWith('.md'))).toHaveLength(1)
+  })
 })

@@ -8,7 +8,7 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 import type { z } from 'zod'
-import { toMarkdown } from '../meeting/markdown.ts'
+import { noteOwner, toMarkdown } from '../meeting/markdown.ts'
 import { type SearchHit, searchMeetings } from '../meeting/search.ts'
 import { type Meeting, MeetingSchema } from '../meeting/types.ts'
 
@@ -101,11 +101,23 @@ export class MeetingLibrary {
     for (const x of after) {
       const old = from.get(x.id)
       const now = this.#pathAmong(x, after)
-      if (old !== undefined && old !== now && existsSync(old)) renameSync(old, now)
+      if (old !== undefined && old !== now && existsSync(old) && !existsSync(now))
+        renameSync(old, now)
     }
-    const note = this.#pathAmong(m, after)
+    const note = this.#freePath(m, this.#pathAmong(m, after), from.get(m.id))
     writeFileSync(note, toMarkdown(m))
     return note
+  }
+
+  /**
+   * A note that is there but written for another meeting (its .json unreadable, or a file the user
+   * made by hand) is never overwritten: this meeting takes the name with its id instead. `own` is
+   * where this meeting's note already was, which covers notes written before `tacet_id` existed.
+   */
+  #freePath(m: NoteKey, path: string, own: string | undefined): string {
+    if (path === own || !existsSync(path) || noteOwner(readFileSync(path, 'utf8')) === m.id)
+      return path
+    return join(this.folder, noteName(m).replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`))
   }
 
   get(id: string): Meeting | undefined {
