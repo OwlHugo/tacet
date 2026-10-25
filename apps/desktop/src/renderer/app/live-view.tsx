@@ -47,7 +47,7 @@ function useClock(active: boolean): number {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     if (!active) return
-    const timer = setInterval(() => setNow(Date.now()), 250)
+    const timer = setInterval(() => setNow(Date.now()), 200)
     return () => clearInterval(timer)
   }, [active])
   return now
@@ -158,8 +158,7 @@ function ProcessingView({ state }: { state: Processing }) {
 export function useLiveView(state: RecorderState) {
   const [browsing, setBrowsing] = useState(false)
   useEffect(() => {
-    if (state.kind === 'starting' || state.kind === 'processing' || state.kind === 'error')
-      setBrowsing(false)
+    if (state.kind !== 'idle') setBrowsing(false)
   }, [state.kind])
   const live = isLive(state) ? state : undefined
   return {
@@ -196,13 +195,14 @@ export function LiveItem(props: { state: Live; active: boolean; onOpen: () => vo
 }
 
 /** Permissions live in the system settings, not in Tacet's: sending the user to Settings would not help. */
-const isPermission = (message: string) => /permission/i.test(message)
+const isPermission = (message: string) =>
+  /microphone and screen recording permissions/i.test(message)
 
 function FailedView({ state, onSettings }: { state: Failed; onSettings: () => void }) {
   const permission = isPermission(state.message)
   return (
     <section className="live" role="alert">
-      <h2 className="live-title">The meeting was not saved</h2>
+      <h2 className="live-title">No notes for this meeting</h2>
       <p className="live-error">{state.message}</p>
       {permission ? (
         <p className="muted">
@@ -214,7 +214,10 @@ function FailedView({ state, onSettings }: { state: Failed; onSettings: () => vo
           <button type="button" className="live-retry" onClick={onSettings}>
             Open Settings
           </button>
-          <p className="muted">Fix it there, then record again with the button on the left.</p>
+          <p className="muted">
+            Fix it there, then record again with the button on the left. Any audio already recorded
+            is kept in the notes folder, under .tacet/audio, and can be imported.
+          </p>
         </>
       )}
     </section>
