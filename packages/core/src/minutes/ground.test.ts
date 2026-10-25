@@ -256,7 +256,8 @@ describe('groundMinutes', () => {
         TRANSCRIPT,
         't',
       )
-      expect(outside.actionItems[0]).not.toHaveProperty('due')
+      // outside the quote, but the clause is about the task: still said for it
+      expect(outside.actionItems[0]?.due).toBe('by Thursday')
       const spaced = groundMinutes(
         one('Send the release notes', 'Me', '  I will send the release notes ', [3], 'by Thursday'),
         TRANSCRIPT,
@@ -682,6 +683,129 @@ describe('groundMinutes', () => {
           'by Thursday',
         )?.task,
       ).toBe('Send the notes by Thursday to the team')
+    })
+
+    it('cuts the word that leads into the deadline, and only a deadline that is led into', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        segments: [
+          { id: 0, start: 0, end: 3, speaker: 'Me', text: 'Vou corrigir o layout até quarta.' },
+          { id: 1, start: 3.5, end: 6, speaker: 'Me', text: 'Vou corrigir o layout quarta.' },
+          {
+            id: 2,
+            start: 6.5,
+            end: 9,
+            speaker: 'Me',
+            text: 'Vou corrigir o layout até sexta de manhã.',
+          },
+        ],
+      }
+      const task = (wording: string, d: string, seg: number, quote: string) =>
+        groundMinutes(one(wording, 'Me', quote, [seg], d), t, 't').actionItems[0]
+      expect(
+        task('Corrigir o layout até quarta', 'quarta', 0, 'corrigir o layout até quarta'),
+      ).toMatchObject({
+        task: 'Corrigir o layout',
+        due: 'quarta',
+      })
+      expect(
+        task('Corrigir o layout quarta', 'quarta', 1, 'corrigir o layout quarta'),
+      ).toMatchObject({
+        task: 'Corrigir o layout quarta',
+        due: 'quarta',
+      })
+      expect(
+        task(
+          'Corrigir o layout até sexta de manhã.',
+          'até sexta de manhã',
+          2,
+          'corrigir o layout até sexta de manhã',
+        ),
+      ).toMatchObject({ task: 'Corrigir o layout.', due: 'até sexta de manhã' })
+    })
+
+    it('a quote that is the whole line does not lend its deadline to the task', () => {
+      const line = (text: string): Transcript => ({
+        ...DIALOGUE,
+        segments: [{ id: 0, start: 0, end: 5, speaker: 'Me', text }],
+      })
+      const whole = 'Ana revisa o contrato e o Pedro faz o deploy até sexta.'
+      const ana = groundMinutes(
+        one('Revisar o contrato até sexta', 'Ana', whole, [0], 'até sexta'),
+        line(whole),
+        't',
+      ).actionItems[0]
+      expect(ana).toMatchObject({ task: 'Revisar o contrato' })
+      expect(ana).not.toHaveProperty('due')
+      const holiday = 'I will send the release notes, by the way Thursday is a holiday.'
+      const notes = groundMinutes(
+        one('Send the release notes', 'Me', holiday, [0], 'Thursday'),
+        line(holiday),
+        't',
+      ).actionItems[0]
+      expect(notes).not.toHaveProperty('due')
+      const sure = groundMinutes(
+        one(
+          'Fix the mobile layout',
+          'Tom',
+          'Tom, can you fix the mobile layout?',
+          [0, 1],
+          'by Wednesday',
+        ),
+        {
+          ...DIALOGUE,
+          segments: [
+            { id: 0, start: 0, end: 3, speaker: 'Me', text: 'Tom, can you fix the mobile layout?' },
+            {
+              id: 1,
+              start: 3.5,
+              end: 6,
+              speaker: 'Others',
+              text: "Sure, I'll have it by Wednesday.",
+            },
+          ],
+        },
+        't',
+      ).actionItems[0]
+      expect(sure?.due).toBe('by Wednesday')
+    })
+
+    it("does not read another task's line as the reply, even when it only says the deadline", () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        segments: [
+          { id: 0, start: 0, end: 3, speaker: 'Me', text: 'Ana revisa o contrato.' },
+          { id: 1, start: 3.5, end: 6, speaker: 'Others', text: 'Pedro faz o deploy, até sexta.' },
+        ],
+      }
+      const r = groundMinutes(
+        {
+          summary: [],
+          decisions: [],
+          action_items: [
+            {
+              task: 'Revisar o contrato',
+              owner: 'Ana',
+              due: 'até sexta',
+              quote: 'Ana revisa o contrato',
+              segments: [0, 1],
+            },
+            {
+              task: 'Fazer o deploy',
+              owner: 'Pedro',
+              due: 'até sexta',
+              quote: 'Pedro faz o deploy',
+              segments: [1],
+            },
+          ],
+        },
+        t,
+        't',
+      )
+      expect(r.actionItems.map((a) => [a.owner, a.due])).toEqual([
+        ['Ana', undefined],
+        ['Pedro', 'até sexta'],
+      ])
     })
 
     it('never moves the deadline of one task onto the next one cited with it', () => {
