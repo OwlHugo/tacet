@@ -1,0 +1,19 @@
+{
+  "name": "tacet",
+  "version": "0.1.0",
+  "description": "Local meeting transcription and grounded minutes from your terminal. whisper.cpp + Ollama, nothing leaves your machine.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "tacet": "./dist/index.js" },
+  "files": ["dist"],
+  "engines": { "node": ">=22.18" },
+  "keywords": ["whisper", "ollama", "transcription", "meeting-notes", "local-first", "cli"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tacet/core": "workspace:^"
+  }
+}
