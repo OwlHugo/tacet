@@ -484,7 +484,7 @@ describe('groundMinutes', () => {
       expect(due('até segunda')).not.toHaveProperty('due')
     })
 
-    it('takes a deadline only from the reply after the task, by someone else, never from a line before it', () => {
+    it('takes a deadline from the line after the task, never from a line before it', () => {
       const t: Transcript = {
         ...DIALOGUE,
         segments: [
@@ -512,7 +512,8 @@ describe('groundMinutes', () => {
           't',
         ).actionItems[0]?.due
       expect(due('sexta', [0, 1])).toBeUndefined()
-      expect(due('até quarta-feira', [1, 2])).toBeUndefined()
+      // the same speaker going on in the next line is the rest of the sentence: still about the task
+      expect(due('até quarta-feira', [1, 2])).toBe('Até quarta-feira')
     })
 
     it('with a paraphrased quote, reads the reply after the line that supports it best', () => {
@@ -545,7 +546,7 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]?.due).toBe('até quarta')
     })
 
-    it('on one mixed track, the next line is the reply even with the same label', () => {
+    it('takes the reply on one mixed track, and a sentence whisper split in two', () => {
       const t: Transcript = {
         ...DIALOGUE,
         segments: [
@@ -582,7 +583,7 @@ describe('groundMinutes', () => {
         { ...t, segments: t.segments.map((s) => ({ ...s, speaker: 'Me' })) },
         't',
       )
-      expect(sameMe.actionItems[0]).not.toHaveProperty('due')
+      expect(sameMe.actionItems[0]?.due).toBe('by Wednesday')
     })
 
     it('takes from the reply only a deadline said about the task, not another one in it', () => {
@@ -614,10 +615,30 @@ describe('groundMinutes', () => {
       expect(due('Reviso. Ah, e o deploy fica pra sexta.', 'pra sexta')).toBeUndefined()
       expect(due('Sure. By the way Thursday is a holiday.', 'Thursday')).toBeUndefined()
       expect(due('Fechado, entrego até quarta.', 'até quarta')).toBe('até quarta')
+      expect(due('Fechado; e o deploy até quarta.', 'até quarta')).toBeUndefined()
+      expect(due('Sim, a Ana reviso até quarta.', 'até quarta')).toBe('até quarta')
       expect(due('Reviso o contrato até segunda, pode ser.', 'até segunda')).toBe('até segunda')
     })
 
-    it('shows the deadline on its own: cut from the end of the task, kept or dropped', () => {
+    it('keeps a deadline said in the task line, even outside the quote, when the clause is about the task', () => {
+      const r = groundMinutes(
+        one(
+          'Send the release notes to the team by Thursday',
+          'Me',
+          'I will send the release notes',
+          [3],
+          'by Thursday',
+        ),
+        TRANSCRIPT,
+        't',
+      )
+      expect(r.actionItems[0]).toMatchObject({
+        task: 'Send the release notes to the team',
+        due: 'by Thursday',
+      })
+    })
+
+    it('shows the deadline on its own: cut from the end of the task, kept or made up', () => {
       const task = (t: string, quote: string, d: string) =>
         groundMinutes(one(t, 'Me', quote, [3], d), TRANSCRIPT, 't').actionItems[0]
       expect(
@@ -643,6 +664,17 @@ describe('groundMinutes', () => {
       expect(task('Send the release notes', 'I will send the release notes', 'notes')?.task).toBe(
         'Send the release notes',
       )
+      expect(
+        task(
+          'Send the release notes, by Thursday',
+          'I will send the release notes to the team by Thursday',
+          'by Thursday',
+        )?.task,
+      ).toBe('Send the release notes')
+      expect(
+        task('by Thursday', 'I will send the release notes to the team by Thursday', 'by Thursday')
+          ?.task,
+      ).toBe('by Thursday')
       expect(
         task(
           'Send the notes by Thursday to the team',

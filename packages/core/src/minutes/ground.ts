@@ -212,66 +212,58 @@ const coreLine = (quote: string, lines: Lines): Segment =>
   lines.reduce((best, s) => (coverage(quote, s.text) > coverage(quote, best.text) ? s : best))
 
 /**
- * A deadline is kept only if it was said in a row inside the task's quote, found as a run of words on
- * the task's own line, or in the cited reply: the next line, said by someone else, that is not another
- * task's line ("Can you do it?" / "Yes, by Wednesday"), which then joins the citation. A deadline elsewhere on the line
+ * A deadline is kept only if it was said about the task: in a row inside the task's quote, or in a
+ * clause of the task's own line or of the cited next line (the reply, or the rest of a sentence
+ * whisper split) whose other words are all the task's or of taking it on ("Sure, by Wednesday"). The
+ * next line must not be another task's line; it then joins the citation. A deadline elsewhere on the line
  * ("I'll send the notes, by the way Thursday is a holiday") or said for another task on the same line
  * ("Ana reviews the contract and Pedro deploys by Friday") is dropped. What is kept is the wording of
  * the transcript, not the model's.
  */
-/** Words that introduce a deadline, cut with it: "by", "on", "até", "pra"... */
-const LEAD = new Set(
-  'by on before until till at in ate para pra na no ate antes de do da'.split(' '),
-)
+/** Words that introduce a deadline at the end of a task, cut with it. */
+const LEAD = /\s+(?:by|on|before|until|até|ate|pra|antes de)$/iu
 
 /**
- * The task as the model wrote it, without the deadline at its end ("Send the notes by Thursday."):
- * a kept deadline is shown on its own, and a dropped one must not reach the minutes through the
- * task's wording. A deadline in the middle of the task is left alone.
+ * The task as the model wrote it, without a deadline at its end ("Send the notes by Thursday."): a
+ * kept deadline is shown on its own, and a dropped one must not reach the minutes through the task's
+ * wording. Only a deadline introduced like one ("by", "até") is cut, and never the whole task.
  */
 function withoutDeadline(task: string, due: string): string {
-  const said = findPhrase(due, task)
-  if (said === undefined) return task
-  const at = task.lastIndexOf(said)
-  const tail = task.slice(at + said.length)
-  if (words(tail).length > 0) return task
-  let head = task.slice(0, at).trimEnd()
-  let led = LEAD.has(words(said)[0] ?? '')
-  for (
-    let w = /[\p{L}]+$/u.exec(head);
-    w && LEAD.has(normalize(w[0]));
-    w = /[\p{L}]+$/u.exec(head)
-  ) {
-    head = head.slice(0, w.index).trimEnd()
-    led = true
-  }
-  // Only a deadline introduced like one ("by Thursday", "até sexta") is cut: "notes" is not a deadline.
-  const cut = head.replace(/[\s,;:-]+$/, '')
-  return led && words(cut).length > 0 ? `${cut}${tail.trim()}` : task
+  const end = /[.!?]$/.exec(task)?.[0] ?? ''
+  const body = task.slice(0, task.length - end.length)
+  const said = findPhrase(due, body)
+  if (said === undefined || !body.endsWith(said)) return task
+  const before = body.slice(0, body.length - said.length).trimEnd()
+  const lead =
+    LEAD.exec(before) ?? (/^(?:by|até|ate|pra|before|until)\s/iu.test(said) ? [''] : null)
+  if (lead === null) return task
+  const cut = before.slice(0, before.length - lead[0].length).replace(/,$/, '')
+  return words(cut).length > 0 ? `${cut}${end}` : task
 }
 
 /** Words a reply uses to take a task on without naming it ("Sure, by Wednesday", "Fechado, entrego até quarta"). */
 const TAKING_IT = new Set(
   (
-    'sure fine deal done will can do deliver send finish get it that this ' +
-    'claro certo fechado combinado beleza pode deixa comigo consigo da entrego faco fecho mando termino'
+    'sure fine deal done will can do deliver send finish get it that this yes by on before until ' +
+    'claro certo fechado combinado beleza pode deixa comigo consigo da entrego faco fecho mando termino ate pra antes'
   ).split(' '),
 )
 
+/** A light stem, so "reviso" answers "revisa" and "sending" answers "send". */
+const stem = (w: string) => w.slice(0, 5)
+
 /**
- * The deadline in a reply, as said, when the clause that says it is about the task: nothing else in
- * that clause but words of the task or of taking it on. "Reviso. Ah, e o deploy fica pra sexta" gives
- * the deploy's deadline, not the review's, and "Sure. By the way Thursday is a holiday" gives none.
+ * The deadline in a reply, as said, when the clause that says it is about the task: every other
+ * content word of the clause is a word of the task or of taking it on. "Reviso. Ah, e o deploy fica
+ * pra sexta" gives the deploy's deadline, not the review's; "Sure. By the way Thursday is a holiday"
+ * gives none.
  */
 function answerDeadline(due: string, reply: string, task: string): string | undefined {
-  // A light stem, so "reviso" answers "revisa" and "sending" answers "send".
-  const stem = (w: string) => w.slice(0, 5)
   const ofTask = new Set(words(task).map(stem))
-  for (const clause of reply.split(/[.,;!?]+/)) {
+  const about = (w: string) => STOP.has(w) || ofTask.has(stem(w)) || TAKING_IT.has(w)
+  for (const clause of reply.split(/[.,;!?]/)) {
     const said = findPhrase(due, clause)
-    if (said === undefined) continue
-    const rest = words(clause.replace(said, ' ')).filter((w) => w.length > 1 && !STOP.has(w))
-    if (rest.every((w) => ofTask.has(stem(w)) || TAKING_IT.has(w))) return said
+    if (said !== undefined && words(clause.replace(said, ' ')).every(about)) return said
   }
   return undefined
 }
@@ -284,17 +276,18 @@ function groundDue(
 ): { readonly due?: string; readonly lines: Lines } {
   const text = c.raw.due.trim()
   if (!text) return { lines: c.lines }
+  const about = `${c.task} ${c.raw.quote} ${c.raw.owner}`
   const quoted = findPhrase(c.raw.quote, c.core.text)
-  const own = quoted === undefined ? undefined : findPhrase(text, quoted)
+  const own =
+    (quoted === undefined ? undefined : findPhrase(text, quoted)) ??
+    answerDeadline(text, c.core.text, about)
   if (own !== undefined) return { due: own, lines: c.lines }
-  // The reply: the line right after the task, said by someone else ("Sure, by Wednesday"). One mixed
-  // track ("Speaker") does not say who spoke, so there the next line is enough.
-  const reply = index
-    .pick([c.core.id + 1])
-    .find((s) => s.speaker !== c.core.speaker || s.speaker === SPEAKER)
+  // The reply: the line right after the task ("Sure, by Wednesday"), or the rest of the same sentence
+  // when whisper split it in two.
+  const [reply] = index.pick([c.core.id + 1])
   const said =
     reply && c.raw.segments.includes(reply.id) && !taskLines.has(reply.id)
-      ? answerDeadline(text, reply.text, `${c.task} ${c.raw.quote}`)
+      ? answerDeadline(text, reply.text, about)
       : undefined
   if (reply && said !== undefined) {
     const joined: [Segment, ...Segment[]] = [reply, ...c.lines.filter((x) => x.id !== reply.id)]
@@ -339,6 +332,18 @@ function groundTasks(
   return kept
 }
 
+/**
+ * The task's wording next to its deadline. A kept deadline is cut from the end of the task, since it
+ * is shown on its own. A deadline the model made up (not said in any cited line) is cut too, so it
+ * cannot reach the minutes through the wording. One that was said but not for sure about this task
+ * stays where the model wrote it: it is the transcript's, and dropping it would lose what was said.
+ */
+function taskWording(c: Candidate, kept: string | undefined): string {
+  if (kept !== undefined) return withoutDeadline(c.task, kept)
+  const said = c.lines.some((s) => findPhrase(c.raw.due, s.text) !== undefined)
+  return said ? c.task : withoutDeadline(c.task, c.raw.due)
+}
+
 function groundActions(
   raw: RawMinutes,
   index: TranscriptIndex,
@@ -352,7 +357,7 @@ function groundActions(
     tasks.map((c) => {
       const d = groundDue(c, taskLines, index, rejected)
       return {
-        task: withoutDeadline(c.task, c.raw.due),
+        task: taskWording(c, d.due),
         owner: resolveOwner(c.raw.owner, c.lines, index),
         ...(d.due === undefined ? {} : { due: d.due }),
         quote: c.raw.quote.trim(),
