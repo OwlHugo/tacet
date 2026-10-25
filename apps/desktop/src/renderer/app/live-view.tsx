@@ -84,9 +84,7 @@ function RecordingView({ state, shortcut }: { state: Recording; shortcut: string
       <p className="live-kicker" aria-live="polite">
         <span className="live-dot" /> Recording
       </p>
-      <p className="live-clock" aria-label="Recording time">
-        {timestamp(Math.max(0, now - state.startedAt) / 1000)}
-      </p>
+      <time className="live-clock">{timestamp(Math.max(0, now - state.startedAt) / 1000)}</time>
       <div className="meters">
         {TRACKS.map((t) => (
           <Meter

@@ -619,6 +619,7 @@ h3 {
   animation: pulse 1.4s ease-in-out infinite;
 }
 .live-clock {
+  display: block;
   margin: -8px 0 4px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 44px;
