@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { IMPORT_EXTENSIONS_LABEL } from '../../shared/audio-files.ts'
 import { audioFiles } from './format.ts'
 import { api } from './platform.ts'
@@ -10,20 +10,31 @@ export interface ImportCallbacks {
   readonly onError: (e: unknown) => void
 }
 
-/** Drag a .wav/.m4a/.mp3 anywhere on the window. The overlay shows while a file is over it. */
+/**
+ * Drag a file anywhere on the window. dragenter/dragleave fire for every child the pointer crosses,
+ * so the overlay counts them and hides when the count is back to zero (left the window) or on drop.
+ */
 export function useAudioDrop(cb: ImportCallbacks) {
   const [over, setOver] = useState(false)
+  const depth = useRef(0)
+  const reset = () => {
+    depth.current = 0
+    setOver(false)
+  }
   const handlers = {
-    onDragOver: (e: React.DragEvent) => {
+    onDragEnter: (e: React.DragEvent) => {
       e.preventDefault()
+      depth.current += 1
       setOver(true)
     },
-    onDragLeave: (e: React.DragEvent) => {
-      if (e.currentTarget === e.target) setOver(false)
+    onDragOver: (e: React.DragEvent) => e.preventDefault(),
+    onDragLeave: () => {
+      depth.current = Math.max(0, depth.current - 1)
+      if (depth.current === 0) setOver(false)
     },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault()
-      setOver(false)
+      reset()
       const [file] = audioFiles(e.dataTransfer.files)
       cb.onStart()
       if (!file) return cb.onError(new Error(`Drop a ${IMPORT_EXTENSIONS_LABEL} file.`))
