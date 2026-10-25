@@ -1,6 +1,12 @@
 import { rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { MeetingLibrary, ollamaModels, type Stage } from '@tacet/core'
+import {
+  defaultModel,
+  installedModels,
+  MeetingLibrary,
+  ollamaModels,
+  type Stage,
+} from '@tacet/core'
 import {
   app,
   BrowserWindow,
@@ -356,6 +362,7 @@ function wireIpc(): void {
   })
   handle('health', INVOKE.health, DEV, async () => ({
     whisper: locateWhisper(pipelineEnv()),
+    whisperModels: installedModels(pipelineEnv().modelsDir),
     ollamaModels: await ollamaModels(config.OLLAMA_HOST),
     microphone:
       process.platform === 'linux'
@@ -400,7 +407,7 @@ app.on('window-all-closed', () => undefined)
 app.on('will-quit', () => globalShortcut.unregisterAll())
 
 void app.whenReady().then(() => {
-  const defaults = defaultSettings(app.getPath('documents'))
+  const defaults = defaultSettings(app.getPath('documents'), defaultModel(pipelineEnv().modelsDir))
   const saved = loadSettings(settingsFile(), defaults)
   settings = config.TACET_OUTPUT_DIR ? { ...saved, outputDir: config.TACET_OUTPUT_DIR } : saved
   app.dock?.hide()

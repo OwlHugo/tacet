@@ -27,6 +27,7 @@ export function SettingsPanel(props: {
   const { settings } = props
   const set = async (patch: Patch) => props.onChange(await api.setSettings(patch))
   const llms = [...new Set([settings.llmModel, ...(props.health?.ollamaModels ?? [])])]
+  const downloaded = new Set(props.health?.whisperModels)
   return (
     <div className="settings">
       <header className="meeting-head">
@@ -57,13 +58,13 @@ export function SettingsPanel(props: {
         >
           {WHISPER_MODELS.map(([value, text]) => (
             <option key={value} value={value}>
-              {text}
+              {downloaded.has(value) ? `${text} · downloaded` : text}
             </option>
           ))}
         </select>
         <small>
-          Downloaded once from Hugging Face the first time you use it. That is the only network
-          request Tacet makes.
+          A model that is not downloaded yet comes from Hugging Face the first time you use it. That
+          is the only network request Tacet makes.
         </small>
       </label>
       <label className="field">

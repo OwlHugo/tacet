@@ -41,5 +41,5 @@ export {
   findWhisper,
   findWhisperOrUndefined,
 } from './whisper/binaries.ts'
-export { ensureModel, modelPath } from './whisper/models.ts'
+export { defaultModel, ensureModel, installedModels, modelPath } from './whisper/models.ts'
 export { type WhisperOptions, whisperTranscriber } from './whisper/transcribe-track.ts'

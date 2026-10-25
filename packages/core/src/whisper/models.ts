@@ -9,6 +9,19 @@ export function modelPath(model: string, modelsDir: string): string {
   return model.endsWith('.bin') ? model : join(modelsDir, `ggml-${model}.bin`)
 }
 
+/** Best first, all multilingual. The default never downloads: it is the best one already on disk. */
+const BY_QUALITY = ['large-v3-turbo', 'small', 'base'] as const
+
+/** Whisper models already downloaded to `modelsDir`, best first. */
+export function installedModels(modelsDir: string) {
+  return BY_QUALITY.filter((m) => existsSync(modelPath(m, modelsDir)))
+}
+
+/** The best installed model, or `base` (downloaded on first use) when there is none. */
+export function defaultModel(modelsDir: string) {
+  return installedModels(modelsDir)[0] ?? 'base'
+}
+
 const modelUrl = (model: string) =>
   `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin`
 

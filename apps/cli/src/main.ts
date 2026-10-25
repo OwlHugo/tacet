@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import { basename, extname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import {
+  defaultModel,
   ensureModel,
   findFfmpeg,
   findWhisper,
@@ -35,7 +36,8 @@ Transcribe options
   --mic FILE            your microphone track (labelled "Me")
   --system FILE         system audio track (labelled "Others")
   file.wav:Name         label a positional track
-  -m, --model NAME      whisper model: tiny, base, small, large-v3-turbo or a .bin path (default base)
+  -m, --model NAME      whisper model: tiny, base, small, large-v3-turbo or a .bin path
+                        (default: the best one downloaded, else base)
   -l, --language CODE   en, pt, ... or auto (default auto)
   --llm MODEL           Ollama model for the minutes (default ${DEFAULT_LLM})
   --no-minutes          transcript only
@@ -66,7 +68,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
     options: {
       mic: { type: 'string' },
       system: { type: 'string' },
-      model: { type: 'string', short: 'm', default: 'base' },
+      model: { type: 'string', short: 'm', default: defaultModel(config.TACET_MODELS_DIR) },
       language: { type: 'string', short: 'l', default: 'auto' },
       llm: { type: 'string', default: DEFAULT_LLM },
       'no-minutes': { type: 'boolean', default: false },

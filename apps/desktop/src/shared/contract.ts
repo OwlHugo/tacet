@@ -63,6 +63,8 @@ export interface MeetingSummary {
 
 export interface Health {
   readonly whisper: string | undefined
+  /** Whisper models already downloaded, best first. */
+  readonly whisperModels: readonly string[]
   readonly ollamaModels: readonly string[] | undefined
   readonly microphone: string
   readonly screen: string

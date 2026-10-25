@@ -2,10 +2,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { type Settings, SettingsSchema } from '../shared/contract.ts'
 
-export function defaultSettings(documents: string): Settings {
+/** `whisperModel` is the best model already downloaded (see defaultModel), so a new install never downloads one it does not need. */
+export function defaultSettings(
+  documents: string,
+  whisperModel: Settings['whisperModel'],
+): Settings {
   return {
     outputDir: join(documents, 'Tacet'),
-    whisperModel: 'base',
+    whisperModel,
     language: 'auto',
     llmModel: 'qwen2.5:7b',
     shortcut: 'CommandOrControl+Shift+M',
