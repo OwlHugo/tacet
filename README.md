@@ -75,7 +75,7 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 | 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.08 | 18.69 | 4/4 | 3/3 | 2/2 |
 | **Total** | 138.2s | **5.2%** | **100%** | | **1.6** | 26.2 | **15/15** | 90.0% | 7/7 |
 
-Hallucination guard: **26/26** fabricated items rejected (four made-up items citing real line ids are injected into every case, and a deadline nobody said is pinned on every real task).
+Hallucination guard: **35/35** fabricated items rejected (four made-up items citing real line ids are injected into every case, a deadline nobody said is pinned on every real task, and each deadline that was said is moved onto another task of the same meeting).
 
 With `large-v3-turbo` (the default when it is downloaded), the WER drops to **3.1%** overall (0.0% / 3.4% / 5.7% / 3.5%) at 8.5 s per audio minute, and the Portuguese case finds both tasks ("como fornecedor" is heard right). Grounded items stay 15/15 and the guard rejects 25/25; deadlines right are 6/7, none wrong.
 
