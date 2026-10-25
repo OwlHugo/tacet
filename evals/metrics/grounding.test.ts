@@ -77,7 +77,20 @@ describe('checkGrounding', () => {
       true,
     ])
     expect(ok('Pedro')).toBe(false)
-    const single = { ...T, segments: T.segments.map((s) => ({ ...s, speaker: 'Speaker' })) }
+    // "the others" is said, but there is no Others track: still not an owner
+    const single = {
+      ...T,
+      segments: [
+        ...T.segments.map((s) => ({ ...s, speaker: 'Speaker' })),
+        {
+          id: 2,
+          start: 10,
+          end: 12,
+          speaker: 'Speaker',
+          text: 'Ask me and the others to review it.',
+        },
+      ],
+    }
     expect(['Me', 'Others', 'Speaker', 'Maria'].map((o) => ok(o, single))).toEqual([
       false,
       false,

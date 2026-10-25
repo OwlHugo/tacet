@@ -39,11 +39,15 @@ export function checkGrounding(
   ]
   const speakers = new Set(transcript.segments.map((s) => s.speaker))
   const spoken = transcript.segments.map((s) => s.text).join(' ')
-  // An owner is a track that exists in this transcript, a name that was said, or nobody.
-  // "Speaker" (one mixed track) says nothing about who spoke, so it is never an owner.
+  // An owner is a track that exists in this transcript, a name that was said, or nobody. Track
+  // labels count only as tracks: "Others" is not an owner of a one-track import just because someone
+  // said "the others". "Speaker" (one mixed track) says nothing about who spoke, so it never is.
+  const TRACK_LABELS = new Set(['Me', 'Others', 'Speaker'])
   const ownerGrounded = (owner: string) =>
     owner === 'Unassigned' ||
-    (owner !== 'Speaker' && (speakers.has(owner) || coverage(owner, spoken) === 1))
+    (TRACK_LABELS.has(owner)
+      ? owner !== 'Speaker' && speakers.has(owner)
+      : speakers.has(owner) || coverage(owner, spoken) === 1)
   const ungrounded = items.filter((it) => {
     const segs = it.segments.map((id) => byId.get(id))
     const text = segs.map((s) => s?.text ?? '').join(' ')
