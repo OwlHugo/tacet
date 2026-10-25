@@ -3,6 +3,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   renameSync,
   writeFileSync,
 } from 'node:fs'
@@ -114,7 +115,11 @@ export class MeetingLibrary {
   #target(m: NoteKey, all: readonly NoteKey[], owners: ReadonlyMap<string, string>): string {
     const base = noteName(m)
     const clash = all.some((x) => x.id !== m.id && noteName(x) === base)
-    const free = (path: string) => !existsSync(path) || owners.get(m.id) === path
+    const own = owners.get(m.id)
+    // Same file, maybe in another case: on APFS and NTFS "Retro.md" and "retro.md" are one file.
+    const isOwn = (path: string) =>
+      own !== undefined && realpathSync.native(path) === realpathSync.native(own)
+    const free = (path: string) => !existsSync(path) || isOwn(path)
     const candidates = [
       ...(clash ? [] : [base]),
       base.replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`),

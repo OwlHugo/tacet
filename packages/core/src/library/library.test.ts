@@ -205,4 +205,11 @@ describe('MeetingLibrary', () => {
     expect(lib.save({ ...MEETING, title: 'Renamed' }).endsWith('1430 Renamed.md')).toBe(true)
     expect(md(lib)).toEqual(['2026-10-24 1430 Renamed.md'])
   })
+
+  it('renames a note when only the case of the title changes', () => {
+    const lib = library()
+    lib.save({ ...MEETING, title: 'Retro' })
+    expect(lib.save({ ...MEETING, title: 'retro' }).endsWith('1430 retro.md')).toBe(true)
+    expect(md(lib)).toEqual(['2026-10-24 1430 retro.md'])
+  })
 })
