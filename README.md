@@ -31,7 +31,7 @@ open https://github.com/OwlHugo/tacet/releases/latest
 npx tacet transcribe meeting.wav
 ```
 
-Requirements: [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install whisper-cpp` on macOS; Windows and Linux builds ship it) and, for minutes, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`). Tacet uses the best whisper model already in `~/.cache/whisper` (`large-v3-turbo`, then `small`, then `base`); with none there, the first run downloads `base` (142 MB) from Hugging Face. You can pick another in Settings or with `-m`. Run `npx tacet doctor` to check everything.
+Requirements: [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install whisper-cpp` on macOS; Windows and Linux builds ship it) and, for minutes, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`). Tacet uses the best whisper model already in `~/.cache/whisper` (`large-v3-turbo`, then `small`, `base`, `tiny`); with none there, the first run downloads `base` (142 MB) from Hugging Face. You can pick another in Settings or with `-m`. Run `npx tacet doctor` to check everything.
 
 ## Your data stays on your machine
 
@@ -164,7 +164,7 @@ new MeetingLibrary(`${process.env.HOME}/Obsidian/Meetings`).save(meeting)
 
 ```
 tacet transcribe <audio...>        one file, or --mic me.wav --system them.wav, or file.wav:Name
-  -m, --model base|small|large-v3-turbo|path.bin
+  -m, --model tiny|base|small|large-v3-turbo|path.bin   (default: best one downloaded)
   -l, --language en|pt|...|auto
   --llm qwen2.5:7b   --no-minutes   -t "Title"   -o ~/notes   --json
 tacet search "pricing page" [--dir ~/notes]

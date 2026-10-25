@@ -9,8 +9,8 @@ import {
   findFfmpeg,
   findWhisper,
   findWhisperOrUndefined,
+  installedModels,
   MeetingLibrary,
-  modelPath,
   ollamaMinutes,
   ollamaModels,
   processMeeting,
@@ -179,10 +179,15 @@ async function doctorCommand(): Promise<void> {
     'ffmpeg (optional)',
     ffmpeg ?? 'not found: only wav/mp3/flac/ogg can be read',
   )
-  for (const m of ['base', 'large-v3-turbo']) {
-    const path = modelPath(m, config.TACET_MODELS_DIR)
-    row(existsSync(path), `model ${m}`, path)
-  }
+  const installed = installedModels(config.TACET_MODELS_DIR)
+  const model = defaultModel(config.TACET_MODELS_DIR)
+  row(
+    installed.length > 0,
+    'whisper model',
+    installed.length > 0
+      ? `${model} by default (downloaded: ${installed.join(', ')}) in ${config.TACET_MODELS_DIR}`
+      : `none in ${config.TACET_MODELS_DIR}: base is downloaded on first use`,
+  )
   const models = await ollamaModels(config.OLLAMA_HOST)
   row(
     models !== undefined,
