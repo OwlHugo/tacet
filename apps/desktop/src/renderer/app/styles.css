@@ -751,3 +751,29 @@ h3 {
   border-width: 0 1.5px 1.5px 0;
   transform: rotate(45deg);
 }
+.live-error {
+  margin: 0;
+  font-size: 15px;
+  color: var(--amber);
+}
+.live-retry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 0;
+  background: var(--violet);
+  color: #0e0f14;
+  font-weight: 600;
+}
+.live-retry:hover {
+  background: #9a8df8;
+}
+.live .live-retry kbd {
+  margin-left: auto;
+  border: 0;
+  background: rgba(14, 15, 20, 0.16);
+  color: rgba(14, 15, 20, 0.8);
+}

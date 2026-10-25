@@ -6,6 +6,9 @@ import { api, IS_MAC } from './platform.ts'
 type Recording = Extract<RecorderState, { kind: 'recording' }>
 type Processing = Extract<RecorderState, { kind: 'processing' }>
 type Active = Extract<RecorderState, { kind: 'starting' | 'recording' | 'processing' }>
+type Failed = Extract<RecorderState, { kind: 'error' }>
+/** What the live panel shows: a meeting in progress, or the reason the last one failed. */
+type Live = Active | Failed
 
 export const isActive = (s: RecorderState): s is Active =>
   s.kind === 'starting' || s.kind === 'recording' || s.kind === 'processing'
@@ -119,7 +122,7 @@ const DEVICE = IS_MAC ? 'Mac' : 'computer'
 
 const STEP_HINT: Record<ProcessingStage, string> = {
   'saving audio': 'Closing the audio files.',
-  transcribing: `whisper.cpp is transcribing each track on this ${DEVICE}.`,
+  transcribing: `whisper.cpp is transcribing each track on this ${DEVICE}. A model used for the first time is downloaded first.`,
   'writing minutes': 'The local model is writing the minutes. The notes open when they are ready.',
 }
 
@@ -152,11 +155,13 @@ function ProcessingView({ state }: { state: Processing }) {
 export function useLiveView(state: RecorderState) {
   const [browsing, setBrowsing] = useState(false)
   useEffect(() => {
-    if (state.kind === 'starting' || state.kind === 'processing') setBrowsing(false)
+    if (state.kind === 'starting' || state.kind === 'processing' || state.kind === 'error')
+      setBrowsing(false)
   }, [state.kind])
+  const live = isActive(state) || state.kind === 'error' ? state : undefined
   return {
     /** The live state while the panel should show it, undefined otherwise. */
-    shown: isActive(state) && !browsing ? state : undefined,
+    shown: browsing ? undefined : live,
     leave: () => setBrowsing(true),
     back: () => setBrowsing(false),
   }
@@ -179,10 +184,25 @@ export function LiveItem(props: { state: Active; active: boolean; onOpen: () => 
   )
 }
 
-/** The main panel while a meeting is being recorded or processed. */
-export function LiveView({ state, shortcut }: { state: Active; shortcut: string | undefined }) {
+function FailedView({ state, shortcut }: { state: Failed; shortcut: string | undefined }) {
+  return (
+    <section className="live" role="alert">
+      <p className="live-kicker">The meeting was not saved</p>
+      <p className="live-error">{state.message}</p>
+      <button type="button" className="live-retry" onClick={() => void api.toggleRecording()}>
+        Record again
+        {shortcut && <kbd>{shortcutLabel(shortcut, IS_MAC)}</kbd>}
+      </button>
+      <p className="muted">Your other meetings are in the list on the left.</p>
+    </section>
+  )
+}
+
+/** The main panel while a meeting is being recorded or processed, or when it just failed. */
+export function LiveView({ state, shortcut }: { state: Live; shortcut: string | undefined }) {
   if (state.kind === 'recording') return <RecordingView state={state} shortcut={shortcut} />
   if (state.kind === 'processing') return <ProcessingView state={state} />
+  if (state.kind === 'error') return <FailedView state={state} shortcut={shortcut} />
   return (
     <section className="live" aria-live="polite">
       <p className="live-kicker">Starting</p>

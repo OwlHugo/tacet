@@ -53,6 +53,31 @@ function Empty({ settings }: { settings: Settings | undefined }) {
   )
 }
 
+/** The list in the sidebar: the live meeting first, then search results or every meeting. */
+function MeetingNav(props: {
+  state: RecorderState
+  live: boolean
+  onLive: () => void
+  query: string
+  hits: SearchHit[]
+  meetings: MeetingSummary[]
+  selected: string | undefined
+  onOpen: (id: string, at?: number) => void
+}) {
+  return (
+    <nav className="list">
+      {isActive(props.state) && (
+        <LiveItem state={props.state} active={props.live} onOpen={props.onLive} />
+      )}
+      {props.query.trim() ? (
+        <SearchResults hits={props.hits} onOpen={props.onOpen} />
+      ) : (
+        <MeetingList meetings={props.meetings} selected={props.selected} onOpen={props.onOpen} />
+      )}
+    </nav>
+  )
+}
+
 /** Cmd/Ctrl+K focuses search, Esc clears it and closes settings. */
 function useKeys(search: React.RefObject<HTMLInputElement | null>, onEscape: () => void) {
   useEffect(() => {
@@ -164,14 +189,19 @@ export function App() {
           inputRef={searchRef}
           hint={IS_MAC ? '⌘K' : 'Ctrl K'}
         />
-        <nav className="list">
-          {busy && <LiveItem state={state} active={live !== undefined} onOpen={liveView.back} />}
-          {query.trim() ? (
-            <SearchResults hits={hits} onOpen={open} />
-          ) : (
-            <MeetingList meetings={meetings} selected={live ? undefined : selected} onOpen={open} />
-          )}
-        </nav>
+        <MeetingNav
+          state={state}
+          live={live !== undefined && !showSettings}
+          onLive={() => {
+            setShowSettings(false)
+            liveView.back()
+          }}
+          query={query}
+          hits={hits}
+          meetings={meetings}
+          selected={live ? undefined : selected}
+          onOpen={open}
+        />
         <footer className="sidebar-foot">
           <span className="local">
             <i className="dot-ok" /> Local only
