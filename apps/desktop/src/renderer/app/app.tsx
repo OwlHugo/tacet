@@ -222,7 +222,11 @@ export function App() {
             onClose={() => setShowSettings(false)}
           />
         ) : live ? (
-          <LiveView state={live} shortcut={settings?.shortcut} />
+          <LiveView
+            state={live}
+            shortcut={settings?.shortcut}
+            onSettings={() => setShowSettings(true)}
+          />
         ) : meeting ? (
           <MeetingView meeting={meeting} focus={focus} onRenamed={renamed(meeting.id)} />
         ) : (

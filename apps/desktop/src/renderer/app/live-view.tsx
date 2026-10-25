@@ -184,25 +184,29 @@ export function LiveItem(props: { state: Active; active: boolean; onOpen: () => 
   )
 }
 
-function FailedView({ state, shortcut }: { state: Failed; shortcut: string | undefined }) {
+function FailedView({ state, onSettings }: { state: Failed; onSettings: () => void }) {
   return (
     <section className="live" role="alert">
-      <p className="live-kicker">The meeting was not saved</p>
+      <h2 className="live-title">The meeting was not saved</h2>
       <p className="live-error">{state.message}</p>
-      <button type="button" className="live-retry" onClick={() => void api.toggleRecording()}>
-        Record again
-        {shortcut && <kbd>{shortcutLabel(shortcut, IS_MAC)}</kbd>}
+      <button type="button" className="live-retry" onClick={onSettings}>
+        Open Settings
       </button>
-      <p className="muted">Your other meetings are in the list on the left.</p>
+      <p className="muted">Fix it there, then record again with the button on the left.</p>
     </section>
   )
 }
 
 /** The main panel while a meeting is being recorded or processed, or when it just failed. */
-export function LiveView({ state, shortcut }: { state: Live; shortcut: string | undefined }) {
+export function LiveView(props: {
+  state: Live
+  shortcut: string | undefined
+  onSettings: () => void
+}) {
+  const { state, shortcut } = props
   if (state.kind === 'recording') return <RecordingView state={state} shortcut={shortcut} />
   if (state.kind === 'processing') return <ProcessingView state={state} />
-  if (state.kind === 'error') return <FailedView state={state} shortcut={shortcut} />
+  if (state.kind === 'error') return <FailedView state={state} onSettings={props.onSettings} />
   return (
     <section className="live" aria-live="polite">
       <p className="live-kicker">Starting</p>

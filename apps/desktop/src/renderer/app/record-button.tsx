@@ -52,7 +52,6 @@ export function RecordButton({
         {shortcut && state.kind !== 'processing' && <kbd>{shortcutLabel(shortcut, IS_MAC)}</kbd>}
       </button>
       {state.kind === 'recording' && <TrackLine state={state} />}
-      {state.kind === 'error' && <p className="record-sub error">{state.message}</p>}
       {state.kind === 'processing' && <div className="progress" />}
     </div>
   )
