@@ -50,7 +50,14 @@ Rules:
 - decisions: only things the participants explicitly agreed or decided. Empty list if none.
 - action_items: only concrete tasks someone committed to or was asked to do. "owner" is the person's name if it was said,
   otherwise "Me" or "Others" based on who committed. Empty list if none.
-- Write in the same language as the transcript. Be brief.`;
+- Write every field in the language of the transcript. Be brief.`;
+
+const LANGUAGES: Record<string, string> = { en: 'English', pt: 'Portuguese', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian' };
+
+export function languageInstruction(code: string): string {
+  const name = LANGUAGES[code];
+  return name ? `\nThe transcript is in ${name}. Write the summary, decisions and tasks in ${name}.` : '';
+}
 
 export function renderTranscriptForPrompt(segments: Segment[]): string {
   return segments.map((s) => `[${s.id}] ${formatTimestamp(s.start)} ${s.speaker}: ${s.text}`).join('\n');
@@ -198,7 +205,7 @@ export async function generateMinutes(transcript: Transcript, opts: MinutesOptio
   const raw: RawMinutes = { summary: [], decisions: [], action_items: [] };
   for (const chunk of chunkSegments(transcript.segments)) {
     if (!chunk.length) continue;
-    const part = await generate(SYSTEM_PROMPT, `Transcript:\n${renderTranscriptForPrompt(chunk)}`);
+    const part = await generate(SYSTEM_PROMPT + languageInstruction(transcript.language), `Transcript:\n${renderTranscriptForPrompt(chunk)}`);
     raw.summary.push(...(part.summary ?? []));
     raw.decisions.push(...(part.decisions ?? []));
     raw.action_items.push(...(part.action_items ?? []));

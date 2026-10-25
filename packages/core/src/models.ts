@@ -18,8 +18,12 @@ export function modelPath(model: string): string {
 }
 
 export function modelUrl(model: string): string {
+  if (model === VAD_MODEL) return `https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-${model}.bin`;
   return `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin`;
 }
+
+/** Silero voice activity model (885 KB). Gives whisper accurate timestamps on tracks with long silences. */
+export const VAD_MODEL = 'silero-v5.1.2';
 
 /**
  * Make sure a whisper model exists locally. Downloading the model is the only network call Tacet ever makes,
