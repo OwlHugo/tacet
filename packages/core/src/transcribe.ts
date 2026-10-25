@@ -3,8 +3,9 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, extname, join } from 'node:path';
 import { resolveFfmpeg, resolveWhisperBinary, type ResolveOptions } from './binaries.js';
-import { ensureModel } from './models.js';
+import { ensureModel, VAD_MODEL } from './models.js';
 import { similarity } from './text.js';
+import { readWav, snapToSpeech, speechRegions } from './vad.js';
 import type { Segment, Speaker, Transcript } from './types.js';
 
 export interface Track {
@@ -18,6 +19,8 @@ export interface TranscribeOptions extends ResolveOptions {
   /** Spoken language code or "auto". Default: auto. */
   language?: string;
   threads?: number;
+  /** Run whisper.cpp's Silero VAD first. Off by default: it shifts timestamps; Tacet snaps to speech itself. */
+  vad?: boolean;
   onLog?: (line: string) => void;
 }
 
@@ -42,11 +45,15 @@ function run(cmd: string, args: string[], env: NodeJS.ProcessEnv, onLog?: (l: st
   });
 }
 
-/** whisper.cpp reads wav/mp3/flac/ogg itself; anything else (webm, m4a, mp4) goes through ffmpeg first. */
+/**
+ * whisper.cpp reads wav/mp3/flac/ogg itself, but timestamp snapping needs PCM, so anything that is
+ * not WAV goes through ffmpeg when it is available.
+ */
 async function toWhisperInput(path: string, work: string): Promise<string> {
   const ext = extname(path).toLowerCase();
-  if (['.wav', '.mp3', '.flac', '.ogg'].includes(ext)) return path;
+  if (ext === '.wav') return path;
   const ffmpeg = resolveFfmpeg();
+  if (!ffmpeg && ['.mp3', '.flac', '.ogg'].includes(ext)) return path;
   if (!ffmpeg) throw new Error(`Cannot read ${ext} files without ffmpeg. Convert to .wav first or install ffmpeg.`);
   const out = join(work, 'input.wav');
   await run(ffmpeg, ['-loglevel', 'error', '-y', '-i', path, '-ar', '16000', '-ac', '1', out], process.env);
@@ -63,17 +70,26 @@ export async function transcribeTrack(track: Track, opts: TranscribeOptions = {}
     const outBase = join(work, 'out');
     const args = ['-m', model, '-f', input, '-oj', '-of', outBase, '-np', '-l', opts.language ?? 'auto'];
     if (opts.threads) args.push('-t', String(opts.threads));
+    if (opts.vad) args.push('--vad', '-vm', await ensureModel(VAD_MODEL));
     // Prebuilt Linux builds ship their .so files next to the binary.
     const env = { ...process.env, LD_LIBRARY_PATH: [dirname(bin), process.env.LD_LIBRARY_PATH].filter(Boolean).join(':') };
     await run(bin, args, env, opts.onLog);
     const json = JSON.parse(readFileSync(`${outBase}.json`, 'utf8')) as WhisperJson;
-    const segments = json.transcription
-      .map((t) => ({ start: t.offsets.from / 1000, end: t.offsets.to / 1000, speaker: track.speaker, text: t.text.trim() }))
+    let segments = json.transcription
+      .map((t) => ({ start: t.offsets.from / 1000, end: t.offsets.to / 1000, speaker: track.speaker, text: cleanText(t.text) }))
       .filter((s) => s.text && !isHallucination(s.text));
+    if (input.endsWith('.wav')) segments = snapToSpeech(segments, speechRegions(readWav(input)));
     return { segments, language: json.result?.language ?? opts.language ?? 'auto' };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
+}
+
+/** Trim and drop the stray quote marks whisper sometimes opens a segment with. */
+export function cleanText(text: string): string {
+  let t = text.trim();
+  if (/^["“]/.test(t) && !/["”]/.test(t.slice(1))) t = t.slice(1).trim();
+  return t;
 }
 
 /** Whisper's well-known outputs on silence. */

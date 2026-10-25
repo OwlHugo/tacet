@@ -2,8 +2,9 @@ export * from './types.js';
 export { formatTimestamp, blockId } from './time.js';
 export { normalize, words, coverage, similarity } from './text.js';
 export { resolveWhisperBinary, resolveFfmpeg, type ResolveOptions } from './binaries.js';
-export { ensureModel, modelPath, modelsDir, modelUrl, WHISPER_MODELS, type WhisperModelName } from './models.js';
+export { ensureModel, modelPath, modelsDir, modelUrl, VAD_MODEL, WHISPER_MODELS, type WhisperModelName } from './models.js';
 export { WavWriter, wavDuration } from './wav.js';
+export { readWav, speechRegions, snapToSpeech, type Pcm, type Region, type VadOptions } from './vad.js';
 export { transcribe, transcribeTrack, mergeTracks, isHallucination, type Track, type TranscribeOptions } from './transcribe.js';
 export { ollamaAvailable, ollamaModels, ollamaHost, ollamaJson, type OllamaOptions } from './ollama.js';
 export {
