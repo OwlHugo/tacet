@@ -384,6 +384,29 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]?.due).toBe('até sexta')
     })
 
+    it('counts the lines grounding gave a task, not only the ones the model cited', () => {
+      const t = line('Morning everyone.', 'I will check the logs, and you fix the build by Friday.')
+      const r = run(
+        t,
+        item('Fix the build', 'Others', 'you fix the build by Friday', [1], 'by Friday'),
+        item('Check the logs', 'Me', 'I will check the logs', [0], 'by Friday'),
+      )
+      expect(r.actionItems.map((a) => [a.task, a.due])).toEqual([
+        ['Fix the build', undefined],
+        ['Check the logs', undefined],
+      ])
+    })
+
+    it('a pronoun owner is not a second name on the line', () => {
+      const t = line('Ana, eu entrego as notas até sexta.')
+      const r = run(
+        t,
+        item('Entregar as notas', 'eu', 'eu entrego as notas', [0], 'até sexta'),
+        item('Algo', 'Ana', 'nada disso', [7], ''),
+      )
+      expect(r.actionItems[0]?.due).toBe('até sexta')
+    })
+
     it('cuts the deadline from the end of the task with the word that leads into it', () => {
       const t = line(
         'Vou mandar as notas antes de sexta.',

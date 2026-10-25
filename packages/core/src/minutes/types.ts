@@ -34,8 +34,8 @@ export const MinutesSchema = z.object({
       task: z.string(),
       owner: z.string(),
       /**
-       * As written in the transcript, only when said in a row inside the task's quote on its own line,
-       * or in the reply right after it (see groundDue).
+       * As written in the transcript, only when said in a row on a line of this task that no other
+       * task stands on and that names at most one of the owners the model gave (see groundDue).
        */
       due: z.string().optional(),
       quote: z.string(),

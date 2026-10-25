@@ -219,7 +219,9 @@ function withoutDeadline(task: string, due: string): string {
 }
 
 /** Owner labels that are not a person's name. */
-const NOT_A_NAME = new Set([ME, OTHERS_LABEL, SPEAKER, 'Unassigned'].map(normalize))
+const NOT_A_NAME = new Set(
+  [ME, OTHERS_LABEL, SPEAKER, 'Unassigned', 'I', 'eu', 'outros', 'nos', 'we'].map(normalize),
+)
 
 /** How many of the owners the model gave a line names: "Ana revisa e o Pedro faz o deploy" names two. */
 function namesOn(line: Segment, owners: ReadonlySet<string>): number {
@@ -291,10 +293,15 @@ function groundActions(
   rejected: Rejected[],
 ): Action[] {
   const tasks = groundTasks(raw, index, threshold, rejected)
-  // Every task the model gave counts, kept or not: a line it shares with any other is in doubt.
+  // A line is in doubt when more than one task stands on it: the lines grounding gave each kept task
+  // (not only the ones the model cited, which may be wrong), and the cited lines of every other task.
+  const kept = new Set(tasks.map((c) => c.raw))
   const citedBy = new Map<number, number>()
-  for (const t of raw.action_items)
-    for (const id of new Set(t.segments)) citedBy.set(id, (citedBy.get(id) ?? 0) + 1)
+  const count = (ids: Iterable<number>) => {
+    for (const id of new Set(ids)) citedBy.set(id, (citedBy.get(id) ?? 0) + 1)
+  }
+  for (const c of tasks) count([...c.lines.map((s) => s.id), ...c.raw.segments])
+  for (const t of raw.action_items) if (!kept.has(t)) count(t.segments)
   const owners = new Set(
     raw.action_items.flatMap((t) => words(t.owner).slice(0, 1)).filter((o) => !NOT_A_NAME.has(o)),
   )
