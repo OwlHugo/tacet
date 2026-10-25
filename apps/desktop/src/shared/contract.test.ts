@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { INVOKE } from './contract.ts'
+import { INVOKE, invalidArguments } from './contract.ts'
 
 const importPath = INVOKE['meetings:import']
 
@@ -29,5 +29,12 @@ describe('meetings:import contract', () => {
       [],
     ])
       expect(importPath.safeParse(args).success).toBe(false)
+  })
+
+  it('turns a rejection into one readable line instead of zod JSON', () => {
+    const { error } = importPath.safeParse([''])
+    expect(error && invalidArguments('meetings:import', error)).toBe(
+      'Invalid meetings:import: expected an absolute path; expected a .wav, .m4a or .mp3 file',
+    )
   })
 })

@@ -93,3 +93,7 @@ export const RECORDER = {
   'recorder:failed': z.tuple([z.string()]),
   'recorder:closed': z.tuple([]),
 } as const
+
+/** "Invalid meetings:import: expected an absolute path", the message the renderer shows. */
+export const invalidArguments = (channel: string, error: z.ZodError): string =>
+  `Invalid ${channel}: ${[...new Set(error.issues.map((i) => i.message))].join('; ')}`
