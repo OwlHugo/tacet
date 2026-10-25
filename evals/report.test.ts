@@ -45,7 +45,14 @@ describe('eval report', () => {
     const md = toMarkdown(report([c(), c({ id: 'b', audioSeconds: 10, wer: 0.3 })]))
     expect(md).toContain('| **Total** | 40.0s | 15.0% |')
     expect(md).toContain('Hallucination guard: 8/8')
-    expect(md).toContain('| 2/2 |\n')
+    expect(md).toContain(
+      '| Expected tasks found | Deadlines right |\n|---|---|---|---|---|---|---|---|---|---|\n',
+    )
+    expect(md).toContain('| 2/2 | 1/2 | 1/1 |\n')
+    expect(md).toContain('| 4/4 | 50.0% | 2/2 |\n')
+    expect(toMarkdown(report([c({ expectedTotal: 0, expectedFound: 0 })]))).toContain(
+      '| 2/2 | – | 1/1 |',
+    )
   })
 
   it('shows no speaker attribution for a one-track case', () => {
