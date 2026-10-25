@@ -52,7 +52,7 @@ const LANGUAGES: Readonly<Record<string, string>> = {
   it: 'Italian',
 }
 
-export function systemPrompt(language: string, speakers: readonly string[] = [ME, OTHERS]): string {
+export function systemPrompt(language: string, speakers: readonly string[]): string {
   const base = forSpeakers(speakers)
   const name = LANGUAGES[language]
   return name
