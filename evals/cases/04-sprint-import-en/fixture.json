@@ -117,14 +117,14 @@
     "summary": [
       {
         "text": "The team discussed the sprint planning for the next two weeks, focusing on the checkout redesign and flaky tests.",
-        "segments": [1, 2, 3, 6, 7, 8]
+        "segments": [0, 1, 2, 3, 6, 7, 8]
       },
       {
-        "text": "It was decided to ship the redesign behind a feature flag with a 10% rollout and to freeze new features until the test suite is green.",
-        "segments": [3, 4, 5, 6, 7, 8]
+        "text": "They decided to ship the redesign behind a feature flag with a 10% rollout and to freeze new features until the test suite is green.",
+        "segments": [3, 4, 5, 7, 8]
       },
       {
-        "text": "Tasks were assigned: Tom to fix the mobile layout by Wednesday, and Priya to fix the flaky end-to-end tests by Friday.",
+        "text": "Tasks were assigned: Tom to fix the mobile layout by Wednesday, and Maya to ask Priya to fix the flaky tests by Friday.",
         "segments": [9, 10, 11, 12, 13]
       }
     ],
@@ -139,20 +139,23 @@
       {
         "task": "Fix the mobile layout by Wednesday.",
         "owner": "Tom",
+        "due": "Wednesday",
         "quote": "Yes. I will fix the mobile layout by Wednesday.",
         "segments": [9, 10]
       },
       {
         "task": "Set up the feature flag and the error rate dashboard.",
         "owner": "",
+        "due": "",
         "quote": "I'll set up the feature flag and the error rate dashboard.",
         "segments": [11]
       },
       {
         "task": "Ask Priya to fix the end-to-end tests by Friday.",
         "owner": "Maya",
+        "due": "Friday",
         "quote": "Sure, I'll ask Priya to fix the end-to-end tests by Friday.",
-        "segments": [13]
+        "segments": [12, 13]
       }
     ]
   }

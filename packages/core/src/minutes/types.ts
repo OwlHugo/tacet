@@ -10,6 +10,8 @@ export const RawMinutesSchema = z.object({
     z.object({
       task: z.string(),
       owner: z.string(),
+      /** The deadline as it was said ("by Thursday", "até quarta"). Empty when none was said. */
+      due: z.string(),
       quote: z.string(),
       segments: z.array(z.number().int()),
     }),
@@ -28,7 +30,14 @@ export const MinutesSchema = z.object({
   summary: z.array(z.object({ text: z.string(), ...citation })),
   decisions: z.array(z.object({ text: z.string(), quote: z.string(), ...citation })),
   actionItems: z.array(
-    z.object({ task: z.string(), owner: z.string(), quote: z.string(), ...citation }),
+    z.object({
+      task: z.string(),
+      owner: z.string(),
+      /** Only when every word of it is in the cited lines. */
+      due: z.string().optional(),
+      quote: z.string(),
+      ...citation,
+    }),
   ),
   /** Items the model produced that are not in the transcript. Kept for transparency, never shown as facts. */
   rejected: z.array(

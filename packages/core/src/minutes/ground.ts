@@ -188,13 +188,50 @@ function groundDecisions(
   return byTime(kept)
 }
 
+type Action = Minutes['actionItems'][number]
+
+/**
+ * A deadline is kept only if every word of it was said in the line that carries the task's quote,
+ * or in a cited line right next to it ("Can you do it?" / "Yes, by Wednesday"), which then joins the
+ * citation. A deadline said elsewhere in the meeting belongs to something else.
+ */
+function groundDue(
+  due: string,
+  quote: string,
+  task: string,
+  lines: Lines,
+  cited: readonly number[],
+  index: TranscriptIndex,
+  rejected: Rejected[],
+): { readonly due?: string; readonly lines: Lines } {
+  const text = due.trim()
+  if (!text) return { lines }
+  const core = lines.reduce((best, s) =>
+    coverage(quote, s.text) > coverage(quote, best.text) ? s : best,
+  )
+  const near = new Set(index.around([core]).map((s) => s.id))
+  const evidence = index.pick(cited).filter((s) => near.has(s.id))
+  const said = new Set(words(textOf([core, ...evidence])))
+  if (words(text).every((w) => said.has(w))) {
+    const extra = evidence.filter((s) => !lines.includes(s))
+    const joined: [Segment, ...Segment[]] = [...lines, ...extra]
+    return { due: text, lines: joined.sort((a, b) => a.id - b.id) }
+  }
+  rejected.push({
+    kind: 'action',
+    text: `${task}: ${text}`,
+    reason: 'deadline not said in the cited lines',
+  })
+  return { lines }
+}
+
 function groundActions(
   raw: RawMinutes,
   index: TranscriptIndex,
   threshold: number,
   rejected: Rejected[],
 ) {
-  const kept: Minutes['actionItems'] = []
+  const kept: Action[] = []
   for (const t of raw.action_items) {
     const task = t.task.trim()
     if (!task) continue
@@ -212,13 +249,16 @@ function groundActions(
         task,
         kept.map((x) => x.task),
       )
-    )
+    ) {
+      const d = groundDue(t.due, t.quote || task, task, a.lines, t.segments, index, rejected)
       kept.push({
         task,
         owner: resolveOwner(t.owner, a.lines, index),
+        ...(d.due === undefined ? {} : { due: d.due }),
         quote: t.quote.trim(),
-        ...cite(a.lines),
+        ...cite(d.lines),
       })
+    }
   }
   return byTime(kept)
 }

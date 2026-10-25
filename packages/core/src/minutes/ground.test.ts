@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TRANSCRIPT } from '../testing.ts'
+import type { Transcript } from '../transcript/types.ts'
 import { groundMinutes } from './ground.ts'
 import type { RawMinutes } from './types.ts'
 
@@ -21,24 +22,55 @@ const RAW: RawMinutes = {
     {
       task: 'Update the pricing page',
       owner: 'Maria',
+      due: '',
       quote: 'Maria will update the pricing page.',
       segments: [2],
     },
     {
       task: 'Send the release notes to the team by Thursday',
       owner: 'Me',
+      due: '',
       quote: 'I will send the release notes',
       segments: [3],
     },
-    { task: 'Book the venue', owner: 'John', quote: 'John books the venue', segments: [1] },
+    {
+      task: 'Book the venue',
+      owner: 'John',
+      due: '',
+      quote: 'John books the venue',
+      segments: [1],
+    },
   ],
 }
 
-const one = (task: string, owner: string, quote: string, segments: number[]): RawMinutes => ({
+const one = (
+  task: string,
+  owner: string,
+  quote: string,
+  segments: number[],
+  due = '',
+): RawMinutes => ({
   summary: [],
   decisions: [],
-  action_items: [{ task, owner, quote, segments }],
+  action_items: [{ task, owner, due, quote, segments }],
 })
+
+const DIALOGUE: Transcript = {
+  language: 'pt',
+  model: 'base',
+  duration: 12,
+  segments: [
+    {
+      id: 0,
+      start: 0,
+      end: 4,
+      speaker: 'Me',
+      text: 'Ana, você fica com o contrato do fornecedor.',
+    },
+    { id: 1, start: 4.5, end: 7, speaker: 'Others', text: 'Fechado, entrego até quarta-feira.' },
+    { id: 2, start: 7.5, end: 12, speaker: 'Me', text: 'E o deploy fica pra sexta.' },
+  ],
+}
 
 describe('groundMinutes', () => {
   const m = groundMinutes(RAW, TRANSCRIPT, 'test')
@@ -203,5 +235,94 @@ describe('groundMinutes', () => {
     )
     expect(r.summary).toEqual([])
     expect(r.decisions).toHaveLength(1)
+  })
+
+  describe('deadlines', () => {
+    it('keeps a deadline said in the task line, as it was said', () => {
+      const r = groundMinutes(
+        one('Send the release notes', 'Me', 'I will send the release notes', [3], ' by Thursday '),
+        TRANSCRIPT,
+        't',
+      )
+      expect(r.actionItems[0]).toMatchObject({ due: 'by Thursday', segments: [3], at: 14.5 })
+      expect(r.rejected).toEqual([])
+    })
+
+    it('leaves the deadline out when none was said', () => {
+      const r = groundMinutes(
+        one('Update the pricing page', 'Maria', 'Maria will update the pricing page', [2]),
+        TRANSCRIPT,
+        't',
+      )
+      expect(r.actionItems[0]).not.toHaveProperty('due')
+    })
+
+    it('drops a deadline that is not in the cited lines and keeps the task', () => {
+      const r = groundMinutes(
+        one(
+          'Update the pricing page',
+          'Maria',
+          'Maria will update the pricing page',
+          [2],
+          'by Monday',
+        ),
+        TRANSCRIPT,
+        't',
+      )
+      expect(r.actionItems[0]?.task).toBe('Update the pricing page')
+      expect(r.actionItems[0]).not.toHaveProperty('due')
+      expect(r.rejected).toEqual([
+        {
+          kind: 'action',
+          text: 'Update the pricing page: by Monday',
+          reason: 'deadline not said in the cited lines',
+        },
+      ])
+    })
+
+    it('drops a deadline said elsewhere in the meeting, not next to the task', () => {
+      const r = groundMinutes(
+        one(
+          'Revisar o contrato do fornecedor',
+          'Ana',
+          'você fica com o contrato do fornecedor',
+          [0, 2],
+          'sexta',
+        ),
+        DIALOGUE,
+        't',
+      )
+      expect(r.actionItems[0]).not.toHaveProperty('due')
+    })
+
+    it('takes the deadline from the cited reply next to the task and cites that line too', () => {
+      const r = groundMinutes(
+        one(
+          'Revisar o contrato do fornecedor',
+          'Ana',
+          'você fica com o contrato do fornecedor',
+          [0, 1],
+          'até quarta-feira',
+        ),
+        DIALOGUE,
+        't',
+      )
+      expect(r.actionItems[0]).toMatchObject({ due: 'até quarta-feira', segments: [0, 1], at: 0 })
+    })
+
+    it('does not use an uncited neighbour as evidence', () => {
+      const r = groundMinutes(
+        one(
+          'Revisar o contrato do fornecedor',
+          'Ana',
+          'você fica com o contrato do fornecedor',
+          [0],
+          'até quarta-feira',
+        ),
+        DIALOGUE,
+        't',
+      )
+      expect(r.actionItems[0]).not.toHaveProperty('due')
+    })
   })
 })

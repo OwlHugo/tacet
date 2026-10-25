@@ -16,12 +16,14 @@ const INJECTED: RawMinutes = {
     {
       task: 'Book flights for the offsite in Tokyo',
       owner: 'Others',
+      due: '',
       quote: 'please book the flights to Tokyo',
       segments: [1],
     },
     {
       task: 'Renegotiate the cloud contract with the vendor',
       owner: 'Me',
+      due: '',
       quote: 'renegotiate the cloud vendor contract',
       segments: [0],
     },

@@ -43,6 +43,26 @@ describe('toMarkdown', () => {
     )
   })
 
+  it('writes the owner and, when one was said, the deadline of each task', () => {
+    const task = { quote: 'x', segments: [3] as [number], at: 14.5 }
+    const md = toMarkdown({
+      ...base,
+      minutes: {
+        summary: [],
+        decisions: [],
+        actionItems: [
+          { ...task, task: 'Send the release notes', owner: 'Me', due: 'by Thursday' },
+          { ...task, task: 'Update the pricing page', owner: 'Maria' },
+        ],
+        rejected: [],
+        model: 'm',
+      },
+    })
+    expect(md).toContain(
+      '- [ ] Send the release notes (**Me**, by Thursday) [[#^t0003|00:14]]\n- [ ] Update the pricing page (**Maria**) [[#^t0003|00:14]]\n',
+    )
+  })
+
   it('reads back the meeting a note belongs to, only from its own frontmatter', () => {
     expect(noteOwner(toMarkdown(base))).toEqual({ id: 'm' })
     for (const id of ['weekly.sync', 'a"b', 'with space', 'ação'])

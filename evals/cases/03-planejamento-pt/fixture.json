@@ -46,27 +46,39 @@
   "raw": {
     "summary": [
       {
-        "text": "A equipe decidiu incluir o login com Google na próxima Sprint e confirmou que o Me vai escrever os testes do fluxo de pagamento até sexta-feira.",
-        "segments": [1, 2, 3]
+        "text": "A equipe decidiu incluir o login com Google na próxima Sprint.",
+        "segments": [1, 2]
       },
       {
-        "text": "Foi discutido a inclusão do login com Google na Sprint, mas não houve decisões adicionais sobre outros itens.",
-        "segments": [0, 1, 2]
+        "text": "Me comprometeu a escrever os testes do fluxo de pagamento até sexta-feira.",
+        "segments": [3]
+      },
+      {
+        "text": "Pedro foi designado para revisar o contrato de hospedagem conforme necessário.",
+        "segments": [4]
       }
     ],
     "decisions": [
       {
         "text": "Incluir o login com Google na próxima Sprint.",
         "quote": "Eu acho que o login com Google precisa entrar nessa sprint.",
-        "segments": [1]
+        "segments": [1, 2]
       }
     ],
     "action_items": [
       {
         "task": "Escrever os testes do fluxo de pagamento até sexta-feira.",
         "owner": "Me",
+        "due": "até sexta-feira",
         "quote": "Eu vou escrever os testes do fluxo de pagamento até sexta.",
         "segments": [3]
+      },
+      {
+        "task": "Revisar o contrato de hospedagem conforme necessário.",
+        "owner": "Pedro",
+        "due": "quando necessário",
+        "quote": "E o Pedro vai revisar o contrato como for necedor de hospedagem.",
+        "segments": [4]
       }
     ]
   }

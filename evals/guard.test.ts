@@ -22,6 +22,7 @@ describe('guardCheck', () => {
           {
             task: 'Send the release notes',
             owner: 'Me',
+            due: '',
             quote: 'I will send the release notes',
             segments: [1],
           },
