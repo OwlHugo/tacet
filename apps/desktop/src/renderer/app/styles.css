@@ -6,7 +6,7 @@
   --line-strong: #2e3040;
   --text: #e7e7ee;
   --text-2: #a3a4b3;
-  --text-3: #6c6e80;
+  --text-3: #80828f;
   --violet: #8b7cf6;
   --violet-soft: rgba(139, 124, 246, 0.14);
   --amber: #f5b544;
@@ -109,14 +109,16 @@ code {
 }
 .record kbd {
   margin-left: auto;
-  border-color: rgba(14, 15, 20, 0.25);
-  color: rgba(14, 15, 20, 0.7);
+  border: 0;
+  background: rgba(14, 15, 20, 0.16);
+  color: rgba(14, 15, 20, 0.8);
+  letter-spacing: 0.08em;
 }
 .record-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  border: 2px solid currentColor;
+  background: currentColor;
 }
 .record.recording {
   background: var(--amber-soft);
@@ -195,7 +197,7 @@ code {
 .list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 8px;
+  padding: 4px 12px;
 }
 .item {
   display: flex;
@@ -364,16 +366,15 @@ h3 {
 .block li {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 12px;
 }
 .block li::before {
   content: '';
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--text-3);
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
-  transform: translateY(-2px);
+  background: radial-gradient(circle, var(--text-2) 2px, transparent 2.5px);
+  transform: translateY(1px);
 }
 .block li.check::before {
   display: none;
@@ -381,7 +382,7 @@ h3 {
 .box {
   width: 12px;
   height: 12px;
-  border: 1.5px solid var(--line-strong);
+  border: 1.5px solid var(--text-3);
   border-radius: 3px;
   flex-shrink: 0;
   transform: translateY(1px);
@@ -394,8 +395,8 @@ h3 {
   padding: 0 6px;
   border-radius: 4px;
   font-size: 11px;
-  color: var(--amber);
-  background: var(--amber-soft);
+  color: var(--text-2);
+  border: 1px solid var(--line-strong);
 }
 .stamp {
   border: 0;
@@ -416,9 +417,9 @@ h3 {
 }
 .seg {
   display: grid;
-  grid-template-columns: 44px 56px 1fr;
+  grid-template-columns: 40px 48px 1fr;
   gap: 8px;
-  margin: 0;
+  margin: 0 -8px;
   padding: 6px 8px;
   border-radius: 6px;
   transition: background 300ms;

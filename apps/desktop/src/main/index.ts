@@ -14,7 +14,7 @@ import {
 } from 'electron';
 import { MeetingStore, ollamaAvailable, ollamaModels, processMeeting, resolveWhisperBinary, type Track as CoreTrack } from '@tacet/core';
 import { randomUUID } from 'node:crypto';
-import { readFileSync, rmSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Health, MeetingSummary, RecorderState, Settings, Track } from '../shared/ipc';
 import { trayIcons } from './icons';
@@ -108,6 +108,18 @@ function showMain() {
     webPreferences: { preload, sandbox: false, contextIsolation: true },
   });
   mainWindow.once('ready-to-show', () => mainWindow?.show());
+  const shot = process.env.TACET_SCREENSHOT;
+  if (shot) {
+    // Docs hook: render the window, save a PNG and quit.
+    mainWindow.webContents.once('did-finish-load', () =>
+      setTimeout(async () => {
+        const img = await mainWindow!.webContents.capturePage();
+        writeFileSync(shot, img.toPNG());
+        log('screenshot', shot);
+        app.quit();
+      }, 2500),
+    );
+  }
   void load(mainWindow, 'index');
   if (process.platform === 'darwin') app.dock?.show();
   mainWindow.on('closed', () => {
