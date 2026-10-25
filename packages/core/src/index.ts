@@ -1,27 +1,44 @@
-export * from './types.js';
-export { formatTimestamp, blockId } from './time.js';
-export { normalize, words, coverage, similarity } from './text.js';
-export { resolveWhisperBinary, resolveFfmpeg, type ResolveOptions } from './binaries.js';
-export { ensureModel, modelPath, modelsDir, modelUrl, VAD_MODEL, WHISPER_MODELS, type WhisperModelName } from './models.js';
-export { WavWriter, wavDuration } from './wav.js';
-export { readWav, speechRegions, snapToSpeech, type Pcm, type Region, type VadOptions } from './vad.js';
-export { transcribe, transcribeTrack, mergeTracks, isHallucination, type Track, type TranscribeOptions } from './transcribe.js';
-export { ollamaAvailable, ollamaModels, ollamaHost, ollamaJson, type OllamaOptions } from './ollama.js';
+export { type Pcm, type Region, snapToSpeech, speechRegions } from './audio/speech.ts'
+export { readWav, WavWriter } from './audio/wav.ts'
+export { MeetingLibrary, noteName } from './library/library.ts'
+export { coverage, normalize, similarity, words } from './matching/words.ts'
+export { toMarkdown } from './meeting/markdown.ts'
 export {
-  generateMinutes,
-  groundMinutes,
-  chunkSegments,
-  renderTranscriptForPrompt,
-  MINUTES_SCHEMA,
-  SYSTEM_PROMPT,
-  DEFAULT_LLM,
+  type ProcessDeps,
+  type ProcessInput,
+  processMeeting,
+  type Stage,
+} from './meeting/process.ts'
+export { type SearchHit, searchMeetings } from './meeting/search.ts'
+export { type Meeting, MeetingSchema } from './meeting/types.ts'
+export { generateMinutes } from './minutes/generate.ts'
+export { type GroundingOptions, groundMinutes } from './minutes/ground.ts'
+export { SYSTEM_PROMPT } from './minutes/prompt.ts'
+export {
+  type GenerateRawMinutes,
+  type Minutes,
+  MinutesSchema,
   type RawMinutes,
-  type MinutesOptions,
-  type GroundingOptions,
-} from './minutes.js';
-export { toMarkdown } from './markdown.js';
-export { MeetingStore, searchMeetings, type SearchHit } from './store.js';
-export { processMeeting, type ProcessOptions, type ProcessResult, type Stage } from './pipeline.js';
-export { wer, type WerResult } from './eval/wer.js';
-export { checkGrounding, type GroundingReport } from './eval/grounding.js';
-export { runEval, reportToMarkdown, INJECTED_HALLUCINATIONS, type EvalCase, type EvalReport, type EvalOptions, type CaseResult } from './eval/run.js';
+  RawMinutesSchema,
+} from './minutes/types.ts'
+export { ollamaHost, ollamaMinutes, ollamaModels } from './ollama/ollama.ts'
+export { mergeTracks } from './transcript/merge.ts'
+export { blockId, formatTimestamp } from './transcript/timestamp.ts'
+export { transcribe } from './transcript/transcribe.ts'
+export {
+  ME,
+  OTHERS,
+  type Segment,
+  type Track,
+  type TranscribeTrack,
+  type Transcript,
+  TranscriptSchema,
+} from './transcript/types.ts'
+export {
+  type FindBinaryOptions,
+  findFfmpeg,
+  findWhisper,
+  findWhisperOrUndefined,
+} from './whisper/binaries.ts'
+export { ensureModel, modelPath } from './whisper/models.ts'
+export { type WhisperOptions, whisperTranscriber } from './whisper/transcribe-track.ts'
