@@ -156,12 +156,14 @@ describe('groundMinutes', () => {
         text: i === 3 ? 'Next speaker please, I will send the release notes' : s.text,
       })),
     }
-    const r = groundMinutes(
-      one('Send the release notes', 'Speaker', 'I will send the release notes', [3]),
-      mixed,
-      't',
-    )
-    expect(r.actionItems[0]?.owner).toBe('Unassigned')
+    for (const label of ['Speaker', 'speaker', ' SPEAKER '])
+      expect(
+        groundMinutes(
+          one('Send the release notes', label, 'I will send the release notes', [3]),
+          mixed,
+          't',
+        ).actionItems[0]?.owner,
+      ).toBe('Unassigned')
   })
 
   it('finds the source when the cited id does not exist', () => {

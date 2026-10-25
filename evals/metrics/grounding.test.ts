@@ -87,10 +87,11 @@ describe('checkGrounding', () => {
           start: 10,
           end: 12,
           speaker: 'Speaker',
-          text: 'Ask me and the others to review it.',
+          text: 'Next speaker: ask me and the others to review it.',
         },
       ],
     }
+    expect(ok('speaker', single)).toBe(false)
     expect(['Me', 'Others', 'Speaker', 'Maria'].map((o) => ok(o, single))).toEqual([
       false,
       false,
