@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-25T04:48:35.427Z",
+  "date": "2026-10-25T05:28:03.537Z",
   "platform": "darwin-arm64",
   "whisperModel": "base",
   "llmModel": "qwen2.5:7b",
@@ -14,7 +14,7 @@
       },
       "speakerAccuracy": 1,
       "timestampErrorSeconds": 0.01,
-      "transcribeSecondsPerAudioMinute": 1.99,
+      "transcribeSecondsPerAudioMinute": 1.94,
       "hallucinationGuard": {
         "injected": 4,
         "rejected": 4
@@ -22,10 +22,10 @@
       "minutes": {
         "mode": "live",
         "model": "qwen2.5:7b",
-        "secondsPerAudioMinute": 28.15,
+        "secondsPerAudioMinute": 27.76,
         "grounding": {
-          "items": 5,
-          "grounded": 5,
+          "items": 4,
+          "grounded": 4,
           "ungrounded": [],
           "expectedFound": 3,
           "expectedTotal": 3
@@ -43,7 +43,7 @@
       },
       "speakerAccuracy": 1,
       "timestampErrorSeconds": 0,
-      "transcribeSecondsPerAudioMinute": 2.19,
+      "transcribeSecondsPerAudioMinute": 1.98,
       "hallucinationGuard": {
         "injected": 4,
         "rejected": 4
@@ -51,7 +51,7 @@
       "minutes": {
         "mode": "live",
         "model": "qwen2.5:7b",
-        "secondsPerAudioMinute": 32.67,
+        "secondsPerAudioMinute": 33.62,
         "grounding": {
           "items": 3,
           "grounded": 3,
@@ -80,10 +80,10 @@
       "minutes": {
         "mode": "live",
         "model": "qwen2.5:7b",
-        "secondsPerAudioMinute": 34.34,
+        "secondsPerAudioMinute": 27.98,
         "grounding": {
-          "items": 3,
-          "grounded": 3,
+          "items": 2,
+          "grounded": 2,
           "ungrounded": [],
           "expectedFound": 1,
           "expectedTotal": 2
@@ -95,10 +95,10 @@
   "totals": {
     "audioSeconds": 72.3,
     "wer": 0.062,
-    "transcribeSecondsPerAudioMinute": 1.99,
-    "minutesSecondsPerAudioMinute": 31.306,
-    "actionItems": 11,
-    "actionItemsGrounded": 11,
+    "transcribeSecondsPerAudioMinute": 1.913,
+    "minutesSecondsPerAudioMinute": 29.401,
+    "actionItems": 9,
+    "actionItemsGrounded": 9,
     "expectedActionRecall": 0.857,
     "hallucinationsInjected": 12,
     "hallucinationsRejected": 12

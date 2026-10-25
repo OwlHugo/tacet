@@ -3,7 +3,7 @@
   "raw": {
     "summary": [
       {
-        "text": "Reviewed the back-end hiring loop and decided to make the second candidate an offer.",
+        "text": "The team reviewed the back-end hiring loop and decided to make the second candidate an offer this week.",
         "segments": [
           0,
           1,
@@ -11,9 +11,8 @@
         ]
       },
       {
-        "text": "Assigned tasks for preparing the offer letter and scheduling a reference call.",
+        "text": "The team agreed on scheduling a reference call with the candidate's last manager.",
         "segments": [
-          3,
           4
         ]
       }

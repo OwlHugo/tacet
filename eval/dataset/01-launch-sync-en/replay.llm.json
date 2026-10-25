@@ -3,39 +3,48 @@
   "raw": {
     "summary": [
       {
-        "text": "Discussed and agreed to ship the beta on Friday, with Maria updating the pricing page and Me sending release notes by Thursday.",
+        "text": "The team agreed to ship the beta on Friday and drop the dark mode toggle from the release.",
         "segments": [
           1,
           2,
+          4
+        ]
+      },
+      {
+        "text": "Me will send the release notes to the team by Thursday, and Maria will update the pricing page.",
+        "segments": [
           3
         ]
       },
       {
-        "text": "Decided to drop the dark mode toggle from the current release.",
+        "text": "Carlos committed to checking the Windows crash reports the next morning.",
         "segments": [
-          4
+          5,
+          6
         ]
       }
     ],
     "decisions": [
       {
-        "text": "Ship the beta on Friday",
-        "quote": "I think the build is stable enough, we should ship the beta on Friday",
+        "text": "Ship the beta on Friday and drop the dark mode toggle from the release.",
+        "quote": "We ship on Friday. We also decided to drop the dark mode toggle from this release.",
         "segments": [
-          1
-        ]
-      },
-      {
-        "text": "Drop the dark mode toggle from the current release",
-        "quote": "We also decided to drop the dark mode toggle from this release.",
-        "segments": [
+          2,
           4
         ]
       }
     ],
     "action_items": [
       {
-        "task": "Update the pricing page before the beta launch",
+        "task": "Send release notes to the team by Thursday.",
+        "owner": "Me",
+        "quote": "I will send the release notes to the whole team by Thursday.",
+        "segments": [
+          3
+        ]
+      },
+      {
+        "task": "Update the pricing page before the beta launch.",
         "owner": "Maria",
         "quote": "Maria will update the pricing page before that.",
         "segments": [
@@ -43,17 +52,9 @@
         ]
       },
       {
-        "task": "Send release notes to the team by Thursday",
-        "owner": "Me",
-        "quote": "I will send the release notes to the whole team by Thursday",
-        "segments": [
-          3
-        ]
-      },
-      {
-        "task": "Check Windows crash reports",
+        "task": "Check the Windows crash reports.",
         "owner": "Carlos",
-        "quote": "Find by me, Carlos can you check the crash reports on Windows?",
+        "quote": "Carlos can you check the crash reports on Windows?",
         "segments": [
           5
         ]
