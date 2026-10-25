@@ -256,4 +256,15 @@ describe('MeetingLibrary', () => {
     expect(lib.save(MEETING).endsWith('1430 Beta launch sync.md')).toBe(true)
     chmodSync(locked, 0o600)
   })
+
+  it('leaves alone a note the user made at the name of one Tacet wrote and deleted', () => {
+    const lib = library()
+    const retro = { ...MEETING, id: 'retro0001', title: 'Retro' }
+    const path = lib.save(retro)
+    writeFileSync(path, '# my own retro notes\n')
+    const renamed = lib.save({ ...retro, title: 'Planning' })
+    expect(renamed.endsWith('1430 Planning.md')).toBe(true)
+    expect(readFileSync(path, 'utf8')).toBe('# my own retro notes\n')
+    expect(md(lib)).toEqual(['2026-10-24 1430 Planning.md', '2026-10-24 1430 Retro.md'])
+  })
 })

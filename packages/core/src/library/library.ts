@@ -131,9 +131,12 @@ export class MeetingLibrary {
    */
   #own(m: NoteKey, index: ReadonlyMap<string, string>): string | undefined {
     const recorded = index.get(m.id)
+    // The index says where Tacet put it; the frontmatter confirms the file there is still that note
+    // and not one the user made at the same name after deleting it.
     if (recorded !== undefined) {
       const path = join(this.folder, recorded)
-      return isRegularFile(path) ? path : undefined
+      const owner = isRegularFile(path) ? noteOwner(readOrUndefined(path) ?? '') : undefined
+      return owner !== undefined && 'id' in owner && owner.id === m.id ? path : undefined
     }
     const base = noteName(m)
     return [base, base.replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`)]
