@@ -54,7 +54,7 @@ function Minutes({
   minutes: NonNullable<Meeting['minutes']>
   jump: (id: number) => void
 }) {
-  const first = (segments: readonly number[]) => () => jump(segments[0] ?? 0)
+  const first = (segments: readonly [number, ...number[]]) => () => jump(segments[0])
   return (
     <>
       <Block title="Summary" empty="Nothing to summarize.">

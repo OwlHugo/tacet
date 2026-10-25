@@ -48,14 +48,14 @@ class TranscriptIndex {
       })
   }
 
-  /** The given lines plus their neighbours. */
+  /** The given lines plus their neighbours, in transcript order. */
   around(lines: readonly Segment[]): Segment[] {
     return this.pick(lines.flatMap((s) => [s.id - 1, s.id, s.id + 1]))
   }
 }
 
-/** Keep the one or two lines of a window that support the text best. */
-function narrow(text: string, window: Lines): Lines {
+/** Keep the one or two lines of a window that support the text best; the cited lines if none does. */
+function narrow(text: string, window: readonly Segment[], cited: Lines): Lines {
   const best = window
     .map((s) => ({ s, score: coverage(text, s.text) }))
     .filter((x) => x.score > 0)
@@ -63,7 +63,7 @@ function narrow(text: string, window: Lines): Lines {
     .slice(0, 2)
     .map((x) => x.s)
     .sort((a, b) => a.id - b.id)
-  return nonEmpty(best) ?? window
+  return nonEmpty(best) ?? cited
 }
 
 /** The model cited the wrong line but the words exist elsewhere: single lines first, then pairs. */
@@ -71,10 +71,11 @@ function reanchor(text: string, index: TranscriptIndex, threshold: number): Anch
   let best: Anchor | undefined
   for (const size of [1, 2]) {
     for (let i = 0; i + size <= index.all.length; i++) {
-      const lines = nonEmpty(index.all.slice(i, i + size))
-      const score = coverage(text, textOf(lines ?? []))
-      if (lines && score >= threshold && (!best || score > best.score + 1e-9))
-        best = { lines, score }
+      const lines = index.all.slice(i, i + size)
+      const score = coverage(text, textOf(lines))
+      const found = nonEmpty(lines)
+      if (found && score >= threshold && (!best || score > best.score + 1e-9))
+        best = { lines: found, score }
     }
   }
   return best
@@ -91,9 +92,9 @@ function anchor(
   if (lines) {
     const score = coverage(text, textOf(lines))
     if (score >= threshold) return { lines, score }
-    const window = nonEmpty(index.around(lines))
-    const wide = coverage(text, textOf(window ?? []))
-    if (window && wide >= threshold) return { lines: narrow(text, window), score: wide }
+    const window = index.around(lines)
+    const wide = coverage(text, textOf(window))
+    if (wide >= threshold) return { lines: narrow(text, window, lines), score: wide }
   }
   return reanchor(text, index, threshold)
 }
@@ -113,7 +114,10 @@ function resolveOwner(owner: string, source: Lines, spoken: ReadonlySet<string>)
   return COMMITMENT.test(normalize(textOf(source))) ? source[0].speaker : 'Unassigned'
 }
 
-const cite = (lines: Lines) => ({ segments: lines.map((s) => s.id), at: lines[0].start })
+const cite = (lines: Lines) => ({
+  segments: [lines[0].id, ...lines.slice(1).map((s) => s.id)] as [number, ...number[]],
+  at: lines[0].start,
+})
 const byTime = <T extends { at: number }>(xs: T[]): T[] => xs.sort((a, b) => a.at - b.at)
 const isDuplicate = (text: string, seen: readonly string[]) =>
   seen.some((s) => similarity(s, text) > DUPLICATE_SIMILARITY)

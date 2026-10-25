@@ -2,11 +2,11 @@ import { blockId, formatTimestamp } from '../transcript/timestamp.ts'
 import type { Meeting } from './types.ts'
 
 interface Cited {
-  readonly segments: readonly number[]
+  readonly segments: readonly [number, ...number[]]
   readonly at: number
 }
 
-const link = (c: Cited) => `[[#^${blockId(c.segments[0] ?? 0)}|${formatTimestamp(c.at)}]]`
+const link = (c: Cited) => `[[#^${blockId(c.segments[0])}|${formatTimestamp(c.at)}]]`
 
 function section(title: string, items: readonly string[], empty: string): string[] {
   return [`## ${title}`, '', ...(items.length > 0 ? items : [empty]), '']

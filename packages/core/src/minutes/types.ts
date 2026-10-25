@@ -18,7 +18,8 @@ export const RawMinutesSchema = z.object({
 export type RawMinutes = z.infer<typeof RawMinutesSchema>
 
 const citation = {
-  segments: z.array(z.number().int().nonnegative()).min(1),
+  /** Never empty: an item without a source line is rejected by the guard. */
+  segments: z.tuple([z.number().int().nonnegative()], z.number().int().nonnegative()),
   /** Start (s) of the first cited segment. Taken from the transcript, never from the LLM. */
   at: z.number().nonnegative(),
 }
