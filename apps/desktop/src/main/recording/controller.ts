@@ -70,6 +70,10 @@ export function recordingController(deps: ControllerDeps) {
       return Promise.resolve()
     },
     stop,
+    /** The user has seen the failure and moved on: back to idle, so it is not shown again. */
+    dismiss: () => {
+      if (deps.getState().kind === 'error') deps.setState({ kind: 'idle' })
+    },
     open: (track: Track, rate: number) => current?.open(track, rate),
     chunk: (track: Track, data: Float32Array) => current?.write(track, data),
     started: (tracks: Track[], warnings: string[]) =>

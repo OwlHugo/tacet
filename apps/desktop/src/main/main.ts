@@ -149,6 +149,8 @@ function showMain(): void {
   win.on('closed', () => {
     mainWindow = undefined
     app.dock?.hide()
+    // The failure was on screen; reopening the window must not show it again.
+    controller.dismiss()
   })
 }
 
@@ -337,6 +339,7 @@ function updateSettings(next: Settings, picked: { whisperModel: boolean }): Sett
 function wireIpc(): void {
   handle('recording:toggle', INVOKE['recording:toggle'], DEV, () => controller.toggle())
   handle('recording:state', INVOKE['recording:state'], DEV, () => state)
+  handle('recording:dismiss', INVOKE['recording:dismiss'], DEV, () => controller.dismiss())
   handle('meetings:list', INVOKE['meetings:list'], DEV, summaries)
   handle('meetings:get', INVOKE['meetings:get'], DEV, (id) => library().get(id))
   handle('meetings:rename', INVOKE['meetings:rename'], DEV, (id, title) => {

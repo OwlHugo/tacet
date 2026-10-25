@@ -169,7 +169,11 @@ export function useLiveView(state: RecorderState) {
   return {
     /** The live state while the panel should show it, undefined otherwise. */
     shown: browsing ? undefined : live,
-    leave: () => setBrowsing(true),
+    leave: () => {
+      setBrowsing(true)
+      // A failure is shown once: leaving it for a meeting or Settings closes it for good.
+      if (state.kind === 'error') void api.dismissFailure()
+    },
     back: () => setBrowsing(false),
   }
 }
