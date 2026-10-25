@@ -33,6 +33,14 @@ describe('settings', () => {
     const f = file()
     writeFileSync(f, JSON.stringify({ ...defaultSettings('/docs', 'base'), language: 'pt' }))
     expect(loadSettings(f, defaults)).toEqual({ ...defaults, language: 'pt' })
+    writeFileSync(f, JSON.stringify({ ...defaultSettings('/docs', 'small'), language: 'pt' }))
+    expect(loadSettings(f, defaults)).toEqual({
+      ...defaults,
+      whisperModel: 'small',
+      language: 'pt',
+    })
+    saveSettings(f, { ...defaults, whisperModel: 'base' }, defaults)
+    expect(loadSettings(f, defaults).whisperModel).toBe('base')
   })
 
   it('ignores a settings file that no longer validates', () => {

@@ -28,8 +28,9 @@ export function withPatch(
 }
 
 /**
- * Files written since version 2 hold only what the user changed. Older files hold every field, so
- * their `whisperModel` is the old default (`base`) written back, not a choice, and is ignored.
+ * Files written since version 2 hold only what the user changed. Older files hold every field, so a
+ * `whisperModel: 'base'` there is the old default written back, not a choice, and is ignored. Any
+ * other model in an old file was picked by the user and is kept.
  */
 const VERSION = 2
 const SavedSchema = SettingsSchema.partial().extend({ version: z.number().int().optional() })
@@ -40,7 +41,8 @@ export function loadSettings(file: string, defaults: Settings): Settings {
   const saved = SavedSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')))
   if (!saved.success) return defaults
   const { version, whisperModel, ...rest } = saved.data
-  return withPatch(defaults, version === VERSION ? { ...rest, whisperModel } : rest)
+  const chosen = version === VERSION || whisperModel !== 'base'
+  return withPatch(defaults, chosen ? { ...rest, whisperModel } : rest)
 }
 
 /** Write only the fields that differ from the defaults, so a better default still reaches the user. */
