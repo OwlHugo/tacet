@@ -48,8 +48,20 @@ export class MeetingLibrary {
     return dir
   }
 
-  notePath(m: Pick<Meeting, 'date' | 'title'>): string {
-    return join(this.folder, noteName(m))
+  /**
+   * Two meetings with the same title in the same minute (the same file imported twice) would share
+   * a note. The earliest keeps the plain name; later ones get their short id appended, so saving a
+   * new meeting never overwrites or renames an older note.
+   */
+  notePath(m: Pick<Meeting, 'id' | 'date' | 'title'>): string {
+    const base = noteName(m)
+    const earlier = this.list().some(
+      (x) =>
+        x.id !== m.id &&
+        noteName(x) === base &&
+        (x.date < m.date || (x.date === m.date && x.id < m.id)),
+    )
+    return join(this.folder, earlier ? base.replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`) : base)
   }
 
   save(m: Meeting): string {

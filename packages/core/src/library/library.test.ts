@@ -72,4 +72,14 @@ describe('MeetingLibrary', () => {
     expect(lib.list()).toEqual([])
     expect(lib.get('nope')).toBeUndefined()
   })
+
+  it('keeps one note per meeting when two share title and minute', () => {
+    const lib = library()
+    const first = lib.save(MEETING)
+    const second = lib.save({ ...MEETING, id: 'm2abcdef9' })
+    expect(second).not.toBe(first)
+    expect(second.endsWith('2026-10-24 1430 Beta launch sync m2abcdef.md')).toBe(true)
+    expect(lib.save(MEETING)).toBe(first)
+    expect(readdirSync(lib.folder).filter((f) => f.endsWith('.md'))).toHaveLength(2)
+  })
 })
