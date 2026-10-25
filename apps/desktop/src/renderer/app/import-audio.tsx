@@ -14,7 +14,7 @@ export interface ImportCallbacks {
  * Drag a file anywhere on the window. dragenter/dragleave fire for every child the pointer crosses,
  * so the overlay counts them and hides when the count is back to zero (left the window) or on drop.
  */
-export function useAudioDrop(cb: ImportCallbacks) {
+export function useAudioDrop(cb: ImportCallbacks, disabled: boolean) {
   const [over, setOver] = useState(false)
   const depth = useRef(0)
   const reset = () => {
@@ -22,12 +22,16 @@ export function useAudioDrop(cb: ImportCallbacks) {
     setOver(false)
   }
   const handlers = {
+    // Without preventDefault the window refuses the drop, and the cursor says so.
     onDragEnter: (e: React.DragEvent) => {
+      if (disabled) return
       e.preventDefault()
       depth.current += 1
       setOver(true)
     },
-    onDragOver: (e: React.DragEvent) => e.preventDefault(),
+    onDragOver: (e: React.DragEvent) => {
+      if (!disabled) e.preventDefault()
+    },
     onDragLeave: () => {
       depth.current = Math.max(0, depth.current - 1)
       if (depth.current === 0) setOver(false)
@@ -35,6 +39,7 @@ export function useAudioDrop(cb: ImportCallbacks) {
     onDrop: (e: React.DragEvent) => {
       e.preventDefault()
       reset()
+      if (disabled) return
       const [file] = audioFiles(e.dataTransfer.files)
       cb.onStart()
       if (!file) return cb.onError(new Error(`Drop a ${IMPORT_EXTENSIONS_LABEL} file.`))

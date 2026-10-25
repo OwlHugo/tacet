@@ -88,10 +88,11 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
   const [importMessage, setImportMessage] = useState<string>()
-  // A new recording or import replaces whatever the last import said, and so does the end of the
-  // meeting that made a dropped file wait.
+  // A new recording or import replaces whatever the last import said. Only the start of one: the end
+  // of an import is the same transition that delivers its own error, which must stay on screen.
   useEffect(() => {
-    if (state.kind !== 'error') setImportMessage(undefined)
+    if (state.kind === 'starting' || state.kind === 'recording' || state.kind === 'processing')
+      setImportMessage(undefined)
   }, [state.kind])
   const searchRef = useRef<HTMLInputElement>(null)
   const hits = useSearch(query)
@@ -103,9 +104,10 @@ export function App() {
     },
     onError: (e: unknown) => setImportMessage(ipcErrorMessage(e)),
   }
-  const drop = useAudioDrop(importCallbacks)
   const busy =
     state.kind === 'processing' || state.kind === 'starting' || state.kind === 'recording'
+  // Like the button: while a meeting is recording or processing, dropping is not offered at all.
+  const drop = useAudioDrop(importCallbacks, busy)
 
   const refresh = useCallback(async (selectNewest: boolean) => {
     const list = await api.listMeetings()
