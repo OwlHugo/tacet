@@ -24,6 +24,7 @@ const Script = z.object({
   rate: z.number().optional(),
   lines: z.array(z.object({ speaker: z.string(), text: z.string() })),
   expected_actions: z.array(z.array(z.string())),
+  expected_due: z.array(z.object({ task: z.array(z.string()), due: z.string() })),
 })
 
 const sh = (cmd: string, args: readonly string[]) =>
@@ -111,6 +112,7 @@ for (const script of z
     tracks,
     reference,
     expected_actions: script.expected_actions,
+    expected_due: script.expected_due,
   }
   writeFileSync(join(dir, 'case.json'), `${JSON.stringify(kase, null, 2)}\n`)
   rmSync(work, { recursive: true, force: true })

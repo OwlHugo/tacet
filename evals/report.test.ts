@@ -13,6 +13,9 @@ const c = (over: Partial<CaseResult> = {}): CaseResult => ({
   grounded: 2,
   expectedFound: 1,
   expectedTotal: 2,
+  dueRight: 1,
+  dueTotal: 1,
+  dueWrong: [],
   guard: { injected: 4, rejected: 4 },
   ...over,
 })
@@ -32,10 +35,17 @@ describe('eval report', () => {
     const r = report([c({ grounded: 1, guard: { injected: 4, rejected: 3 }, wer: 0.5 })])
     expect(failures(r, 0.2)).toHaveLength(3)
   })
+  it('fails on a task that carries a deadline nobody said for it', () => {
+    const r = report([c({ dueRight: 0, dueWrong: ['Send notes: "friday", expected "thursday"'] })])
+    expect(failures(r, undefined)).toEqual([
+      'wrong deadline: a: Send notes: "friday", expected "thursday"',
+    ])
+  })
   it('renders a weighted total row', () => {
     const md = toMarkdown(report([c(), c({ id: 'b', audioSeconds: 10, wer: 0.3 })]))
     expect(md).toContain('| **Total** | 40.0s | 15.0% |')
     expect(md).toContain('Hallucination guard: 8/8')
+    expect(md).toContain('| 2/2 |\n')
   })
 
   it('shows no speaker attribution for a one-track case', () => {

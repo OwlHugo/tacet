@@ -69,5 +69,15 @@
     ["mobile", "layout"],
     ["feature", "flag", "dashboard"],
     ["end", "end", "tests"]
+  ],
+  "expected_due": [
+    {
+      "task": ["mobile", "layout"],
+      "due": "wednesday"
+    },
+    {
+      "task": ["end", "end", "tests"],
+      "due": "friday"
+    }
   ]
 }

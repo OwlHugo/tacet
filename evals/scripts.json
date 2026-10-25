@@ -28,7 +28,11 @@
         "text": "Sure, I will look at the Windows crash reports tomorrow morning."
       }
     ],
-    "expected_actions": [["pricing", "page"], ["release", "notes"], ["crash", "reports"]]
+    "expected_actions": [["pricing", "page"], ["release", "notes"], ["crash", "reports"]],
+    "expected_due": [
+      { "task": ["release", "notes"], "due": "thursday" },
+      { "task": ["crash", "reports"], "due": "tomorrow morning" }
+    ]
   },
   {
     "id": "02-hiring-en",
@@ -51,7 +55,8 @@
       },
       { "speaker": "Me", "text": "And I will schedule a reference call with her last manager." }
     ],
-    "expected_actions": [["offer", "letter"], ["reference", "call"]]
+    "expected_actions": [["offer", "letter"], ["reference", "call"]],
+    "expected_due": [{ "task": ["offer", "letter"], "due": "wednesday" }]
   },
   {
     "id": "03-planejamento-pt",
@@ -71,6 +76,7 @@
         "text": "E o Pedro vai revisar o contrato com o fornecedor de hospedagem."
       }
     ],
-    "expected_actions": [["testes", "pagamento"], ["contrato", "fornecedor"]]
+    "expected_actions": [["testes", "pagamento"], ["contrato", "fornecedor"]],
+    "expected_due": [{ "task": ["testes", "pagamento"], "due": "sexta" }]
   }
 ]

@@ -11,6 +11,10 @@ export interface CaseResult {
   readonly grounded: number
   readonly expectedFound: number
   readonly expectedTotal: number
+  readonly dueRight: number
+  readonly dueTotal: number
+  /** Tasks that carry a deadline other than the one said. */
+  readonly dueWrong: readonly string[]
   readonly guard: { readonly injected: number; readonly rejected: number }
 }
 
@@ -50,6 +54,9 @@ function totals(r: Report) {
     items: sum(r.cases, (c) => c.items),
     grounded: sum(r.cases, (c) => c.grounded),
     recall: expected > 0 ? sum(r.cases, (c) => c.expectedFound) / expected : undefined,
+    dueRight: sum(r.cases, (c) => c.dueRight),
+    dueTotal: sum(r.cases, (c) => c.dueTotal),
+    dueWrong: r.cases.flatMap((c) => c.dueWrong.map((w) => `${c.id}: ${w}`)),
     injected: sum(r.cases, (c) => c.guard.injected),
     rejected: sum(r.cases, (c) => c.guard.rejected),
   }
@@ -59,13 +66,13 @@ export function toMarkdown(r: Report): string {
   const t = totals(r)
   const rows = r.cases.map(
     (c) =>
-      `| ${c.id} | ${c.audioSeconds.toFixed(1)}s | ${pct(c.wer)} | ${c.speakerAccuracy === undefined ? '–' : pct(c.speakerAccuracy)} | ${num(c.timestampErrorSeconds, 's')} | ${num(c.transcribeSecondsPerAudioMinute)} | ${num(c.minutesSecondsPerAudioMinute)} | ${c.grounded}/${c.items} | ${c.expectedFound}/${c.expectedTotal} |`,
+      `| ${c.id} | ${c.audioSeconds.toFixed(1)}s | ${pct(c.wer)} | ${c.speakerAccuracy === undefined ? '–' : pct(c.speakerAccuracy)} | ${num(c.timestampErrorSeconds, 's')} | ${num(c.transcribeSecondsPerAudioMinute)} | ${num(c.minutesSecondsPerAudioMinute)} | ${c.grounded}/${c.items} | ${c.expectedFound}/${c.expectedTotal} | ${c.dueRight}/${c.dueTotal} |`,
   )
   return [
-    '| Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |',
-    '|---|---|---|---|---|---|---|---|---|',
+    '| Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |',
+    '|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **Total** | ${t.audioSeconds.toFixed(1)}s | ${pct(t.wer)} | | | ${num(t.transcribe)} | ${num(t.minutes)} | ${t.grounded}/${t.items} | ${t.recall === undefined ? '–' : pct(t.recall)} |`,
+    `| **Total** | ${t.audioSeconds.toFixed(1)}s | ${pct(t.wer)} | | | ${num(t.transcribe)} | ${num(t.minutes)} | ${t.grounded}/${t.items} | ${t.recall === undefined ? '–' : pct(t.recall)} | ${t.dueRight}/${t.dueTotal} |`,
     '',
     `Hallucination guard: ${t.rejected}/${t.injected} fabricated items rejected.`,
     `Mode \`${r.mode}\`, platform ${r.platform}, whisper \`${r.whisperModel}\`, LLM \`${r.llmModel}\`.`,
@@ -78,6 +85,7 @@ export function failures(r: Report, maxWer: number | undefined): string[] {
   return [
     ...(t.grounded === t.items ? [] : [`${t.items - t.grounded} minutes item(s) without a source`]),
     ...(t.rejected === t.injected ? [] : ['the hallucination guard let a fabricated item through']),
+    ...t.dueWrong.map((w) => `wrong deadline: ${w}`),
     ...(maxWer !== undefined && t.wer > maxWer ? [`WER ${pct(t.wer)} above ${pct(maxWer)}`] : []),
   ]
 }
