@@ -25,7 +25,7 @@ export function noteOwner(
   if (front === undefined) return undefined
   const id = /^tacet_id: ([A-Za-z0-9_-]{1,64})\r?$/m.exec(front)?.[1]
   if (id !== undefined) return { id }
-  const date = /^date: (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z)\r?$/m.exec(front)?.[1]
+  const date = /^date: (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z)\r?$/m.exec(front)?.[1]
   return date !== undefined && /^tacet: 1\r?$/m.test(front) ? { date } : undefined
 }
 
