@@ -62,6 +62,8 @@ export async function runPipeline(
   env: PipelineEnv,
   onStage: (stage: Stage) => void,
 ): Promise<{ meeting: Meeting; notePath: string }> {
+  // A model used for the first time is downloaded here, before whisper runs: that is part of transcribing.
+  onStage('transcribing')
   const llmUp = (await ollamaModels(env.ollamaHost)) !== undefined
   const meeting = await processMeeting(
     { id: input.id ?? randomUUID(), title: input.title, date: input.date, tracks: input.tracks },
