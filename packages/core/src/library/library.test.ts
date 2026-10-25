@@ -1,8 +1,10 @@
 import {
+  chmodSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
@@ -39,6 +41,8 @@ const MEETING: Meeting = {
 }
 
 const library = () => new MeetingLibrary(mkdtempSync(join(tmpdir(), 'tacet-lib-')))
+/** A library from before Tacet kept its note index. */
+const forgetIndex = (lib: MeetingLibrary) => rmSync(join(lib.folder, '.tacet', 'notes'))
 const md = (lib: MeetingLibrary) =>
   readdirSync(lib.folder)
     .filter((f) => f.endsWith('.md'))
@@ -184,31 +188,30 @@ describe('MeetingLibrary', () => {
     const lib = library()
     const path = lib.save(MEETING)
     writeFileSync(path, readFileSync(path, 'utf8').replace(/tacet_id: .*\n/, ''))
+    forgetIndex(lib)
     expect(lib.save({ ...MEETING, timings: { transcribeSeconds: 2 } })).toBe(path)
     expect(readFileSync(path, 'utf8')).toContain('tacet_id: m1')
     expect(md(lib)).toHaveLength(1)
   })
 
-  it('leaves both files alone when the user copied a note, and writes the meeting somewhere new', () => {
+  it('moves only its own note when the user copied it, however often the meeting is renamed', () => {
     const lib = library()
     const retro = { ...MEETING, id: 'retro0001', title: 'Retro' }
     const original = lib.save(retro)
     const copy = original.replace('Retro.md', 'Retro 1.md')
     writeFileSync(copy, `${readFileSync(original, 'utf8')}\nmy annotations\n`)
-    const renamed = lib.save({ ...retro, title: 'Planning' })
-    expect(renamed.endsWith('1430 Planning.md')).toBe(true)
+    for (const title of ['Planning', 'Retro', 'Planning', 'Retro', 'Planning'])
+      lib.save({ ...retro, title })
     expect(readFileSync(copy, 'utf8')).toContain('my annotations')
-    expect(md(lib)).toEqual([
-      '2026-10-24 1430 Planning.md',
-      '2026-10-24 1430 Retro 1.md',
-      '2026-10-24 1430 Retro.md',
-    ])
+    expect(md(lib)).toEqual(['2026-10-24 1430 Planning.md', '2026-10-24 1430 Retro 1.md'])
+    expect(lib.notePath(retro)).toBe(join(lib.folder, '2026-10-24 1430 Planning.md'))
   })
 
   it('recognizes its notes when an editor saved them with CRLF line endings', () => {
     const lib = library()
     const path = lib.save(MEETING)
     writeFileSync(path, readFileSync(path, 'utf8').replaceAll('\n', '\r\n'))
+    forgetIndex(lib)
     expect(lib.save({ ...MEETING, title: 'Renamed' }).endsWith('1430 Renamed.md')).toBe(true)
     expect(md(lib)).toEqual(['2026-10-24 1430 Renamed.md'])
   })
@@ -232,7 +235,25 @@ describe('MeetingLibrary', () => {
     const at = { ...MEETING, date: '2026-10-24T17:30:00Z' }
     const path = lib.save(at)
     writeFileSync(path, readFileSync(path, 'utf8').replace(/tacet_id: .*\n/, ''))
+    forgetIndex(lib)
     expect(lib.save({ ...at, title: 'Renamed' }).endsWith(' Renamed.md')).toBe(true)
     expect(md(lib)).toHaveLength(1)
+  })
+
+  it('never writes through a broken link that sits at the note name', () => {
+    const lib = library()
+    const outside = join(mkdtempSync(join(tmpdir(), 'tacet-out-')), 'x.md')
+    symlinkSync(outside, join(lib.folder, '2026-10-24 1430 Beta launch sync.md'))
+    expect(lib.save(MEETING).endsWith('1430 Beta launch sync m1.md')).toBe(true)
+    expect(readdirSync(join(outside, '..'))).toEqual([])
+  })
+
+  it('saves even when another note in the folder cannot be read', () => {
+    const lib = library()
+    const locked = join(lib.folder, 'private.md')
+    writeFileSync(locked, '# mine\n')
+    chmodSync(locked, 0o000)
+    expect(lib.save(MEETING).endsWith('1430 Beta launch sync.md')).toBe(true)
+    chmodSync(locked, 0o600)
   })
 })
