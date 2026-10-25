@@ -10,7 +10,8 @@ const OWNER_TRACKS = `"owner" is the person's name if it was said,
   otherwise "Me" or "Others" based on who committed.`
 const OWNER_SINGLE = `"owner" is the person's name only if it was said in the transcript,
   otherwise an empty string. Never write "Speaker", "Me" or "Others" as an owner.`
-const OWNER_LABELLED = `"owner" is the person's name if it was said, otherwise the label of the line where they committed.`
+const OWNER_LABELLED = `"owner" is the person's name if it was said, otherwise the label of the line
+  where someone said they will do it ("I will", "I'll"), otherwise an empty string.`
 
 const NEUTRAL_TRACKS = `- "Me" and "Others" are track labels, not names. In summary and decisions write neutrally ("the team", "it was agreed"), never "Me did".
 `

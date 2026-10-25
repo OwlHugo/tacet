@@ -138,6 +138,13 @@ describe('groundMinutes', () => {
     )
     expect(said.actionItems[0]?.owner).toBe('Ana')
     expect(me.actionItems[0]?.owner).toBe('Ana')
+    // a label that was never spoken, on a line with no commitment, is not an owner
+    const bob = groundMinutes(
+      one('Update the pricing page', 'Bob', 'Maria will update the pricing page', [2]),
+      labelled,
+      't',
+    )
+    expect(bob.actionItems[0]?.owner).toBe('Unassigned')
   })
 
   it('finds the source when the cited id does not exist', () => {

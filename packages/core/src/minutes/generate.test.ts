@@ -58,6 +58,7 @@ describe('generateMinutes', () => {
 
     const named = systemPrompt('en', ['Ana', 'Bob'])
     expect(named).toContain('Speakers are labelled "Ana", "Bob".')
+    expect(named).toContain('otherwise an empty string')
     expect(named).not.toContain('"Me" is the person')
   })
 
