@@ -77,7 +77,7 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 Hallucination guard: **26/26** fabricated items rejected (four made-up items citing real line ids are injected into every case, and a deadline nobody said is pinned on every real task).
 
-On the three two-track cases (01 to 03), `large-v3-turbo` brings the WER down to **2.7%** (0.0% / 3.4% / 5.7%) at 11.2 s per audio minute.
+With `large-v3-turbo` (the default when it is downloaded), the WER drops to **3.1%** overall (0.0% / 3.4% / 5.7% / 3.5%) at 7.9 s per audio minute, and the Portuguese case finds both tasks ("como fornecedor" is heard right). Grounded items stay 14/14 and the guard rejects 25/25; deadlines right are 5/7, none wrong.
 
 What the columns mean:
 
