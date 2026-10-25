@@ -221,7 +221,7 @@ function groundDue(
   const evidence = index.pick(c.raw.segments).filter((s) => near.has(s.id) && !taskLines.has(s.id))
   const phrase = ` ${words(text).join(' ')} `
   const saidIn = (s: Segment) => ` ${words(s.text).join(' ')} `.includes(phrase)
-  if (phrase.trim() !== '' && [c.core, ...evidence].some(saidIn)) {
+  if ([c.core, ...evidence].some(saidIn)) {
     const extra = evidence.filter((s) => !c.lines.includes(s))
     const joined: [Segment, ...Segment[]] = [...c.lines, ...extra]
     return { due: text, lines: joined.sort((a, b) => a.id - b.id) }
