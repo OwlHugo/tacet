@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": { "entry": ["scripts/*.ts"] },
+    "apps/desktop": { "entry": ["scripts/*.ts"] },
+    "evals": { "entry": ["gerar-audio.ts"] }
+  }
+}
