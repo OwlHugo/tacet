@@ -88,9 +88,10 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
   const [importMessage, setImportMessage] = useState<string>()
-  // A new recording or import replaces whatever the last import said.
+  // A new recording or import replaces whatever the last import said, and so does the end of the
+  // meeting that made a dropped file wait.
   useEffect(() => {
-    if (state.kind === 'starting' || state.kind === 'processing') setImportMessage(undefined)
+    if (state.kind !== 'error') setImportMessage(undefined)
   }, [state.kind])
   const searchRef = useRef<HTMLInputElement>(null)
   const hits = useSearch(query)
