@@ -1,5 +1,9 @@
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import afterSign from './after-sign.ts'
+
+// Built like the hook builds it, so the test holds on Windows too.
+const APP = join('/out/mac-arm64', 'Tacet.app')
 
 const context = (platform: string) => ({
   electronPlatformName: platform,
@@ -29,7 +33,7 @@ describe('afterSign', () => {
   it('leaves a Developer ID signature alone', () => {
     const f = fakeCodesign('size=9000')
     afterSign(context('darwin'), f.run)
-    expect(f.calls).toEqual([['-dv', '/out/mac-arm64/Tacet.app']])
+    expect(f.calls).toEqual([['-dv', APP]])
   })
 
   it('pins an ad-hoc signature to the bundle id so macOS keeps permissions across builds', () => {
@@ -44,9 +48,9 @@ describe('afterSign', () => {
       '--options',
       'runtime',
       '--entitlements',
-      '/repo/apps/desktop/build/entitlements.mac.plist',
+      join('/repo/apps/desktop', 'build', 'entitlements.mac.plist'),
       '-r=designated => identifier "dev.tacet.app"',
-      '/out/mac-arm64/Tacet.app',
+      APP,
     ])
   })
 })
