@@ -15,6 +15,7 @@ import {
   Tray,
 } from 'electron'
 import {
+  IMPORT_EXTENSIONS,
   INVOKE,
   type MeetingSummary,
   RECORDER,
@@ -23,7 +24,13 @@ import {
 } from '../shared/contract.ts'
 import { EVENTS } from '../shared/events.ts'
 import { config } from './config.ts'
-import { locateWhisper, type PipelineEnv, recordedTracks, runPipeline } from './pipeline.ts'
+import {
+  importedMeeting,
+  locateWhisper,
+  type PipelineEnv,
+  recordedTracks,
+  runPipeline,
+} from './pipeline.ts'
 import { recordingController } from './recording/controller.ts'
 import type { RecordedTrack } from './recording/session.ts'
 import {
@@ -193,6 +200,27 @@ async function processRecording(
   }
 }
 
+/** Same pipeline as a recording, from a file on disk. The IPC caller gets the error, the UI shows it. */
+async function importAudio(path: string): Promise<string> {
+  if (state.kind !== 'idle' && state.kind !== 'error')
+    throw new Error('Wait for the current meeting to finish.')
+  const input = importedMeeting(path)
+  setState({ kind: 'processing', stage: 'transcribing' })
+  const { meeting, notePath } = await runPipeline(
+    { ...input, date: new Date() },
+    settings,
+    pipelineEnv(),
+    (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
+  ).catch((e: unknown) => {
+    setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) })
+    throw e
+  })
+  log('imported', path, '->', notePath)
+  setState({ kind: 'idle' })
+  broadcast(EVENTS.meetingsChanged)
+  return meeting.id
+}
+
 const controller = recordingController({
   recorder,
   notesFolder: () => settings.outputDir,
@@ -289,6 +317,15 @@ function wireIpc(): void {
     if (m) shell.showItemInFolder(library().notePath(m))
   })
   handle('meetings:search', INVOKE['meetings:search'], DEV, (q) => library().search(q))
+  handle('meetings:import', INVOKE['meetings:import'], DEV, importAudio)
+  handle('meetings:import-dialog', INVOKE['meetings:import-dialog'], DEV, async () => {
+    const r = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [{ name: 'Audio', extensions: [...IMPORT_EXTENSIONS] }],
+    })
+    const [file] = r.filePaths
+    return r.canceled || !file ? undefined : importAudio(INVOKE['meetings:import'].parse([file])[0])
+  })
   handle('settings:get', INVOKE['settings:get'], DEV, () => settings)
   handle('settings:set', INVOKE['settings:set'], DEV, (patch) =>
     updateSettings(withPatch(settings, patch)),

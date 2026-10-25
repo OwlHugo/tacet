@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { basename, extname } from 'node:path'
 import {
   ensureModel,
   findFfmpeg,
@@ -41,6 +42,12 @@ const LABEL = { mic: ME, system: OTHERS } as const
 
 export const recordedTracks = (tracks: readonly RecordedTrack[]): Track[] =>
   tracks.map((t) => ({ path: t.path, speaker: LABEL[t.track] }))
+
+/** An imported file is one mixed track: nobody can tell "Me" from "Others" in it. */
+export const importedMeeting = (path: string) => ({
+  title: basename(path, extname(path)),
+  tracks: [{ path, speaker: 'Speaker' }],
+})
 
 /** Run the core pipeline with the user's settings and save the note. Minutes only if Ollama is up. */
 export async function runPipeline(

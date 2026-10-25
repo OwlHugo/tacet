@@ -2,6 +2,7 @@ import type { Meeting, SearchHit } from '@tacet/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
 import { shortcutLabel } from './format.ts'
+import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
 import { RecordButton } from './record-button.tsx'
@@ -39,8 +40,9 @@ function Empty({ settings }: { settings: Settings | undefined }) {
       <h2>Record your first meeting</h2>
       <p>
         Press <kbd>{shortcutLabel(settings?.shortcut ?? 'CommandOrControl+Shift+M', IS_MAC)}</kbd>{' '}
-        anywhere, or use the tray icon. Tacet records your microphone and the call audio on separate
-        tracks, transcribes them with whisper.cpp and writes the minutes with a local model.
+        anywhere, use the tray icon, or drop an audio file here. Tacet records your microphone and
+        the call audio on separate tracks, transcribes them with whisper.cpp and writes the minutes
+        with a local model.
       </p>
       <p className="muted">
         Notes are saved as Markdown in {settings?.outputDir ?? 'your notes folder'}. Nothing is
@@ -85,8 +87,17 @@ export function App() {
   const [health, setHealth] = useState<Health>()
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
+  const [dropError, setDropError] = useState<string>()
   const searchRef = useRef<HTMLInputElement>(null)
   const hits = useSearch(query)
+  const imported = (id: string) => {
+    setDropError(undefined)
+    setShowSettings(false)
+    setSelected(id)
+  }
+  const drop = useAudioDrop(imported, setDropError)
+  const busy =
+    state.kind === 'processing' || state.kind === 'starting' || state.kind === 'recording'
 
   const refresh = useCallback(async (selectNewest: boolean) => {
     const list = await api.listMeetings()
@@ -127,10 +138,13 @@ export function App() {
     void refresh(false).then(() => api.getMeeting(id).then(setMeeting))
 
   return (
-    <div className="app">
+    <div className="app" {...drop.handlers}>
+      {drop.over && <DropOverlay />}
       <aside className="sidebar">
         <div className="drag" />
         <RecordButton state={state} shortcut={settings?.shortcut} />
+        <ImportButton disabled={busy} onImported={imported} />
+        {dropError && <p className="record-sub error">{dropError}</p>}
         <SearchBox
           value={query}
           onChange={setQuery}

@@ -1,5 +1,5 @@
 import type { Meeting, SearchHit } from '@tacet/core'
-import { contextBridge, type IpcRendererEvent, ipcRenderer } from 'electron'
+import { contextBridge, type IpcRendererEvent, ipcRenderer, webUtils } from 'electron'
 import type { Health, MeetingSummary, RecorderState, Settings, Track } from '../shared/contract.ts'
 import { EVENTS } from '../shared/events.ts'
 
@@ -23,6 +23,12 @@ const api = {
     ipcRenderer.invoke('meetings:rename', id, title),
   revealMeeting: (id: string): Promise<void> => ipcRenderer.invoke('meetings:reveal', id),
   search: (q: string): Promise<SearchHit[]> => ipcRenderer.invoke('meetings:search', q),
+  /** Transcribe a dropped file. Resolves with the new meeting id. */
+  importAudio: (file: File): Promise<string> =>
+    ipcRenderer.invoke('meetings:import', webUtils.getPathForFile(file)),
+  /** Pick a file with the native dialog. Resolves with the new meeting id, or undefined if cancelled. */
+  importAudioDialog: (): Promise<string | undefined> =>
+    ipcRenderer.invoke('meetings:import-dialog'),
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('settings:get'),
   setSettings: (patch: Partial<Omit<Settings, 'outputDir'>>): Promise<Settings> =>
     ipcRenderer.invoke('settings:set', patch),

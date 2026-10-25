@@ -24,3 +24,9 @@ export function shortcutLabel(accelerator: string, isMac: boolean): string {
 }
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+const AUDIO = /\.(wav|m4a|mp3)$/i
+
+/** Dropped files Tacet can transcribe, by extension. */
+export const audioFiles = <F extends { readonly name: string }>(files: Iterable<F>): F[] =>
+  [...files].filter((f) => AUDIO.test(f.name))

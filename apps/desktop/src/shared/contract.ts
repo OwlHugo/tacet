@@ -11,6 +11,13 @@ export type Track = z.infer<typeof TrackSchema>
 /** Meeting ids are UUIDs: they become file names, so nothing else gets through. */
 const MeetingIdSchema = z.uuid()
 
+/** Audio files the user can import: an absolute path to a .wav, .m4a or .mp3. */
+export const IMPORT_EXTENSIONS = ['wav', 'm4a', 'mp3'] as const
+const ImportPathSchema = z
+  .string()
+  .regex(/^(\/|[A-Za-z]:\\)/, 'expected an absolute path')
+  .regex(/\.(wav|m4a|mp3)$/i, 'expected a .wav, .m4a or .mp3 file')
+
 /** Electron accelerator such as CommandOrControl+Shift+M. */
 const AcceleratorSchema = z
   .string()
@@ -65,6 +72,8 @@ export const INVOKE = {
   'meetings:rename': z.tuple([MeetingIdSchema, z.string().trim().min(1).max(200)]),
   'meetings:reveal': z.tuple([MeetingIdSchema]),
   'meetings:search': z.tuple([z.string().max(500)]),
+  'meetings:import': z.tuple([ImportPathSchema]),
+  'meetings:import-dialog': z.tuple([]),
   'settings:get': z.tuple([]),
   'settings:set': z.tuple([SettingsPatchSchema]),
   'settings:choose-folder': z.tuple([]),
