@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -99,5 +99,46 @@ describe('MeetingLibrary', () => {
     expect(lib.notePath({ ...MEETING, id: 'q', title: 'Other' }).endsWith('1430 Other.md')).toBe(
       true,
     )
+  })
+
+  it('still saves a new meeting when another .json in the folder is corrupt or from an old schema', () => {
+    const lib = library()
+    mkdirSync(join(lib.folder, '.tacet'), { recursive: true })
+    writeFileSync(join(lib.folder, '.tacet', 'broken.json'), '{ not json')
+    writeFileSync(join(lib.folder, '.tacet', 'old.json'), JSON.stringify({ id: 'old', name: 'v0' }))
+    const path = lib.save(MEETING)
+    expect(path.endsWith('2026-10-24 1430 Beta launch sync.md')).toBe(true)
+    expect(readFileSync(path, 'utf8')).toContain('Maria')
+    expect(lib.get('m1')?.title).toBe('Beta launch sync')
+  })
+
+  it('gives a clash of three back its plain name when the others are renamed away', () => {
+    const lib = library()
+    const at = (s: number) => new Date(2026, 9, 24, 14, 30, s).toISOString()
+    const a = { ...MEETING, id: 'aaaaaaaa1', date: at(1) }
+    const b = { ...MEETING, id: 'bbbbbbbb2', date: at(2) }
+    const c = { ...MEETING, id: 'cccccccc3', date: at(3) }
+    for (const m of [a, b, c]) lib.save(m)
+    const md = () =>
+      readdirSync(lib.folder)
+        .filter((f) => f.endsWith('.md'))
+        .sort()
+    expect(md()).toEqual([
+      '2026-10-24 1430 Beta launch sync aaaaaaaa.md',
+      '2026-10-24 1430 Beta launch sync bbbbbbbb.md',
+      '2026-10-24 1430 Beta launch sync cccccccc.md',
+    ])
+    lib.save({ ...b, title: 'Retro' })
+    expect(md()).toEqual([
+      '2026-10-24 1430 Beta launch sync aaaaaaaa.md',
+      '2026-10-24 1430 Beta launch sync cccccccc.md',
+      '2026-10-24 1430 Retro.md',
+    ])
+    lib.save({ ...c, title: 'Planning' })
+    expect(md()).toEqual([
+      '2026-10-24 1430 Beta launch sync.md',
+      '2026-10-24 1430 Planning.md',
+      '2026-10-24 1430 Retro.md',
+    ])
   })
 })
