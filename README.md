@@ -69,11 +69,11 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |
 |---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.04 | 39.31 | 4/4 | 3/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.33 | 35.05 | 3/3 | 2/2 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 1.92 | 29.80 | 2/2 | 1/2 |
-| 04-sprint-import-en | 65.9s | 4.1% | 100.0% | 0.02s | 1.10 | 19.13 | 4/4 | 3/3 |
-| **Total** | 138.2s | **5.2%** | **100%** | | **1.6** | 27.5 | **13/13** | 90.0% |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.35 | 27.53 | 4/4 | 3/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.42 | 33.52 | 3/3 | 2/2 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.06 | 27.91 | 2/2 | 1/2 |
+| 04-sprint-import-en | 65.9s | 4.1% | 100.0% | 0.02s | 1.12 | 17.84 | 4/4 | 3/3 |
+| **Total** | 138.2s | **5.2%** | **100%** | | **1.7** | 23.8 | **13/13** | 90.0% |
 
 Hallucination guard: **16/16** fabricated items rejected (four made-up items citing real line ids are injected into every case).
 
