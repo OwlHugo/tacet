@@ -1,5 +1,5 @@
 import { basename, extname } from 'node:path'
-import { ME, OTHERS, type Track } from '@tacet/core'
+import { ME, OTHERS, SPEAKER, type Track } from '@tacet/core'
 
 /**
  * Tracks come from:
@@ -20,7 +20,7 @@ export function parseTracks(
   const positional = positionals.map((p) => {
     const m = /^(.*\.[a-z0-9]{2,5}):([^\\/:]+)$/i.exec(p)
     if (m?.[1] && m[2]) return { path: m[1], speaker: m[2] }
-    return { path: p, speaker: several ? basename(p, extname(p)) : 'Speaker' }
+    return { path: p, speaker: several ? basename(p, extname(p)) : SPEAKER }
   })
   return [...flagged, ...positional]
 }

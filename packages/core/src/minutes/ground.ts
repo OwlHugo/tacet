@@ -1,5 +1,11 @@
 import { coverage, normalize, similarity, words } from '../matching/words.ts'
-import type { Segment, Transcript } from '../transcript/types.ts'
+import {
+  ME,
+  OTHERS as OTHERS_LABEL,
+  type Segment,
+  SPEAKER,
+  type Transcript,
+} from '../transcript/types.ts'
 import type { Minutes, RawMinutes, Rejected } from './types.ts'
 
 export interface GroundingOptions {
@@ -31,11 +37,13 @@ const textOf = (xs: readonly Segment[]) => xs.map((s) => s.text).join(' ')
 class TranscriptIndex {
   readonly all: readonly Segment[]
   readonly spoken: ReadonlySet<string>
+  readonly speakers: ReadonlySet<string>
   readonly #byId: ReadonlyMap<number, Segment>
 
   constructor(transcript: Transcript) {
     this.all = transcript.segments
     this.spoken = new Set(words(textOf(transcript.segments)))
+    this.speakers = new Set(transcript.segments.map((s) => s.speaker))
     this.#byId = new Map(transcript.segments.map((s) => [s.id, s]))
   }
 
@@ -100,18 +108,28 @@ function anchor(
 }
 
 const SELF = new Set(['me', 'eu', 'i'])
-const OTHERS = new Set(['others', 'outros', 'them'])
+const OTHERS_WORDS = new Set(['others', 'outros', 'them'])
 const NOBODY = new Set(['', 'unassigned', 'unknown', 'none', 'n a', 'ninguem'])
 const COMMITMENT = /\b(i ll|i will|i can|vou|eu)\b/
 
-/** A named owner is kept only if the name was actually said in the meeting. */
-function resolveOwner(owner: string, source: Lines, spoken: ReadonlySet<string>): string {
+/**
+ * A named owner is kept only if the name was actually said in the meeting, and "Me"/"Others" only
+ * if that track exists: an imported file has a single mixed track, so nobody there is "Others".
+ */
+function resolveOwner(owner: string, source: Lines, index: TranscriptIndex): string {
   const n = normalize(owner)
-  if (SELF.has(n)) return 'Me'
-  if (OTHERS.has(n)) return 'Others'
-  if (!NOBODY.has(n) && words(owner).every((w) => spoken.has(w))) return owner.trim()
-  // "I will send the notes": whoever said that line owns the task.
-  return COMMITMENT.test(normalize(textOf(source))) ? source[0].speaker : 'Unassigned'
+  if (SELF.has(n) && index.speakers.has(ME)) return ME
+  if (OTHERS_WORDS.has(n) && index.speakers.has(OTHERS_LABEL)) return OTHERS_LABEL
+  if (
+    !NOBODY.has(n) &&
+    !SELF.has(n) &&
+    !OTHERS_WORDS.has(n) &&
+    words(owner).every((w) => index.spoken.has(w))
+  )
+    return owner.trim()
+  // "I will send the notes": whoever said that line owns the task, if we know who that was.
+  const said = source[0].speaker
+  return COMMITMENT.test(normalize(textOf(source))) && said !== SPEAKER ? said : 'Unassigned'
 }
 
 const cite = (lines: Lines) => ({
@@ -196,7 +214,7 @@ function groundActions(
     )
       kept.push({
         task,
-        owner: resolveOwner(t.owner, a.lines, index.spoken),
+        owner: resolveOwner(t.owner, a.lines, index),
         quote: t.quote.trim(),
         ...cite(a.lines),
       })

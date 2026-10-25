@@ -29,6 +29,7 @@ export {
   ME,
   OTHERS,
   type Segment,
+  SPEAKER,
   type Track,
   type TranscribeTrack,
   type Transcript,

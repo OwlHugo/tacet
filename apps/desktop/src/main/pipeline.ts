@@ -12,6 +12,7 @@ import {
   ollamaMinutes,
   ollamaModels,
   processMeeting,
+  SPEAKER,
   type Stage,
   type Track,
   whisperTranscriber,
@@ -46,7 +47,7 @@ export const recordedTracks = (tracks: readonly RecordedTrack[]): Track[] =>
 /** An imported file is one mixed track: nobody can tell "Me" from "Others" in it. */
 export const importedMeeting = (path: string) => ({
   title: basename(path, extname(path)),
-  tracks: [{ path, speaker: 'Speaker' }],
+  tracks: [{ path, speaker: SPEAKER }],
 })
 
 /** Run the core pipeline with the user's settings and save the note. Minutes only if Ollama is up. */

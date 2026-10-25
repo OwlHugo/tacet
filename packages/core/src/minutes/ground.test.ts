@@ -94,6 +94,30 @@ describe('groundMinutes', () => {
     expect(r.actionItems[0]?.owner).toBe('Me')
   })
 
+  it('never invents Me/Others on a single mixed track (imported file)', () => {
+    const mixed = {
+      ...TRANSCRIPT,
+      segments: TRANSCRIPT.segments.map((s) => ({ ...s, speaker: 'Speaker' })),
+    }
+    const self = groundMinutes(
+      one('Send the release notes', 'Me', 'I will send the release notes', [3]),
+      mixed,
+      't',
+    )
+    const them = groundMinutes(
+      one('Send the release notes', 'Others', 'I will send the release notes', [3]),
+      mixed,
+      't',
+    )
+    const named = groundMinutes(
+      one('Update the pricing page', 'Maria', 'Maria will update the pricing page', [2]),
+      mixed,
+      't',
+    )
+    expect([self, them].map((r) => r.actionItems[0]?.owner)).toEqual(['Unassigned', 'Unassigned'])
+    expect(named.actionItems[0]?.owner).toBe('Maria')
+  })
+
   it('finds the source when the cited id does not exist', () => {
     const r = groundMinutes(
       one('Send the release notes', 'Me', 'send the release notes', [99]),

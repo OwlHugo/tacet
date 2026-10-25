@@ -3,6 +3,8 @@ import { z } from 'zod'
 /** Track labels. The mic track is the person recording, the system track is everyone on the call. */
 export const ME = 'Me'
 export const OTHERS = 'Others'
+/** Label of a single mixed track (an imported file): nobody in particular, never a task owner. */
+export const SPEAKER = 'Speaker'
 
 const SegmentSchema = z.object({
   /** Index inside the transcript; the minutes cite segments by it. */
