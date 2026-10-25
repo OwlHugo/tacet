@@ -1,7 +1,7 @@
 import type { Meeting, SearchHit } from '@tacet/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
-import { importError, shortcutLabel } from './format.ts'
+import { ipcErrorMessage, shortcutLabel } from './format.ts'
 import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
@@ -88,9 +88,6 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
   const [importMessage, setImportMessage] = useState<string>()
-  // The newest recorder state as it arrives over IPC, ahead of React's render: an import's rejection
-  // can be handled before the render that applies the error state it follows.
-  const latest = useRef(state)
   // A new recording or import replaces whatever the last import said.
   useEffect(() => {
     if (state.kind === 'starting' || state.kind === 'processing') setImportMessage(undefined)
@@ -103,11 +100,7 @@ export function App() {
       setShowSettings(false)
       setSelected(id)
     },
-    // The main process sends the error state before the import rejects; latest has it already.
-    onError: (e: unknown) => {
-      const now = latest.current
-      setImportMessage(importError(e, now.kind === 'error' ? now.message : undefined))
-    },
+    onError: (e: unknown) => setImportMessage(ipcErrorMessage(e)),
   }
   const drop = useAudioDrop(importCallbacks)
   const busy =
@@ -123,10 +116,7 @@ export function App() {
     void refresh(false)
     void api.getSettings().then(setSettings)
     void api.health().then(setHealth)
-    const offState = api.onState((s) => {
-      latest.current = s
-      setState(s)
-    })
+    const offState = api.onState(setState)
     const offChanged = api.onMeetingsChanged(() => void refresh(true))
     return () => {
       offState()

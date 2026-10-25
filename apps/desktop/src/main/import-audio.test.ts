@@ -88,15 +88,15 @@ describe('audioImporter', () => {
     }
   })
 
-  it('turns a pipeline failure into the error state and rejects with it', async () => {
+  it('rejects with a pipeline failure and puts the recorder back to idle', async () => {
     const t = setup({ kind: 'error', message: 'old' }, async () => {
       throw new Error('ffmpeg: invalid data')
     })
     await expect(t.importAudio('/x.mp3')).rejects.toThrow('ffmpeg: invalid data')
-    expect(t.state()).toEqual({ kind: 'error', message: 'ffmpeg: invalid data' })
+    expect(t.seen.map((s) => s.kind)).toEqual(['processing', 'idle'])
   })
 
-  it('replaces an older error when the new path is refused, without running the pipeline', async () => {
+  it('refuses a path that does not resolve to a file without touching the state', async () => {
     let ran = false
     const t = setup(
       { kind: 'error', message: 'ffmpeg: invalid data' },
@@ -107,10 +107,7 @@ describe('audioImporter', () => {
       (raw) => resolveImportPath(raw, 'darwin', () => false),
     )
     await expect(t.importAudio('/gone.wav')).rejects.toThrow('File not found: /gone.wav')
-    expect({ ran, state: t.state() }).toEqual({
-      ran: false,
-      state: { kind: 'error', message: 'File not found: /gone.wav' },
-    })
+    expect({ ran, seen: t.seen }).toEqual({ ran: false, seen: [] })
   })
 
   it('hands the resolved path to the pipeline', async () => {

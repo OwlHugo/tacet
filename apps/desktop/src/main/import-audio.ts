@@ -31,31 +31,19 @@ export interface ImportDeps {
   readonly run: (path: string) => Promise<string>
 }
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
-
 /**
  * Same pipeline as a recording, from a file on disk. Refuses while something else is running, without
- * touching that state. A pipeline failure becomes the error state and also rejects, so the caller
- * that started the import shows it.
+ * touching that state. Any failure puts the recorder back to idle and rejects: the import's error
+ * belongs to the window that started it, which shows it once, so it never lingers as a recording error.
  */
 export function audioImporter(deps: ImportDeps): (path: string) => Promise<string> {
   return async (path) => {
     const busy = deps.getState().kind
     if (busy !== 'idle' && busy !== 'error')
       throw new Error('Wait for the current meeting to finish.')
-    // From here on this import owns the error line: an older error is replaced, never shown twice.
-    const fail = (e: unknown): never => {
-      deps.setState({ kind: 'error', message: message(e) })
-      throw e
-    }
-    const id = await Promise.resolve(path)
-      .then(deps.resolve)
-      .then((file) => {
-        deps.setState({ kind: 'processing', stage: 'transcribing' })
-        return deps.run(file)
-      })
-      .catch(fail)
-    deps.setState({ kind: 'idle' })
+    const file = deps.resolve(path)
+    deps.setState({ kind: 'processing', stage: 'transcribing' })
+    const id = await deps.run(file).finally(() => deps.setState({ kind: 'idle' }))
     return id
   }
 }
