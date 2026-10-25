@@ -155,6 +155,12 @@ tacet doctor
 - **Windows**: microphone access in Settings → Privacy. System audio needs nothing.
 - **Linux**: PulseAudio or PipeWire with `pipewire-pulse`. Tacet records the "Monitor of …" source of your output device.
 
+## Known issues (v0.1)
+
+- macOS builds are not signed or notarized yet: right-click → Open the first time.
+- On macOS 14.2+ Electron can use either ScreenCaptureKit or the Core Audio tap for loopback. Tacet uses ScreenCaptureKit by default (it only needs the Screen Recording permission). Set `TACET_CATAP=1` to try the Core Audio tap, which only works from the packaged `.app`.
+- If recording or playback hangs on macOS, Core Audio is wedged: `sudo killall coreaudiod` fixes it.
+
 ## Development
 
 ```bash
