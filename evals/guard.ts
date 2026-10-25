@@ -1,4 +1,10 @@
-import { groundMinutes, type RawMinutes, type Transcript } from '@tacet/core'
+import {
+  groundMinutes,
+  type Minutes,
+  normalize,
+  type RawMinutes,
+  type Transcript,
+} from '@tacet/core'
 
 /** Fabricated items that cite real segment ids but are not in any transcript. */
 const INJECTED: RawMinutes = {
@@ -36,25 +42,64 @@ const FAKE = new Set([
   ...INJECTED.action_items.map((x) => x.task),
 ])
 
-/** A deadline nobody said, pinned on every real task: it must never reach the minutes. */
+/** A deadline nobody said: it must never reach the minutes, not even through the task's wording. */
 const FAKE_DUE = 'before the Lisbon offsite'
 
+type Item = RawMinutes['action_items'][number]
+
+/** Whether the task's wording still ends with the deadline. */
+const shows = (a: Minutes['actionItems'][number], due: string) =>
+  normalize(a.task).endsWith(normalize(due))
+
 /**
- * Deadlines that were said, each moved onto another real task of the same meeting, as a model that
- * mixes up who promised what would do: Maria's "before that" on the release notes. A moved deadline
- * may only survive on a task whose own line or reply says it too.
+ * The deadline cases a model gets wrong, each built on the real output of the case. Every attack is
+ * grounded on its own, against the honest result, and counts as rejected when the attacked task
+ * shows no deadline other than the one the honest run gave it.
  */
-function swapped(raw: RawMinutes): RawMinutes['action_items'] {
-  const said = raw.action_items.map((a) => a.due).filter((d) => d.trim() !== '')
-  return raw.action_items.flatMap((a) => {
-    const other = said.find((d) => d !== a.due)
-    return other === undefined ? [] : [{ ...a, due: other }]
+function deadlineAttacks(
+  raw: RawMinutes,
+): { name: string; items: Item[]; target: number; due: string }[] {
+  const said = raw.action_items.map((a) => a.due.trim())
+  return raw.action_items.flatMap((a, k) => {
+    const other = said.find((d, j) => j !== k && d !== '' && d !== a.due.trim())
+    const pin = (due: string, items: Item[] = raw.action_items) =>
+      items.map((x, j) =>
+        j === k ? { ...x, due, task: `${x.task.replace(/[.!?]$/, '')} by ${due}` } : x,
+      )
+    return [
+      // A deadline nobody said, in the field and in the wording.
+      { name: 'made up', items: pin(FAKE_DUE), target: k, due: FAKE_DUE },
+      // A deadline said in the meeting for another task, moved onto this one.
+      ...(other === undefined ? [] : [{ name: 'moved', items: pin(other), target: k, due: other }]),
+      // Another task said on the same line: that line no longer tells whose its deadline is.
+      ...(a.due.trim() === ''
+        ? []
+        : [
+            {
+              name: 'shared line',
+              items: [
+                ...raw.action_items,
+                {
+                  task: a.task,
+                  owner: 'Unassigned',
+                  due: a.due,
+                  quote: a.quote,
+                  segments: a.segments,
+                },
+              ].map((x, j) =>
+                j === raw.action_items.length ? { ...x, task: `Also ${x.task}` } : x,
+              ),
+              target: k,
+              due: a.due,
+            },
+          ]),
+    ]
   })
 }
 
 /**
- * Mix the fabricated items into real model output, a made-up deadline into each real task, and a
- * deadline said for another task into each real task, and count how many the guard throws away.
+ * Mix the fabricated items into real model output, and run every deadline attack on it, and count
+ * how many the guard throws away.
  */
 export function guardCheck(
   raw: RawMinutes,
@@ -64,10 +109,7 @@ export function guardCheck(
     {
       summary: [...raw.summary, ...INJECTED.summary],
       decisions: [...raw.decisions, ...INJECTED.decisions],
-      action_items: [
-        ...raw.action_items.map((a) => ({ ...a, due: FAKE_DUE })),
-        ...INJECTED.action_items,
-      ],
+      action_items: [...raw.action_items, ...INJECTED.action_items],
     },
     transcript,
     'guard',
@@ -77,22 +119,28 @@ export function guardCheck(
     ...m.decisions.map((x) => x.text),
     ...m.actionItems.map((x) => x.task),
   ].filter((t) => FAKE.has(t)).length
-  // Only tasks that reach the minutes test the deadline check; a task dropped for its wording does not.
-  const real = m.actionItems.filter((a) => !FAKE.has(a.task))
-  const fakeDue = real.filter((a) => a.due === FAKE_DUE).length
-  const moved = swappedCheck(raw, transcript)
-  const injected = FAKE.size + real.length + moved.injected
-  return { injected, rejected: injected - survived - fakeDue - moved.survived }
-}
-
-/** A deadline moved to another task survives only where the transcript says it for that task too. */
-function swappedCheck(raw: RawMinutes, transcript: Transcript) {
-  const tasks = swapped(raw)
-  const m = groundMinutes({ summary: [], decisions: [], action_items: tasks }, transcript, 'guard')
-  const honest = groundMinutes(raw, transcript, 'guard')
-  const ownDue = new Map(honest.actionItems.map((a) => [a.task, a.due]))
-  const kept = m.actionItems.filter((a) => a.due !== undefined)
-  // Two tasks can share a deadline that was said for both ("both by Friday"): not a leak.
-  const survived = kept.filter((a) => a.due !== ownDue.get(a.task)).length
-  return { injected: m.actionItems.length, survived }
+  const honest = groundMinutes(raw, transcript, 'guard').actionItems
+  let attacks = 0
+  let leaked = 0
+  for (const at of deadlineAttacks(raw)) {
+    const task = at.items[at.target]
+    const own = honest.find((h) => h.quote === task?.quote.trim())
+    // Only a task that reaches the minutes tests the deadline check.
+    if (own === undefined) continue
+    const hit = groundMinutes(
+      { ...raw, action_items: at.items },
+      transcript,
+      'guard',
+    ).actionItems.find((x) => x.quote === own.quote && x.owner === own.owner)
+    if (hit === undefined) continue
+    attacks++
+    // A missing deadline is acceptable; the attack's deadline, in the field or the wording, is not.
+    const wrong =
+      at.name === 'shared line'
+        ? hit.due !== undefined
+        : (hit.due !== undefined && hit.due !== own.due) || shows(hit, at.due)
+    if (wrong) leaked++
+  }
+  const injected = FAKE.size + attacks
+  return { injected, rejected: injected - survived - leaked }
 }
