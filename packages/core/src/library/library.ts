@@ -48,30 +48,32 @@ export class MeetingLibrary {
     return dir
   }
 
-  /**
-   * Two meetings with the same title in the same minute (the same file imported twice) would share
-   * a note. The earliest keeps the plain name; later ones get their short id appended, so saving a
-   * new meeting never overwrites or renames an older note.
-   */
-  notePath(m: Pick<Meeting, 'id' | 'date' | 'title'>): string {
+  /** Where a meeting's note lives, given every meeting in the library. */
+  #pathAmong(m: Pick<Meeting, 'id' | 'date' | 'title'>, all: readonly Meeting[]): string {
     const base = noteName(m)
-    const earlier = this.list().some(
-      (x) =>
-        x.id !== m.id &&
-        noteName(x) === base &&
-        (x.date < m.date || (x.date === m.date && x.id < m.id)),
-    )
-    return join(this.folder, earlier ? base.replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`) : base)
+    // Same title in the same minute (one file imported twice): every note in the clash gets its
+    // short id, so no order of saves can make two meetings share a file.
+    const clash = all.some((x) => x.id !== m.id && noteName(x) === base)
+    return join(this.folder, clash ? base.replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`) : base)
   }
 
+  notePath(m: Pick<Meeting, 'id' | 'date' | 'title'>): string {
+    return this.#pathAmong(m, this.list())
+  }
+
+  /** Writes the data and the note. A rename or a new clash moves the affected notes along. */
   save(m: Meeting): string {
     mkdirSync(this.#dataDir, { recursive: true })
-    const previous = this.get(m.id)
-    const note = this.notePath(m)
-    if (previous && this.notePath(previous) !== note && existsSync(this.notePath(previous))) {
-      renameSync(this.notePath(previous), note)
-    }
+    const before = this.list()
+    const from = new Map(before.map((x) => [x.id, this.#pathAmong(x, before)]))
     writeFileSync(join(this.#dataDir, `${m.id}.json`), JSON.stringify(m, null, 2))
+    const after = this.list()
+    for (const x of after) {
+      const old = from.get(x.id)
+      const now = this.#pathAmong(x, after)
+      if (old !== undefined && old !== now && existsSync(old)) renameSync(old, now)
+    }
+    const note = this.#pathAmong(m, after)
     writeFileSync(note, toMarkdown(m))
     return note
   }

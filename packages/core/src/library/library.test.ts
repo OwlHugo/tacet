@@ -73,13 +73,31 @@ describe('MeetingLibrary', () => {
     expect(lib.get('nope')).toBeUndefined()
   })
 
-  it('keeps one note per meeting when two share title and minute', () => {
+  it('keeps one note per meeting when two share title and minute, in any save order', () => {
     const lib = library()
-    const first = lib.save(MEETING)
-    const second = lib.save({ ...MEETING, id: 'm2abcdef9' })
-    expect(second).not.toBe(first)
-    expect(second.endsWith('2026-10-24 1430 Beta launch sync m2abcdef.md')).toBe(true)
-    expect(lib.save(MEETING)).toBe(first)
-    expect(readdirSync(lib.folder).filter((f) => f.endsWith('.md'))).toHaveLength(2)
+    const plain = lib.save(MEETING)
+    expect(plain.endsWith('2026-10-24 1430 Beta launch sync.md')).toBe(true)
+    const later = {
+      ...MEETING,
+      id: 'm2abcdef9',
+      date: new Date(2026, 9, 24, 14, 30, 40).toISOString(),
+    }
+    const second = lib.save(later)
+    expect(second.endsWith('1430 Beta launch sync m2abcdef.md')).toBe(true)
+    // the first note moved out of the way instead of being overwritten
+    expect(lib.notePath(MEETING).endsWith('1430 Beta launch sync m1.md')).toBe(true)
+    expect(lib.save(MEETING)).toBe(lib.notePath(MEETING))
+    const notes = readdirSync(lib.folder)
+      .filter((f) => f.endsWith('.md'))
+      .sort()
+    expect(notes).toEqual([
+      '2026-10-24 1430 Beta launch sync m1.md',
+      '2026-10-24 1430 Beta launch sync m2abcdef.md',
+    ])
+    expect(readFileSync(second, 'utf8')).toContain('Beta launch sync')
+    // a different title in the same minute is not a clash
+    expect(lib.notePath({ ...MEETING, id: 'q', title: 'Other' }).endsWith('1430 Other.md')).toBe(
+      true,
+    )
   })
 })
