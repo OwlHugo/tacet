@@ -4,7 +4,16 @@
  * Windows and Linux get the official release binaries.
  */
 import { execFileSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -18,6 +27,9 @@ const ASSETS: Readonly<Record<string, string>> = {
 }
 const BINARY = process.platform === 'win32' ? 'whisper-cli.exe' : 'whisper-cli'
 const KEEP = /^(whisper-cli(\.exe)?|.*\.(dll|so(\.\d+)*)|LICENSE)$/
+// Windows' own bsdtar reads .zip; the GNU tar that Git Bash puts first on PATH reads neither .zip nor
+// "C:\..." (it takes "C:" for a remote host).
+const TAR = process.platform === 'win32' ? 'C:\\Windows\\System32\\tar.exe' : 'tar'
 
 /** The folder inside the extracted archive that holds whisper-cli. */
 function folderWithBinary(dir: string): string | undefined {
@@ -48,11 +60,14 @@ if (!asset) {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`)
   writeFileSync(join(work, asset), Buffer.from(await res.arrayBuffer()))
-  execFileSync('tar', ['-xf', join(work, asset), '-C', work])
+  execFileSync(TAR, ['-xf', asset], { cwd: work })
   const bin = folderWithBinary(work)
   if (!bin) throw new Error(`${BINARY} not found in ${asset}`)
-  for (const f of readdirSync(bin).filter((n) => KEEP.test(n)))
-    cpSync(join(bin, f), join(OUT, f), { dereference: true })
+  // The Linux archive ships libfoo.so -> libfoo.so.1 symlinks: copy what each one points to, as a file.
+  for (const f of readdirSync(bin).filter((n) => KEEP.test(n))) {
+    const src = realpathSync(join(bin, f))
+    if (statSync(src).isFile()) copyFileSync(src, join(OUT, f))
+  }
   rmSync(work, { recursive: true, force: true })
   console.log(`[fetch-whisper] installed into ${OUT}`)
 }
