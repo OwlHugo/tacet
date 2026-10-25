@@ -55,7 +55,7 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 - **Two tracks, no driver.** Your microphone and the system audio are recorded as separate files. System audio uses Chromium's loopback capture: ScreenCaptureKit on macOS 13+, WASAPI on Windows, the PulseAudio/PipeWire monitor on Linux. No BlackHole, no Loopback.app.
 - **Me / Others.** Each track is transcribed separately, so speaker labels come for free. Mic echo of the speakers is detected and removed when you are not using headphones.
 - **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms (see the eval).
-- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said in the task's lines, and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
+- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word in the task's own words (or in the reply right after it), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
 - **Global shortcut** `⌘⇧M` / `Ctrl+Shift+M` to start and stop from anywhere.
@@ -69,15 +69,15 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |
 |---|---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 1.91 | 26.00 | 4/4 | 3/3 | 3/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.01 | 37.62 | 3/3 | 2/2 | 1/1 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 1.77 | 35.74 | 3/3 | 1/2 | 0/1 |
-| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.09 | 17.27 | 4/4 | 3/3 | 2/2 |
-| **Total** | 138.2s | **5.2%** | **100%** | | **1.5** | 25.1 | **14/14** | 90.0% | 6/7 |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 1.97 | 31.74 | 5/5 | 3/3 | 3/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.16 | 36.20 | 3/3 | 2/2 | 1/1 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 1.83 | 32.38 | 3/3 | 1/2 | 1/1 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.08 | 18.69 | 4/4 | 3/3 | 2/2 |
+| **Total** | 138.2s | **5.2%** | **100%** | | **1.6** | 26.2 | **15/15** | 90.0% | 7/7 |
 
 Hallucination guard: **26/26** fabricated items rejected (four made-up items citing real line ids are injected into every case, and a deadline nobody said is pinned on every real task).
 
-With `large-v3-turbo` (the default when it is downloaded), the WER drops to **3.1%** overall (0.0% / 3.4% / 5.7% / 3.5%) at 7.9 s per audio minute, and the Portuguese case finds both tasks ("como fornecedor" is heard right). Grounded items stay 14/14 and the guard rejects 25/25; deadlines right are 5/7, none wrong.
+With `large-v3-turbo` (the default when it is downloaded), the WER drops to **3.1%** overall (0.0% / 3.4% / 5.7% / 3.5%) at 8.5 s per audio minute, and the Portuguese case finds both tasks ("como fornecedor" is heard right). Grounded items stay 15/15 and the guard rejects 25/25; deadlines right are 6/7, none wrong.
 
 What the columns mean:
 
@@ -85,7 +85,7 @@ What the columns mean:
 - **Speaker attribution**: share of script lines that land on the right track (two-track cases only; the one-track import has nothing to attribute).
 - **Timestamp error**: mean distance between when a line was spoken and the start of the segment holding it.
 - **Grounded items**: decisions and action items that cite real lines, carry the timestamp of the first cited line and whose quote is found there; a task's owner must be a track of that meeting, a name that was said, or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output. CI fails if any item is ungrounded or any injected item survives.
-- **Deadlines right**: deadlines said in the script that reach the right task, in the words that were said. A task carrying a deadline other than the one said, or one the script gives no deadline, fails the eval; a missing one only lowers this count. The miss is the Portuguese case: the model wrote "sexta-feira" where only "sexta" was said, and the guard dropped it.
+- **Deadlines right**: deadlines said in the script that reach the right task, in the words that were said. A task carrying a deadline other than the one said, or one the script gives no deadline, fails the eval; a missing one only lowers this count.
 - **Expected tasks found**: recall of the action items written in the script. The miss in the Portuguese case is on purpose kept visible: whisper `base` heard "como fornecedor" as "como for necedor", and Tacet would rather drop a task than write one the transcript does not say.
 
 Transcription runs for real on all three CI runners. The whisper and LLM outputs are recorded locally (`pnpm eval:gravar`) and replayed in CI, since GitHub runners have no GPU for a 7B model; the grounding checks run on those outputs every time.
