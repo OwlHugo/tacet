@@ -1,0 +1,39 @@
+appId: dev.tacet.app
+productName: Tacet
+copyright: Copyright © 2026 Hugo Adriano de Oliveira
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+extraResources:
+  - from: resources/bin
+    to: bin
+    filter: ['**/*']
+asar: true
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  icon: build/icon.png
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    LSUIElement: true
+    NSMicrophoneUsageDescription: Tacet records your microphone during meetings. Audio stays on this Mac.
+    NSAudioCaptureUsageDescription: Tacet records the audio of your calls. Audio stays on this Mac.
+    NSScreenCaptureUsageDescription: Tacet uses screen capture only to record system audio. No video is saved.
+win:
+  target: [nsis]
+  icon: build/icon.png
+nsis:
+  oneClick: true
+linux:
+  target: [AppImage]
+  category: Office
+  icon: build/icon.png
+publish: null

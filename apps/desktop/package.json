@@ -1,0 +1,35 @@
+{
+  "name": "@tacet/desktop",
+  "productName": "Tacet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local meeting recorder and transcriber. Nothing leaves your machine.",
+  "license": "MIT",
+  "author": "Hugo Adriano de Oliveira <hugoadrianodeoliveira@gmail.com>",
+  "homepage": "https://github.com/OwlHugo/tacet",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "start": "electron-vite preview",
+    "fetch-whisper": "node scripts/fetch-whisper.mjs",
+    "dist": "pnpm run build && pnpm run fetch-whisper && electron-builder --publish never"
+  },
+  "dependencies": {
+    "@tacet/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "vite": "^8.3.5"
+  }
+}
