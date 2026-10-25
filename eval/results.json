@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-25T04:48:35.427Z",
+  "platform": "darwin-arm64",
+  "whisperModel": "base",
+  "llmModel": "qwen2.5:7b",
+  "cases": [
+    {
+      "id": "01-launch-sync-en",
+      "audioSeconds": 30.2,
+      "wer": 0.012,
+      "werBySpeaker": {
+        "Others": 0,
+        "Me": 0.026
+      },
+      "speakerAccuracy": 1,
+      "timestampErrorSeconds": 0.01,
+      "transcribeSecondsPerAudioMinute": 1.99,
+      "hallucinationGuard": {
+        "injected": 4,
+        "rejected": 4
+      },
+      "minutes": {
+        "mode": "live",
+        "model": "qwen2.5:7b",
+        "secondsPerAudioMinute": 28.15,
+        "grounding": {
+          "items": 5,
+          "grounded": 5,
+          "ungrounded": [],
+          "expectedFound": 3,
+          "expectedTotal": 3
+        },
+        "rejectedByGuard": 0
+      }
+    },
+    {
+      "id": "02-hiring-en",
+      "audioSeconds": 19.4,
+      "wer": 0.034,
+      "werBySpeaker": {
+        "Me": 0.061,
+        "Others": 0
+      },
+      "speakerAccuracy": 1,
+      "timestampErrorSeconds": 0,
+      "transcribeSecondsPerAudioMinute": 2.19,
+      "hallucinationGuard": {
+        "injected": 4,
+        "rejected": 4
+      },
+      "minutes": {
+        "mode": "live",
+        "model": "qwen2.5:7b",
+        "secondsPerAudioMinute": 32.67,
+        "grounding": {
+          "items": 3,
+          "grounded": 3,
+          "ungrounded": [],
+          "expectedFound": 2,
+          "expectedTotal": 2
+        },
+        "rejectedByGuard": 0
+      }
+    },
+    {
+      "id": "03-planejamento-pt",
+      "audioSeconds": 22.7,
+      "wer": 0.151,
+      "werBySpeaker": {
+        "Others": 0.258,
+        "Me": 0
+      },
+      "speakerAccuracy": 1,
+      "timestampErrorSeconds": 0.01,
+      "transcribeSecondsPerAudioMinute": 1.82,
+      "hallucinationGuard": {
+        "injected": 4,
+        "rejected": 4
+      },
+      "minutes": {
+        "mode": "live",
+        "model": "qwen2.5:7b",
+        "secondsPerAudioMinute": 34.34,
+        "grounding": {
+          "items": 3,
+          "grounded": 3,
+          "ungrounded": [],
+          "expectedFound": 1,
+          "expectedTotal": 2
+        },
+        "rejectedByGuard": 0
+      }
+    }
+  ],
+  "totals": {
+    "audioSeconds": 72.3,
+    "wer": 0.062,
+    "transcribeSecondsPerAudioMinute": 1.99,
+    "minutesSecondsPerAudioMinute": 31.306,
+    "actionItems": 11,
+    "actionItemsGrounded": 11,
+    "expectedActionRecall": 0.857,
+    "hallucinationsInjected": 12,
+    "hallucinationsRejected": 12
+  }
+}

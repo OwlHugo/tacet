@@ -1,0 +1,66 @@
+{
+  "id": "01-launch-sync-en",
+  "title": "Beta launch sync",
+  "language": "en",
+  "tracks": [
+    {
+      "file": "me.wav",
+      "speaker": "Me"
+    },
+    {
+      "file": "others.wav",
+      "speaker": "Others"
+    }
+  ],
+  "reference": [
+    {
+      "speaker": "Others",
+      "text": "Morning everyone. The only topic today is the beta launch.",
+      "start": 0.5
+    },
+    {
+      "speaker": "Me",
+      "text": "I think the build is stable enough. We should ship the beta on Friday.",
+      "start": 4.86
+    },
+    {
+      "speaker": "Others",
+      "text": "Agreed, we ship on Friday. Maria will update the pricing page before that.",
+      "start": 9.11
+    },
+    {
+      "speaker": "Me",
+      "text": "Great. I will send the release notes to the whole team by Thursday.",
+      "start": 14.3
+    },
+    {
+      "speaker": "Others",
+      "text": "We also decided to drop the dark mode toggle from this release.",
+      "start": 18.28
+    },
+    {
+      "speaker": "Me",
+      "text": "Fine by me. Carlos can you check the crash reports on Windows?",
+      "start": 22.35
+    },
+    {
+      "speaker": "Others",
+      "text": "Sure, I will look at the Windows crash reports tomorrow morning.",
+      "start": 26.66
+    }
+  ],
+  "expected_actions": [
+    [
+      "pricing",
+      "page"
+    ],
+    [
+      "release",
+      "notes"
+    ],
+    [
+      "crash",
+      "reports"
+    ]
+  ]
+}
