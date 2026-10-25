@@ -75,6 +75,7 @@ function Minutes({
         {minutes.actionItems.map((a) => (
           <Row key={`${a.at}-${a.task}`} at={a.at} onJump={first(a.segments)} check>
             {a.task} <span className="owner">{a.owner}</span>
+            {a.due && <span className="due">{a.due}</span>}
           </Row>
         ))}
       </Block>

@@ -445,6 +445,14 @@ h3 {
   color: var(--amber);
   background: var(--amber-soft);
 }
+.due {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-2);
+  border: 1px solid var(--line-strong);
+}
 .stamp {
   border: 0;
   background: transparent;
