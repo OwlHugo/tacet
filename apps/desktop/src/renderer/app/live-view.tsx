@@ -80,11 +80,13 @@ function RecordingView({ state, shortcut }: { state: Recording; shortcut: string
   const now = useClock(true)
   const levels = useLevels()
   return (
-    <section className="live" aria-live="polite">
-      <p className="live-kicker">
+    <section className="live">
+      <p className="live-kicker" aria-live="polite">
         <span className="live-dot" /> Recording
       </p>
-      <p className="live-clock">{timestamp(Math.max(0, now - state.startedAt) / 1000)}</p>
+      <p className="live-clock" aria-label="Recording time">
+        {timestamp(Math.max(0, now - state.startedAt) / 1000)}
+      </p>
       <div className="meters">
         {TRACKS.map((t) => (
           <Meter
@@ -195,15 +197,28 @@ export function LiveItem(props: { state: Live; active: boolean; onOpen: () => vo
   )
 }
 
+/** Permissions live in the system settings, not in Tacet's: sending the user to Settings would not help. */
+const isPermission = (message: string) => /permission/i.test(message)
+
 function FailedView({ state, onSettings }: { state: Failed; onSettings: () => void }) {
+  const permission = isPermission(state.message)
   return (
     <section className="live" role="alert">
       <h2 className="live-title">The meeting was not saved</h2>
       <p className="live-error">{state.message}</p>
-      <button type="button" className="live-retry" onClick={onSettings}>
-        Open Settings
-      </button>
-      <p className="muted">Fix it there, then record again with the button on the left.</p>
+      {permission ? (
+        <p className="muted">
+          Allow Tacet in the system settings ({IS_MAC ? 'Privacy & Security' : 'privacy settings'}),
+          then record again with the button on the left.
+        </p>
+      ) : (
+        <>
+          <button type="button" className="live-retry" onClick={onSettings}>
+            Open Settings
+          </button>
+          <p className="muted">Fix it there, then record again with the button on the left.</p>
+        </>
+      )}
     </section>
   )
 }
