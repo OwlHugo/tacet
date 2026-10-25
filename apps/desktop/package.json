@@ -8,26 +8,26 @@
   "author": "Hugo Adriano de Oliveira <hugoadrianodeoliveira@gmail.com>",
   "homepage": "https://github.com/OwlHugo/tacet",
   "type": "module",
-  "main": "./out/main/index.js",
+  "main": "./out/main/main.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json",
     "start": "electron-vite preview",
-    "fetch-whisper": "node scripts/fetch-whisper.mjs",
+    "fetch-whisper": "node scripts/fetch-whisper.ts",
     "dist": "pnpm run build && pnpm run fetch-whisper && electron-builder --publish never"
   },
   "devDependencies": {
-    "@tacet/core": "workspace:^",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "electron": "^45.0.0",
-    "electron-builder": "^26.18.0",
-    "electron-vite": "^6.0.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "vite": "^8.3.5"
+    "@tacet/core": "workspace:*",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0",
+    "electron-vite": "6.0.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "vite": "8.3.5",
+    "zod": "4.6.7"
   }
 }
