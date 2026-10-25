@@ -67,12 +67,15 @@ describe('audioImporter', () => {
   it('runs the pipeline and goes back to idle', async () => {
     const t = setup({ kind: 'idle' }, async (p) => `id:${p}`)
     await expect(t.importAudio('/x.wav')).resolves.toBe('id:/x.wav')
-    expect(t.seen.map((s) => s.kind)).toEqual(['processing', 'idle'])
+    expect(t.seen).toEqual([
+      { kind: 'processing', stage: 'transcribing', source: 'import' },
+      { kind: 'idle' },
+    ])
   })
 
   it('refuses while recording or processing and leaves that state alone', async () => {
     for (const busy of [
-      { kind: 'processing', stage: 'transcribing' },
+      { kind: 'processing', stage: 'transcribing', source: 'import' },
       { kind: 'recording', startedAt: 1, tracks: ['mic'], warnings: [] },
       { kind: 'starting' },
     ] satisfies RecorderState[]) {
@@ -89,7 +92,7 @@ describe('audioImporter', () => {
   })
 
   it('rejects with a pipeline failure and puts the recorder back to idle', async () => {
-    const t = setup({ kind: 'error', message: 'old' }, async () => {
+    const t = setup({ kind: 'error', message: 'old', cause: 'pipeline' }, async () => {
       throw new Error('ffmpeg: invalid data')
     })
     await expect(t.importAudio('/x.mp3')).rejects.toThrow('ffmpeg: invalid data')
@@ -99,7 +102,7 @@ describe('audioImporter', () => {
   it('refuses a path that does not resolve to a file without touching the state', async () => {
     let ran = false
     const t = setup(
-      { kind: 'error', message: 'ffmpeg: invalid data' },
+      { kind: 'error', message: 'ffmpeg: invalid data', cause: 'pipeline' },
       async () => {
         ran = true
         return 'x'

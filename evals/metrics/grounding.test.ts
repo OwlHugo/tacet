@@ -22,6 +22,7 @@ describe('checkGrounding', () => {
           {
             task: 'Update the pricing page',
             owner: 'Maria',
+            due: '',
             quote: 'Maria will update the pricing page',
             segments: [0],
           },

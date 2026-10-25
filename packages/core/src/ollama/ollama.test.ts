@@ -53,7 +53,7 @@ describe('ollama adapter', () => {
     chatReply = {
       summary: [],
       decisions: [],
-      action_items: [{ task: 'x', owner: 'Me', quote: 'x', segments: [0] }],
+      action_items: [{ task: 'x', owner: 'Me', due: '', quote: 'x', segments: [0] }],
     }
     const raw = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('system', 'user')
     expect(raw.action_items[0]?.task).toBe('x')

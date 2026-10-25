@@ -30,6 +30,7 @@ Rules:
 - summary: 2 to 5 short points about what was discussed.
 - decisions: only things the participants explicitly agreed or decided. Empty list if none.
 - action_items: only concrete tasks someone committed to or was asked to do. ${owner} Empty list if none.
+- "due" is the task's deadline in the exact words of the transcript ("by Thursday", "até sexta", "tomorrow morning"), never expanded ("até sexta" stays "até sexta") or turned into a date. When it is said in the reply right after the task ("Sure, tomorrow morning"), add that line to "segments". Empty string if no deadline was said.
 ${neutral}- Write every field in the language of the transcript. Be brief.`
 
 /** The prompt for a recording (mic = "Me", system audio = "Others"). */

@@ -80,7 +80,9 @@ export function toMarkdown(m: Meeting): string {
         ),
         ...section(
           'Action items',
-          m.minutes.actionItems.map((a) => `- [ ] ${a.task} (**${a.owner}**) ${link(a)}`),
+          m.minutes.actionItems.map(
+            (a) => `- [ ] ${a.task} (**${a.owner}**${a.due ? `, ${a.due}` : ''}) ${link(a)}`,
+          ),
           '_No action items found in the transcript._',
         ),
       ]

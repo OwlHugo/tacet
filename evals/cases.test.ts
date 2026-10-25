@@ -16,6 +16,7 @@ describe('loadCases', () => {
     for (const c of cases) {
       expect(c.fixture.transcript.segments.length).toBeGreaterThan(0)
       expect(c.reference.length).toBeGreaterThan(0)
+      for (const d of c.expected_due) expect(d.task.length * d.due.length).toBeGreaterThan(0)
     }
   })
 })

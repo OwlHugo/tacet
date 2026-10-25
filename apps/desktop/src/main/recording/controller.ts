@@ -43,7 +43,7 @@ export function recordingController(deps: ControllerDeps) {
   async function stop(): Promise<void> {
     const session = current
     if (!session) return
-    deps.setState({ kind: 'processing', stage: 'saving audio' })
+    deps.setState({ kind: 'processing', stage: 'saving audio', source: 'recording' })
     await new Promise<void>((resolve) => {
       flushed = resolve
       deps.recorder().webContents.send(EVENTS.recorderStop)
@@ -55,6 +55,7 @@ export function recordingController(deps: ControllerDeps) {
       deps.setState({
         kind: 'error',
         message: 'Nothing was recorded. Check microphone and screen recording permissions.',
+        cause: 'capture',
       })
       return
     }
@@ -76,7 +77,7 @@ export function recordingController(deps: ControllerDeps) {
     failed: (message: string) => {
       current?.close()
       current = undefined
-      deps.setState({ kind: 'error', message })
+      deps.setState({ kind: 'error', message, cause: 'capture' })
     },
     closed: () => flushed?.(),
   }

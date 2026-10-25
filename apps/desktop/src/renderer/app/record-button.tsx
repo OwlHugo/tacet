@@ -35,7 +35,7 @@ export function RecordButton({
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     if (state.kind !== 'recording') return
-    const timer = setInterval(() => setNow(Date.now()), 500)
+    const timer = setInterval(() => setNow(Date.now()), 200)
     return () => clearInterval(timer)
   }, [state.kind])
   const busy = state.kind === 'processing' || state.kind === 'starting'
@@ -52,7 +52,6 @@ export function RecordButton({
         {shortcut && state.kind !== 'processing' && <kbd>{shortcutLabel(shortcut, IS_MAC)}</kbd>}
       </button>
       {state.kind === 'recording' && <TrackLine state={state} />}
-      {state.kind === 'error' && <p className="record-sub error">{state.message}</p>}
       {state.kind === 'processing' && <div className="progress" />}
     </div>
   )

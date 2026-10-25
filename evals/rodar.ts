@@ -29,6 +29,7 @@ import { type EvalCase, fixtureOf, fixturePath, loadCases } from './cases.ts'
 import { config } from './config.ts'
 import { guardCheck } from './guard.ts'
 import { speakerAccuracy, timestampError } from './metrics/attribution.ts'
+import { checkDeadlines } from './metrics/deadlines.ts'
 import { checkGrounding } from './metrics/grounding.ts'
 import { wer } from './metrics/wer.ts'
 import { type CaseResult, failures, type Report, toMarkdown } from './report.ts'
@@ -127,6 +128,7 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
     MODE === 'com-ia' ? values.llm : c.fixture.llmModel,
   )
   const grounding = checkGrounding(minutes, minutesOn, c.expected_actions)
+  const deadlines = checkDeadlines(minutes, c.expected_due)
   const perMinute = (s: number | undefined) =>
     s === undefined ? undefined : s / (run.transcript.duration / 60)
   const result: CaseResult = {
@@ -141,6 +143,9 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
     grounded: grounding.grounded,
     expectedFound: grounding.expectedFound,
     expectedTotal: grounding.expectedTotal,
+    dueRight: deadlines.right,
+    dueTotal: deadlines.total,
+    dueWrong: deadlines.wrong,
     guard: guardCheck(run.raw, minutesOn),
   }
   if (values.gravar) {
@@ -149,7 +154,9 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
       `${JSON.stringify(fixtureOf(values.whisper, values.llm, run.transcript, run.raw), null, 2)}\n`,
     )
   }
-  log(`  WER ${(result.wer * 100).toFixed(1)}%, ${grounding.grounded}/${grounding.items} grounded`)
+  log(
+    `  WER ${(result.wer * 100).toFixed(1)}%, ${grounding.grounded}/${grounding.items} grounded, ${deadlines.right}/${deadlines.total} deadlines`,
+  )
   return result
 }
 

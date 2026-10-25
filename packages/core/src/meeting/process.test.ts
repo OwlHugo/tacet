@@ -34,6 +34,7 @@ describe('processMeeting', () => {
             {
               task: 'Send the release notes',
               owner: '',
+              due: '',
               quote: 'I will send the release notes',
               segments: [0],
             },

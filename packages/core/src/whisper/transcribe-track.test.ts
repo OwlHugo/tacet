@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { WavWriter } from '../audio/wav.ts'
 import { findFfmpeg, findWhisper, findWhisperOrUndefined } from './binaries.ts'
-import { ensureModel, modelPath } from './models.ts'
+import { defaultModel, ensureModel, installedModels, modelPath } from './models.ts'
 import { whisperTranscriber } from './transcribe-track.ts'
 
 const dir = () => mkdtempSync(join(tmpdir(), 'tacet-whisper-'))
@@ -109,5 +109,18 @@ describe('models', () => {
     writeFileSync(join(d, 'ggml-base.bin'), '')
     expect(await ensureModel('base', d)).toBe(join(d, 'ggml-base.bin'))
     await expect(ensureModel(join(d, 'missing.bin'), d)).rejects.toThrow(/Model file not found/)
+  })
+
+  it('defaults to the best model already on disk, so nothing is downloaded behind your back', () => {
+    const d = dir()
+    expect(defaultModel(d)).toBe('base')
+    writeFileSync(join(d, 'ggml-tiny.bin'), '')
+    expect(defaultModel(d)).toBe('tiny')
+    writeFileSync(join(d, 'ggml-base.bin'), '')
+    writeFileSync(join(d, 'ggml-small.bin'), '')
+    expect(defaultModel(d)).toBe('small')
+    writeFileSync(join(d, 'ggml-large-v3-turbo.bin'), '')
+    expect(installedModels(d)).toEqual(['large-v3-turbo', 'small', 'base', 'tiny'])
+    expect(defaultModel(d)).toBe('large-v3-turbo')
   })
 })

@@ -55,6 +55,8 @@ function Minutes({
   jump: (id: number) => void
 }) {
   const first = (segments: readonly [number, ...number[]]) => () => jump(segments[0])
+  // A dropped deadline leaves its task in the minutes: it is not an item that went missing.
+  const madeUp = minutes.rejected.filter((r) => r.kind !== 'deadline').length
   return (
     <>
       <Block title="Summary" empty="Nothing to summarize.">
@@ -75,14 +77,13 @@ function Minutes({
         {minutes.actionItems.map((a) => (
           <Row key={`${a.at}-${a.task}`} at={a.at} onJump={first(a.segments)} check>
             {a.task} <span className="owner">{a.owner}</span>
+            {a.due && <span className="due">{a.due}</span>}
           </Row>
         ))}
       </Block>
       <p className="footnote">
         Every line links to the transcript.{' '}
-        {minutes.rejected.length > 0
-          ? `${minutes.rejected.length} item(s) the model made up were dropped. `
-          : ''}
+        {madeUp > 0 ? `${madeUp} item(s) the model made up were dropped. ` : ''}
         Written by {minutes.model} on this machine.
       </p>
     </>

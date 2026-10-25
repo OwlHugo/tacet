@@ -39,5 +39,11 @@
       "start": 16.66
     }
   ],
-  "expected_actions": [["offer", "letter"], ["reference", "call"]]
+  "expected_actions": [["offer", "letter"], ["reference", "call"]],
+  "expected_due": [
+    {
+      "task": ["offer", "letter"],
+      "due": "wednesday"
+    }
+  ]
 }

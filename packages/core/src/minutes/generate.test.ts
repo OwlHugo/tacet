@@ -17,12 +17,14 @@ describe('generateMinutes', () => {
             {
               task: 'Send the release notes',
               owner: 'Me',
+              due: '',
               quote: 'I will send the release notes',
               segments: [3],
             },
             {
               task: 'Book flights to Tokyo',
               owner: 'Others',
+              due: '',
               quote: 'book the flights to Tokyo',
               segments: [1],
             },

@@ -72,7 +72,7 @@ export function MeetingList(props: {
       <span className="item-title">{m.title}</span>
       <span className="item-meta">
         {day(m.date)} · {time(m.date)} · {duration(m.duration)}
-        {m.actionItems > 0 ? ` · ${m.actionItems} tasks` : ''}
+        {m.actionItems > 0 ? ` · ${m.actionItems} ${m.actionItems === 1 ? 'task' : 'tasks'}` : ''}
       </span>
     </button>
   ))

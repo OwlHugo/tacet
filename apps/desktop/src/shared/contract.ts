@@ -41,6 +41,8 @@ export type Settings = z.infer<typeof SettingsSchema>
 /** What the renderer may change. The notes folder only changes through the native folder picker. */
 const SettingsPatchSchema = SettingsSchema.omit({ outputDir: true }).partial().strict()
 
+export type ProcessingStage = 'saving audio' | 'transcribing' | 'writing minutes'
+
 export type RecorderState =
   | { readonly kind: 'idle' }
   | { readonly kind: 'starting' }
@@ -50,8 +52,18 @@ export type RecorderState =
       readonly tracks: readonly Track[]
       readonly warnings: readonly string[]
     }
-  | { readonly kind: 'processing'; readonly stage: string }
-  | { readonly kind: 'error'; readonly message: string }
+  | {
+      readonly kind: 'processing'
+      readonly stage: ProcessingStage
+      /** An import has no audio to save, so its steps start at transcribing. */
+      readonly source: 'recording' | 'import'
+    }
+  | {
+      readonly kind: 'error'
+      readonly message: string
+      /** `capture`: nothing could be recorded (microphone or screen permission); `pipeline`: recorded, then failed. */
+      readonly cause: 'capture' | 'pipeline'
+    }
 
 export interface MeetingSummary {
   readonly id: string
@@ -63,6 +75,8 @@ export interface MeetingSummary {
 
 export interface Health {
   readonly whisper: string | undefined
+  /** Whisper models already downloaded, best first. */
+  readonly whisperModels: readonly string[]
   readonly ollamaModels: readonly string[] | undefined
   readonly microphone: string
   readonly screen: string

@@ -50,7 +50,7 @@
         "segments": [0, 1, 2]
       },
       {
-        "text": "The team agreed on scheduling a reference call with the candidate's last manager.",
+        "text": "The second candidate's last manager will be contacted for a reference call.",
         "segments": [4]
       }
     ],
@@ -65,12 +65,14 @@
       {
         "task": "Prepare the offer letter and send it to Legal on Wednesday.",
         "owner": "Others",
+        "due": "Wednesday",
         "quote": "I will prepare the offer letter and send it to Legal on Wednesday.",
         "segments": [3]
       },
       {
-        "task": "Schedule a reference call with the candidate's last manager.",
+        "task": "Schedule a reference call with the second candidate's last manager.",
         "owner": "Me",
+        "due": "",
         "quote": "And I will schedule a reference call with her last manager.",
         "segments": [4]
       }

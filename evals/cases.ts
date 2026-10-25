@@ -15,6 +15,8 @@ const CaseSchema = z.object({
   reference: z.array(ReferenceLineSchema),
   /** Each expected action item as keywords that must appear in the task or its quote. */
   expected_actions: z.array(z.array(z.string())),
+  /** Each deadline said in the script: the task as keywords and the words its `due` must hold. */
+  expected_due: z.array(z.object({ task: z.array(z.string()), due: z.string() })),
 })
 
 /** What a real whisper + LLM run produced, replayed by `eval:sem-ia` so CI needs neither. */

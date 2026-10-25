@@ -10,6 +10,8 @@ export const RawMinutesSchema = z.object({
     z.object({
       task: z.string(),
       owner: z.string(),
+      /** The deadline as it was said ("by Thursday", "até quarta"). Empty when none was said. */
+      due: z.string(),
       quote: z.string(),
       segments: z.array(z.number().int()),
     }),
@@ -28,12 +30,23 @@ export const MinutesSchema = z.object({
   summary: z.array(z.object({ text: z.string(), ...citation })),
   decisions: z.array(z.object({ text: z.string(), quote: z.string(), ...citation })),
   actionItems: z.array(
-    z.object({ task: z.string(), owner: z.string(), quote: z.string(), ...citation }),
+    z.object({
+      task: z.string(),
+      owner: z.string(),
+      /**
+       * As written in the transcript, only when said in a row on a line of this task that no other
+       * task stands on and that names at most one of the owners the model gave (see groundDue).
+       */
+      due: z.string().optional(),
+      quote: z.string(),
+      ...citation,
+    }),
   ),
   /** Items the model produced that are not in the transcript. Kept for transparency, never shown as facts. */
   rejected: z.array(
     z.object({
-      kind: z.enum(['summary', 'decision', 'action']),
+      /** `deadline`: the task was kept, only the deadline the model gave it was dropped. */
+      kind: z.enum(['summary', 'decision', 'action', 'deadline']),
       text: z.string(),
       reason: z.string(),
     }),

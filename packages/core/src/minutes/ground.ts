@@ -1,4 +1,4 @@
-import { coverage, normalize, similarity, words } from '../matching/words.ts'
+import { coverage, findPhrase, normalize, similarity, words } from '../matching/words.ts'
 import {
   ME,
   OTHERS as OTHERS_LABEL,
@@ -188,17 +188,85 @@ function groundDecisions(
   return byTime(kept)
 }
 
-function groundActions(
+type Action = Minutes['actionItems'][number]
+
+/** A task that passed grounding, before its deadline is checked. */
+interface Candidate {
+  readonly raw: RawMinutes['action_items'][number]
+  readonly task: string
+  readonly lines: Lines
+}
+
+/** Words that introduce a deadline at the end of a task, cut with it. */
+const LEAD = /\s+(?:by|on|before|until|até|ate|pra|antes de)$/iu
+
+/**
+ * The task as the model wrote it, without a deadline at its end ("Send the notes by Thursday."): a
+ * kept deadline is shown on its own, and a dropped one must not reach the minutes through the task's
+ * wording. Only a deadline introduced like one ("by", "até") is cut, and never the whole task.
+ */
+function withoutDeadline(task: string, due: string): string {
+  const end = /[.!?]$/.exec(task)?.[0] ?? ''
+  const body = task.slice(0, task.length - end.length)
+  const said = findPhrase(due, body)
+  if (said === undefined || !body.endsWith(said)) return task
+  const before = body.slice(0, body.length - said.length).trimEnd()
+  const lead =
+    LEAD.exec(before) ?? (/^(?:by|até|ate|pra|before|until)\s/iu.test(said) ? [''] : null)
+  if (lead === null) return task
+  const cut = before.slice(0, before.length - lead[0].length).replace(/,$/, '')
+  return words(cut).length > 0 ? `${cut}${end}` : task
+}
+
+/** Owner labels that are not a person's name. */
+const NOT_A_NAME = new Set(
+  [ME, OTHERS_LABEL, SPEAKER, 'Unassigned', 'I', 'eu', 'outros', 'nos', 'we'].map(normalize),
+)
+
+/** How many of the owners the model gave a line names: "Ana revisa e o Pedro faz o deploy" names two. */
+function namesOn(line: Segment, owners: ReadonlySet<string>): number {
+  const said = new Set(words(line.text))
+  return [...owners].filter((o) => said.has(o)).length
+}
+
+/**
+ * A deadline is kept only when there is no doubt whose it is: it is said, as a run of words, on a
+ * cited line of this task that no other task cites and that names at most one person. A line shared
+ * by two tasks, or naming two people, drops it. A missing deadline is acceptable; a wrong one is not.
+ * What is kept is the transcript's wording.
+ */
+function groundDue(
+  c: Candidate,
+  citedBy: ReadonlyMap<number, number>,
+  owners: ReadonlySet<string>,
+  rejected: Rejected[],
+): string | undefined {
+  const text = c.raw.due.trim()
+  if (!text) return undefined
+  for (const line of c.lines) {
+    const said = findPhrase(text, line.text)
+    if (said !== undefined && citedBy.get(line.id) === 1 && namesOn(line, owners) <= 1) return said
+  }
+  rejected.push({
+    kind: 'deadline',
+    text: `${c.task}: ${text}`,
+    reason: 'deadline not said on a line of this task alone',
+  })
+  return undefined
+}
+
+function groundTasks(
   raw: RawMinutes,
   index: TranscriptIndex,
   threshold: number,
   rejected: Rejected[],
-) {
-  const kept: Minutes['actionItems'] = []
+): Candidate[] {
+  const kept: Candidate[] = []
   for (const t of raw.action_items) {
     const task = t.task.trim()
     if (!task) continue
-    const a = anchor(t.quote || task, t.segments, index, threshold)
+    const source = t.quote || task
+    const a = anchor(source, t.segments, index, threshold)
     if (!a)
       rejected.push({ kind: 'action', text: task, reason: 'quote not found in the transcript' })
     else if (!wordingSupported(task, a.lines, index))
@@ -213,14 +281,42 @@ function groundActions(
         kept.map((x) => x.task),
       )
     )
-      kept.push({
-        task,
-        owner: resolveOwner(t.owner, a.lines, index),
-        quote: t.quote.trim(),
-        ...cite(a.lines),
-      })
+      kept.push({ raw: t, task, lines: a.lines })
   }
-  return byTime(kept)
+  return kept
+}
+
+function groundActions(
+  raw: RawMinutes,
+  index: TranscriptIndex,
+  threshold: number,
+  rejected: Rejected[],
+): Action[] {
+  const tasks = groundTasks(raw, index, threshold, rejected)
+  // A line is in doubt when more than one task stands on it: the lines grounding gave each kept task
+  // (not only the ones the model cited, which may be wrong), and the cited lines of every other task.
+  const kept = new Set(tasks.map((c) => c.raw))
+  const citedBy = new Map<number, number>()
+  const count = (ids: Iterable<number>) => {
+    for (const id of new Set(ids)) citedBy.set(id, (citedBy.get(id) ?? 0) + 1)
+  }
+  for (const c of tasks) count([...c.lines.map((s) => s.id), ...c.raw.segments])
+  for (const t of raw.action_items) if (!kept.has(t)) count(t.segments)
+  const owners = new Set(
+    raw.action_items.flatMap((t) => words(t.owner).slice(0, 1)).filter((o) => !NOT_A_NAME.has(o)),
+  )
+  return byTime(
+    tasks.map((c) => {
+      const due = groundDue(c, citedBy, owners, rejected)
+      return {
+        task: withoutDeadline(c.task, due ?? c.raw.due),
+        owner: resolveOwner(c.raw.owner, c.lines, index),
+        ...(due === undefined ? {} : { due }),
+        quote: c.raw.quote.trim(),
+        ...cite(c.lines),
+      }
+    }),
+  )
 }
 
 /**

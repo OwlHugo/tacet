@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
 import { ipcErrorMessage, shortcutLabel } from './format.ts'
 import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
+import { isActive, isLive, LiveItem, LiveView, useLiveView } from './live-view.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
 import { RecordButton } from './record-button.tsx'
@@ -52,6 +53,31 @@ function Empty({ settings }: { settings: Settings | undefined }) {
   )
 }
 
+/** The list in the sidebar: the live meeting first, then search results or every meeting. */
+function MeetingNav(props: {
+  state: RecorderState
+  live: boolean
+  onLive: () => void
+  query: string
+  hits: SearchHit[]
+  meetings: MeetingSummary[]
+  selected: string | undefined
+  onOpen: (id: string, at?: number) => void
+}) {
+  return (
+    <nav className="list">
+      {isLive(props.state) && (
+        <LiveItem state={props.state} active={props.live} onOpen={props.onLive} />
+      )}
+      {props.query.trim() ? (
+        <SearchResults hits={props.hits} onOpen={props.onOpen} />
+      ) : (
+        <MeetingList meetings={props.meetings} selected={props.selected} onOpen={props.onOpen} />
+      )}
+    </nav>
+  )
+}
+
 /** Cmd/Ctrl+K focuses search, Esc clears it and closes settings. */
 function useKeys(search: React.RefObject<HTMLInputElement | null>, onEscape: () => void) {
   useEffect(() => {
@@ -88,6 +114,7 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
   const [importMessage, setImportMessage] = useState<string>()
+  const liveView = useLiveView(state)
   // A new recording or import replaces whatever the last import said. Only the start of one: the end
   // of an import is the same transition that delivers its own error, which must stay on screen.
   useEffect(() => {
@@ -104,8 +131,8 @@ export function App() {
     },
     onError: (e: unknown) => setImportMessage(ipcErrorMessage(e)),
   }
-  const busy =
-    state.kind === 'processing' || state.kind === 'starting' || state.kind === 'recording'
+  const busy = isActive(state)
+  const live = liveView.shown
   // Like the button: while a meeting is recording or processing, dropping is not offered at all.
   const drop = useAudioDrop(importCallbacks, busy)
 
@@ -139,6 +166,7 @@ export function App() {
   }, [selected])
 
   const open = (id: string, at?: number) => {
+    liveView.leave()
     setSelected(id)
     setFocus(at)
     setQuery('')
@@ -161,13 +189,19 @@ export function App() {
           inputRef={searchRef}
           hint={IS_MAC ? '⌘K' : 'Ctrl K'}
         />
-        <nav className="list">
-          {query.trim() ? (
-            <SearchResults hits={hits} onOpen={open} />
-          ) : (
-            <MeetingList meetings={meetings} selected={selected} onOpen={open} />
-          )}
-        </nav>
+        <MeetingNav
+          state={state}
+          live={live !== undefined && !showSettings}
+          onLive={() => {
+            setShowSettings(false)
+            liveView.back()
+          }}
+          query={query}
+          hits={hits}
+          meetings={meetings}
+          selected={live ? undefined : selected}
+          onOpen={open}
+        />
         <footer className="sidebar-foot">
           <span className="local">
             <i className="dot-ok" /> Local only
@@ -186,6 +220,12 @@ export function App() {
             health={health}
             onChange={setSettings}
             onClose={() => setShowSettings(false)}
+          />
+        ) : live ? (
+          <LiveView
+            state={live}
+            shortcut={settings?.shortcut}
+            onSettings={() => setShowSettings(true)}
           />
         ) : meeting ? (
           <MeetingView meeting={meeting} focus={focus} onRenamed={renamed(meeting.id)} />

@@ -12,6 +12,7 @@ function setup(fakeMic?: string) {
   const sent: { channel: string; args: unknown[] }[] = []
   const recorded: RecordedTrack[][] = []
   const states: string[] = []
+  const saw: RecorderState[] = []
   let asked = 0
   const c = recordingController({
     recorder: () => ({ webContents: { send: (channel, ...args) => sent.push({ channel, args }) } }),
@@ -20,6 +21,7 @@ function setup(fakeMic?: string) {
     setState: (s) => {
       state = s
       states.push(s.kind)
+      saw.push(s)
     },
     askMicrophone: async () => {
       asked++
@@ -27,7 +29,7 @@ function setup(fakeMic?: string) {
     fakeMic,
     onRecorded: (_session, tracks) => recorded.push(tracks),
   })
-  return { c, sent, recorded, states, asked: () => asked, state: () => state }
+  return { c, sent, recorded, states, saw, asked: () => asked, state: () => state }
 }
 
 describe('recordingController', () => {
@@ -52,6 +54,7 @@ describe('recordingController', () => {
     t.c.closed()
     await stopping
     expect(t.states).toContain('processing')
+    expect(t.saw).toContainEqual({ kind: 'processing', stage: 'saving audio', source: 'recording' })
     expect(t.recorded[0]?.map((r) => r.track)).toEqual(['mic'])
   })
 
@@ -63,7 +66,7 @@ describe('recordingController', () => {
     const stopping = t.c.toggle()
     t.c.closed()
     await stopping
-    expect(t.state()).toMatchObject({ kind: 'error' })
+    expect(t.state()).toMatchObject({ kind: 'error', cause: 'capture' })
     expect(t.recorded).toEqual([])
   })
 
@@ -73,7 +76,7 @@ describe('recordingController', () => {
     await t.c.toggle()
     expect(t.sent).toHaveLength(1)
     t.c.failed('no devices')
-    expect(t.state()).toEqual({ kind: 'error', message: 'no devices' })
+    expect(t.state()).toEqual({ kind: 'error', message: 'no devices', cause: 'capture' })
     await t.c.toggle()
     expect(t.sent).toHaveLength(2)
   })

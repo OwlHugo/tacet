@@ -1,6 +1,12 @@
 import { rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { MeetingLibrary, ollamaModels, type Stage } from '@tacet/core'
+import {
+  defaultModel,
+  installedModels,
+  MeetingLibrary,
+  ollamaModels,
+  type Stage,
+} from '@tacet/core'
 import {
   app,
   BrowserWindow,
@@ -18,6 +24,7 @@ import { IMPORT_EXTENSIONS } from '../shared/audio-files.ts'
 import {
   INVOKE,
   type MeetingSummary,
+  type ProcessingStage,
   RECORDER,
   type RecorderState,
   type Settings,
@@ -33,7 +40,7 @@ import {
   runPipeline,
 } from './pipeline.ts'
 import { recordingController } from './recording/controller.ts'
-import type { RecordedTrack } from './recording/session.ts'
+import { chunkLevel, type RecordedTrack } from './recording/session.ts'
 import {
   handle,
   listen,
@@ -66,6 +73,7 @@ const log = (...a: unknown[]) => console.log('[tacet]', ...a)
 const settingsFile = () => join(app.getPath('userData'), 'settings.json')
 
 let settings: Settings
+let defaults: Settings
 let state: RecorderState = { kind: 'idle' }
 let tray: Tray | undefined
 let mainWindow: BrowserWindow | undefined
@@ -160,7 +168,7 @@ function recorder(): BrowserWindow {
   return win
 }
 
-const STAGE_LABEL: Record<Stage, string> = {
+const STAGE_LABEL: Record<Stage, ProcessingStage> = {
   transcribing: 'transcribing',
   minutes: 'writing minutes',
 }
@@ -178,7 +186,7 @@ async function processRecording(
     },
     settings,
     pipelineEnv(),
-    (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
+    (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage], source: 'recording' }),
   )
   if (!settings.keepAudio) rmSync(rec.dir, { recursive: true, force: true })
   log(
@@ -210,7 +218,7 @@ const importAudio = audioImporter({
       { ...importedMeeting(path), date: new Date() },
       settings,
       pipelineEnv(),
-      (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
+      (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage], source: 'import' }),
     )
     log('imported', path, '->', notePath)
     broadcast(EVENTS.meetingsChanged)
@@ -251,7 +259,11 @@ const controller = recordingController({
   onRecorded: (rec, tracks) =>
     void processRecording(rec, tracks)
       .catch((e: unknown) =>
-        setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) }),
+        setState({
+          kind: 'error',
+          message: e instanceof Error ? e.message : String(e),
+          cause: 'pipeline',
+        }),
       )
       .finally(() => config.TACET_AUTORECORD && setTimeout(() => app.quit(), 500)),
 })
@@ -309,7 +321,7 @@ const summaries = (): MeetingSummary[] =>
 function updateSettings(next: Settings): Settings {
   const shortcutChanged = next.shortcut !== settings.shortcut
   settings = next
-  saveSettings(settingsFile(), settings)
+  saveSettings(settingsFile(), settings, defaults)
   if (shortcutChanged) registerShortcut()
   updateTray()
   return settings
@@ -356,6 +368,7 @@ function wireIpc(): void {
   })
   handle('health', INVOKE.health, DEV, async () => ({
     whisper: locateWhisper(pipelineEnv()),
+    whisperModels: installedModels(pipelineEnv().modelsDir),
     ollamaModels: await ollamaModels(config.OLLAMA_HOST),
     microphone:
       process.platform === 'linux'
@@ -366,7 +379,11 @@ function wireIpc(): void {
   }))
 
   listen('recorder:open', RECORDER['recorder:open'], DEV, controller.open)
-  listen('recorder:chunk', RECORDER['recorder:chunk'], DEV, controller.chunk)
+  listen('recorder:chunk', RECORDER['recorder:chunk'], DEV, (track, data) => {
+    controller.chunk(track, data)
+    if (mainWindow && !mainWindow.isDestroyed())
+      mainWindow.webContents.send(EVENTS.level, track, chunkLevel(data))
+  })
   listen('recorder:started', RECORDER['recorder:started'], DEV, (tracks, warnings) => {
     log('recording', tracks, warnings)
     controller.started(tracks, warnings)
@@ -400,7 +417,7 @@ app.on('window-all-closed', () => undefined)
 app.on('will-quit', () => globalShortcut.unregisterAll())
 
 void app.whenReady().then(() => {
-  const defaults = defaultSettings(app.getPath('documents'))
+  defaults = defaultSettings(app.getPath('documents'), defaultModel(pipelineEnv().modelsDir))
   const saved = loadSettings(settingsFile(), defaults)
   settings = config.TACET_OUTPUT_DIR ? { ...saved, outputDir: config.TACET_OUTPUT_DIR } : saved
   app.dock?.hide()
