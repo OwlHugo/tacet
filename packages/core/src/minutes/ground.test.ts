@@ -118,6 +118,28 @@ describe('groundMinutes', () => {
     expect(named.actionItems[0]?.owner).toBe('Maria')
   })
 
+  it('keeps CLI labels as owners and never maps "Me" onto tracks that are not Me/Others', () => {
+    const labelled = {
+      ...TRANSCRIPT,
+      segments: TRANSCRIPT.segments.map((s) => ({
+        ...s,
+        speaker: s.speaker === 'Me' ? 'Ana' : 'Bob',
+      })),
+    }
+    const said = groundMinutes(
+      one('Send the release notes', '', 'I will send the release notes', [3]),
+      labelled,
+      't',
+    )
+    const me = groundMinutes(
+      one('Send the release notes', 'Me', 'I will send the release notes', [3]),
+      labelled,
+      't',
+    )
+    expect(said.actionItems[0]?.owner).toBe('Ana')
+    expect(me.actionItems[0]?.owner).toBe('Ana')
+  })
+
   it('finds the source when the cited id does not exist', () => {
     const r = groundMinutes(
       one('Send the release notes', 'Me', 'send the release notes', [99]),

@@ -45,4 +45,34 @@ describe('generateMinutes', () => {
   it('leaves the prompt alone for unknown languages', () => {
     expect(systemPrompt('auto')).not.toContain('The transcript is in')
   })
+
+  it('tells the model what the labels mean for recordings, imports and named tracks', () => {
+    const tracks = systemPrompt('en', ['Me', 'Others', 'Me'])
+    expect(tracks).toContain('"Me" is the person who recorded the meeting')
+
+    const single = systemPrompt('en', ['Speaker', 'Speaker'])
+    expect(single).toContain('one mixed track')
+    expect(single).toContain('Never write "Speaker", "Me" or "Others" as an owner')
+    expect(single).not.toContain('"Me" is the person')
+    expect(single).not.toContain('based on who committed')
+
+    const named = systemPrompt('en', ['Ana', 'Bob'])
+    expect(named).toContain('Speakers are labelled "Ana", "Bob".')
+    expect(named).not.toContain('"Me" is the person')
+  })
+
+  it('sends the single-track prompt for an imported file', async () => {
+    let system = ''
+    await generateMinutes(
+      { ...TRANSCRIPT, segments: TRANSCRIPT.segments.map((s) => ({ ...s, speaker: 'Speaker' })) },
+      {
+        model: 'fake',
+        generate: async (s) => {
+          system = s
+          return { summary: [], decisions: [], action_items: [] }
+        },
+      },
+    )
+    expect(system).toContain('one mixed track')
+  })
 })

@@ -16,7 +16,10 @@ export async function generateMinutes(
   deps: GenerateMinutesDeps,
 ): Promise<{ minutes: Minutes; raw: RawMinutes }> {
   const raw: RawMinutes = { summary: [], decisions: [], action_items: [] }
-  const system = systemPrompt(transcript.language)
+  const system = systemPrompt(
+    transcript.language,
+    transcript.segments.map((s) => s.speaker),
+  )
   for (const chunk of chunkSegments(transcript.segments)) {
     const part = await deps.generate(system, `Transcript:\n${transcriptForPrompt(chunk)}`)
     raw.summary.push(...part.summary)
