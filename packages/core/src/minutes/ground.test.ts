@@ -147,6 +147,23 @@ describe('groundMinutes', () => {
     expect(bob.actionItems[0]?.owner).toBe('Unassigned')
   })
 
+  it('never takes the single-track label as a name, even when "speaker" was said', () => {
+    const mixed = {
+      ...TRANSCRIPT,
+      segments: TRANSCRIPT.segments.map((s, i) => ({
+        ...s,
+        speaker: 'Speaker',
+        text: i === 3 ? 'Next speaker please, I will send the release notes' : s.text,
+      })),
+    }
+    const r = groundMinutes(
+      one('Send the release notes', 'Speaker', 'I will send the release notes', [3]),
+      mixed,
+      't',
+    )
+    expect(r.actionItems[0]?.owner).toBe('Unassigned')
+  })
+
   it('finds the source when the cited id does not exist', () => {
     const r = groundMinutes(
       one('Send the release notes', 'Me', 'send the release notes', [99]),
