@@ -30,7 +30,7 @@ describe('guardCheck', () => {
       },
       T,
     )
-    expect(r).toEqual({ injected: 4, rejected: 4 })
+    expect(r).toEqual({ injected: 5, rejected: 5 })
   })
 
   it('notices when a fabricated item survives', () => {
@@ -48,5 +48,32 @@ describe('guardCheck', () => {
       ],
     }
     expect(guardCheck({ summary: [], decisions: [], action_items: [] }, leaky).rejected).toBe(3)
+  })
+
+  it('notices when the made-up deadline survives on a real task', () => {
+    const said: Transcript = {
+      ...T,
+      segments: [
+        { id: 0, start: 0, end: 4, speaker: 'Others', text: 'Maria will update the pricing page.' },
+        {
+          id: 1,
+          start: 5,
+          end: 9,
+          speaker: 'Me',
+          text: 'I will send the release notes before the Lisbon offsite.',
+        },
+      ],
+    }
+    const task = {
+      task: 'Send the release notes',
+      owner: 'Me',
+      due: '',
+      quote: 'I will send the release notes',
+      segments: [1],
+    }
+    expect(guardCheck({ summary: [], decisions: [], action_items: [task] }, said)).toEqual({
+      injected: 5,
+      rejected: 4,
+    })
   })
 })

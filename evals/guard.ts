@@ -36,7 +36,13 @@ const FAKE = new Set([
   ...INJECTED.action_items.map((x) => x.task),
 ])
 
-/** Mix the fabricated items into real model output and count how many the guard throws away. */
+/** A deadline nobody said, pinned on every real task: it must never reach the minutes. */
+const FAKE_DUE = 'before the Lisbon offsite'
+
+/**
+ * Mix the fabricated items into real model output, and a made-up deadline into each real task, and
+ * count how many the guard throws away.
+ */
 export function guardCheck(
   raw: RawMinutes,
   transcript: Transcript,
@@ -45,7 +51,10 @@ export function guardCheck(
     {
       summary: [...raw.summary, ...INJECTED.summary],
       decisions: [...raw.decisions, ...INJECTED.decisions],
-      action_items: [...raw.action_items, ...INJECTED.action_items],
+      action_items: [
+        ...raw.action_items.map((a) => ({ ...a, due: FAKE_DUE })),
+        ...INJECTED.action_items,
+      ],
     },
     transcript,
     'guard',
@@ -55,5 +64,7 @@ export function guardCheck(
     ...m.decisions.map((x) => x.text),
     ...m.actionItems.map((x) => x.task),
   ].filter((t) => FAKE.has(t)).length
-  return { injected: FAKE.size, rejected: FAKE.size - survived }
+  const fakeDue = m.actionItems.filter((a) => a.due === FAKE_DUE).length
+  const injected = FAKE.size + raw.action_items.length
+  return { injected, rejected: injected - survived - fakeDue }
 }

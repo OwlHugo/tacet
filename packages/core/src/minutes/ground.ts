@@ -235,7 +235,8 @@ function groundActions(
   for (const t of raw.action_items) {
     const task = t.task.trim()
     if (!task) continue
-    const a = anchor(t.quote || task, t.segments, index, threshold)
+    const source = t.quote || task
+    const a = anchor(source, t.segments, index, threshold)
     if (!a)
       rejected.push({ kind: 'action', text: task, reason: 'quote not found in the transcript' })
     else if (!wordingSupported(task, a.lines, index))
@@ -250,7 +251,7 @@ function groundActions(
         kept.map((x) => x.task),
       )
     ) {
-      const d = groundDue(t.due, t.quote || task, task, a.lines, t.segments, index, rejected)
+      const d = groundDue(t.due, source, task, a.lines, t.segments, index, rejected)
       kept.push({
         task,
         owner: resolveOwner(t.owner, a.lines, index),

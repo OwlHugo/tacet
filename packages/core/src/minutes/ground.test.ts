@@ -310,6 +310,74 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]).toMatchObject({ due: 'até quarta-feira', segments: [0, 1], at: 0 })
     })
 
+    it('needs every word of the deadline: "sexta-feira" is not "sexta"', () => {
+      const r = groundMinutes(
+        one('Rever o deploy', 'Me', 'o deploy fica pra sexta', [2], 'sexta-feira'),
+        DIALOGUE,
+        't',
+      )
+      expect(r.actionItems[0]).not.toHaveProperty('due')
+    })
+
+    it('reads the deadline around the line that carries the quote, the first one on a tie', () => {
+      const lines = (texts: string[]): Transcript => ({
+        ...DIALOGUE,
+        segments: texts.map((text, id) => ({
+          id,
+          start: id * 2,
+          end: id * 2 + 1,
+          speaker: 'Me',
+          text,
+        })),
+      })
+      const t = lines([
+        'Até segunda alguém revisa.',
+        'Ana revisa o contrato do fornecedor.',
+        'Ana revisa o contrato do fornecedor, combinado.',
+        'Entrego até quarta.',
+        'Bom dia.',
+        'Bom dia.',
+      ])
+      const due = (d: string, quote: string) =>
+        groundMinutes(
+          one('Revisar o contrato do fornecedor', 'Ana', quote, [0, 1, 2, 3], d),
+          t,
+          't',
+        ).actionItems[0]?.due
+      expect(due('até segunda', 'Ana revisa o contrato do fornecedor')).toBe('até segunda')
+      expect(due('até quarta', 'Ana revisa o contrato do fornecedor')).toBeUndefined()
+      expect(due('até quarta', 'contrato do fornecedor, combinado')).toBe('até quarta')
+    })
+
+    it('adds the cited question that held the deadline to the citation, in transcript order', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        segments: [
+          { id: 0, start: 0, end: 3, speaker: 'Me', text: 'Quem fecha isso até quarta-feira?' },
+          {
+            id: 1,
+            start: 3.5,
+            end: 7,
+            speaker: 'Me',
+            text: 'Ana, você fica com o contrato do fornecedor.',
+          },
+          { id: 2, start: 7.5, end: 9, speaker: 'Others', text: 'Fechado.' },
+        ],
+      }
+      const r = groundMinutes(
+        one(
+          'Revisar o contrato do fornecedor',
+          'Ana',
+          'você fica com o contrato do fornecedor',
+          [0],
+          'até quarta-feira',
+        ),
+        t,
+        't',
+      )
+      expect(r.actionItems[0]).toMatchObject({ due: 'até quarta-feira', segments: [0, 1], at: 0 })
+    })
+
     it('does not use an uncited neighbour as evidence', () => {
       const r = groundMinutes(
         one(
