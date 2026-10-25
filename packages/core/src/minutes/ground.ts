@@ -210,16 +210,14 @@ const coreLine = (quote: string, lines: Lines): Segment =>
  */
 function groundDue(
   c: Candidate,
-  otherTasks: ReadonlySet<number>,
+  taskLines: ReadonlySet<number>,
   index: TranscriptIndex,
   rejected: Rejected[],
 ): { readonly due?: string; readonly lines: Lines } {
   const text = c.raw.due.trim()
   if (!text) return { lines: c.lines }
   const near = new Set(index.around([c.core]).map((s) => s.id))
-  const evidence = index
-    .pick(c.raw.segments)
-    .filter((s) => near.has(s.id) && (s.id === c.core.id || !otherTasks.has(s.id)))
+  const evidence = index.pick(c.raw.segments).filter((s) => near.has(s.id) && !taskLines.has(s.id))
   const said = new Set(words(textOf([c.core, ...evidence])))
   if (words(text).every((w) => said.has(w))) {
     const extra = evidence.filter((s) => !c.lines.includes(s))
@@ -272,11 +270,11 @@ function groundActions(
   rejected: Rejected[],
 ): Action[] {
   const tasks = groundTasks(raw, index, threshold, rejected)
-  const cores = tasks.map((c) => c.core.id)
+  // A line that carries a task is never the evidence for another task's deadline.
+  const taskLines = new Set(tasks.map((c) => c.core.id))
   return byTime(
     tasks.map((c) => {
-      const others = new Set(cores.filter((id) => id !== c.core.id))
-      const d = groundDue(c, others, index, rejected)
+      const d = groundDue(c, taskLines, index, rejected)
       return {
         task: c.task,
         owner: resolveOwner(c.raw.owner, c.lines, index),

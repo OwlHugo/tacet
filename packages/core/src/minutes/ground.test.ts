@@ -245,6 +245,12 @@ describe('groundMinutes', () => {
         't',
       )
       expect(r.actionItems[0]).toMatchObject({ due: 'by Thursday', segments: [3], at: 14.5 })
+      const spaced = groundMinutes(
+        one('Send the release notes', 'Me', '  I will send the release notes ', [3], 'by Thursday'),
+        TRANSCRIPT,
+        't',
+      )
+      expect(spaced.actionItems[0]?.quote).toBe('I will send the release notes')
       expect(r.rejected).toEqual([])
     })
 
