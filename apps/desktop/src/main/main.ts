@@ -326,7 +326,11 @@ function wireIpc(): void {
   })
   handle('meetings:reveal', INVOKE['meetings:reveal'], DEV, (id) => {
     const m = library().get(id)
-    if (m) shell.showItemInFolder(library().notePath(m))
+    if (!m) return
+    // No note on disk any more (the user replaced or deleted it): show the folder instead.
+    const note = library().notePath(m)
+    if (note) shell.showItemInFolder(note)
+    else void shell.openPath(settings.outputDir)
   })
   handle('meetings:search', INVOKE['meetings:search'], DEV, (q) => library().search(q))
   handle('meetings:import', INVOKE['meetings:import'], DEV, importFromWindow)

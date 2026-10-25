@@ -100,7 +100,7 @@ describe('MeetingLibrary', () => {
     const second = lib.save(later)
     expect(second.endsWith('1430 Beta launch sync m2abcdef.md')).toBe(true)
     // the first note moved out of the way instead of being overwritten
-    expect(lib.notePath(MEETING).endsWith('1430 Beta launch sync m1.md')).toBe(true)
+    expect(lib.notePath(MEETING)?.endsWith('1430 Beta launch sync m1.md')).toBe(true)
     expect(lib.save(MEETING)).toBe(lib.notePath(MEETING))
     const notes = readdirSync(lib.folder)
       .filter((f) => f.endsWith('.md'))
@@ -111,9 +111,8 @@ describe('MeetingLibrary', () => {
     ])
     expect(readFileSync(second, 'utf8')).toContain('Beta launch sync')
     // a different title in the same minute is not a clash
-    expect(lib.notePath({ ...MEETING, id: 'q', title: 'Other' }).endsWith('1430 Other.md')).toBe(
-      true,
-    )
+    // a meeting never saved has no note
+    expect(lib.notePath({ ...MEETING, id: 'q', title: 'Other' })).toBeUndefined()
   })
 
   it('still saves a new meeting when another .json in the folder is corrupt or from an old schema', () => {
@@ -265,6 +264,14 @@ describe('MeetingLibrary', () => {
     const renamed = lib.save({ ...retro, title: 'Planning' })
     expect(renamed.endsWith('1430 Planning.md')).toBe(true)
     expect(readFileSync(path, 'utf8')).toBe('# my own retro notes\n')
+    expect(lib.notePath({ ...retro, title: 'Planning' })).toBe(renamed)
     expect(md(lib)).toEqual(['2026-10-24 1430 Planning.md', '2026-10-24 1430 Retro.md'])
+  })
+
+  it('has no note path once the user replaced the note with their own text', () => {
+    const lib = library()
+    const path = lib.save(MEETING)
+    writeFileSync(path, '# rewritten by hand\n')
+    expect(lib.notePath(MEETING)).toBeUndefined()
   })
 })

@@ -168,10 +168,9 @@ export class MeetingLibrary {
     return path
   }
 
-  /** Where this meeting's note is, or would be written. */
-  notePath(m: NoteKey): string {
-    const own = this.#own(m, this.#index())
-    return own ?? this.#target(m, this.#names(), own)
+  /** Where this meeting's note is, or undefined when it has none on disk (never written, or replaced). */
+  notePath(m: NoteKey): string | undefined {
+    return this.#own(m, this.#index())
   }
 
   /**
