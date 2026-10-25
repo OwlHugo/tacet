@@ -3,7 +3,12 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   resolve: { conditions: ['development'] },
   test: {
-    include: ['packages/*/src/**/*.test.ts', 'apps/*/src/**/*.test.ts', 'evals/**/*.test.ts'],
+    include: [
+      'packages/*/src/**/*.test.ts',
+      'apps/*/src/**/*.test.ts',
+      'apps/*/scripts/**/*.test.ts',
+      'evals/**/*.test.ts',
+    ],
     coverage: {
       provider: 'v8',
       include: ['packages/core/src/**'],

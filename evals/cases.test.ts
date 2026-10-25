@@ -9,9 +9,11 @@ describe('loadCases', () => {
       '01-launch-sync-en',
       '02-hiring-en',
       '03-planejamento-pt',
+      '04-sprint-import-en',
     ])
+    const labels = cases.map((c) => c.tracks.map((t) => t.speaker).sort())
+    expect(labels).toEqual([['Me', 'Others'], ['Me', 'Others'], ['Me', 'Others'], ['Speaker']])
     for (const c of cases) {
-      expect(c.tracks.map((t) => t.speaker).sort()).toEqual(['Me', 'Others'])
       expect(c.fixture.transcript.segments.length).toBeGreaterThan(0)
       expect(c.reference.length).toBeGreaterThan(0)
     }

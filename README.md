@@ -63,27 +63,28 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 
 ## Eval
 
-Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.yml)). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items: [`evals/scripts.json`](evals/scripts.json).
+Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.yml)). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), plus the one-track demo meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke.
 
 Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |
 |---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 1.94 | 27.76 | 4/4 | 3/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0s | 1.98 | 33.62 | 3/3 | 2/2 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 1.82 | 27.98 | 2/2 | 1/2 |
-| **Total** | 72.3s | **6.2%** | **100%** | | **1.9** | 29.4 | **9/9** | 85.7% |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.35 | 27.53 | 4/4 | 3/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.42 | 33.52 | 3/3 | 2/2 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.06 | 27.91 | 2/2 | 1/2 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.12 | 17.84 | 4/4 | 3/3 |
+| **Total** | 138.2s | **5.2%** | **100%** | | **1.7** | 23.8 | **13/13** | 90.0% |
 
-Hallucination guard: **12/12** fabricated items rejected (four made-up items citing real line ids are injected into every case).
+Hallucination guard: **16/16** fabricated items rejected (four made-up items citing real line ids are injected into every case).
 
-With `large-v3-turbo` the WER drops to **2.7%** (0.0% / 3.4% / 5.7%) at 11.2 s per audio minute.
+On the three two-track cases (01 to 03), `large-v3-turbo` brings the WER down to **2.7%** (0.0% / 3.4% / 5.7%) at 11.2 s per audio minute.
 
 What the columns mean:
 
 - **WER**: word error rate per track against the script, pooled over all words.
-- **Speaker attribution**: share of script lines that land on the right track.
+- **Speaker attribution**: share of script lines that land on the right track (two-track cases only; the one-track import has nothing to attribute).
 - **Timestamp error**: mean distance between when a line was spoken and the start of the segment holding it.
-- **Grounded items**: decisions and action items that cite real lines, carry the timestamp of the first cited line and whose quote is found there. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output. CI fails if any item is ungrounded or any injected item survives.
+- **Grounded items**: decisions and action items that cite real lines, carry the timestamp of the first cited line and whose quote is found there; a task's owner must be a track of that meeting, a name that was said, or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output. CI fails if any item is ungrounded or any injected item survives.
 - **Expected tasks found**: recall of the action items written in the script. The miss in the Portuguese case is on purpose kept visible: whisper `base` heard "como fornecedor" as "como for necedor", and Tacet would rather drop a task than write one the transcript does not say.
 
 Transcription runs for real on all three CI runners. The whisper and LLM outputs are recorded locally (`pnpm eval:gravar`) and replayed in CI, since GitHub runners have no GPU for a 7B model; the grounding checks run on those outputs every time.

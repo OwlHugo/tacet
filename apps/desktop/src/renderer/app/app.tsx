@@ -1,7 +1,7 @@
 import type { Meeting, SearchHit } from '@tacet/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
-import { shortcutLabel } from './format.ts'
+import { ipcErrorMessage, shortcutLabel } from './format.ts'
 import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
@@ -87,17 +87,27 @@ export function App() {
   const [health, setHealth] = useState<Health>()
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
-  const [dropError, setDropError] = useState<string>()
+  const [importMessage, setImportMessage] = useState<string>()
+  // A new recording or import replaces whatever the last import said. Only the start of one: the end
+  // of an import is the same transition that delivers its own error, which must stay on screen.
+  useEffect(() => {
+    if (state.kind === 'starting' || state.kind === 'recording' || state.kind === 'processing')
+      setImportMessage(undefined)
+  }, [state.kind])
   const searchRef = useRef<HTMLInputElement>(null)
   const hits = useSearch(query)
-  const imported = (id: string) => {
-    setDropError(undefined)
-    setShowSettings(false)
-    setSelected(id)
+  const importCallbacks = {
+    onStart: () => setImportMessage(undefined),
+    onImported: (id: string) => {
+      setShowSettings(false)
+      setSelected(id)
+    },
+    onError: (e: unknown) => setImportMessage(ipcErrorMessage(e)),
   }
-  const drop = useAudioDrop(imported, setDropError)
   const busy =
     state.kind === 'processing' || state.kind === 'starting' || state.kind === 'recording'
+  // Like the button: while a meeting is recording or processing, dropping is not offered at all.
+  const drop = useAudioDrop(importCallbacks, busy)
 
   const refresh = useCallback(async (selectNewest: boolean) => {
     const list = await api.listMeetings()
@@ -143,8 +153,8 @@ export function App() {
       <aside className="sidebar">
         <div className="drag" />
         <RecordButton state={state} shortcut={settings?.shortcut} />
-        <ImportButton disabled={busy} onImported={imported} />
-        {dropError && <p className="record-sub error">{dropError}</p>}
+        <ImportButton disabled={busy} {...importCallbacks} />
+        {importMessage && <p className="record-sub error">{importMessage}</p>}
         <SearchBox
           value={query}
           onChange={setQuery}

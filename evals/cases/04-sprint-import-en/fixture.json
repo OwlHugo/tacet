@@ -1,0 +1,159 @@
+{
+  "whisperModel": "base",
+  "llmModel": "qwen2.5:7b",
+  "transcript": {
+    "segments": [
+      {
+        "start": 0.04,
+        "end": 2.98,
+        "speaker": "Speaker",
+        "text": "OK, Tom, let's do the sprint planning.",
+        "id": 0
+      },
+      {
+        "start": 2.98,
+        "end": 6.86,
+        "speaker": "Speaker",
+        "text": "We have two weeks, and the checkout redesign is still open.",
+        "id": 1
+      },
+      {
+        "start": 7.76,
+        "end": 12.46,
+        "speaker": "Speaker",
+        "text": "Right, the payment form is done, but the mobile layout still breaks on small screens.",
+        "id": 2
+      },
+      {
+        "start": 13.200000000000001,
+        "end": 17.16,
+        "speaker": "Speaker",
+        "text": "Then I think we should ship the redesign behind a feature flag",
+        "id": 3
+      },
+      {
+        "start": 17.16,
+        "end": 20.02,
+        "speaker": "Speaker",
+        "text": "and turn it on for 10% of users first.",
+        "id": 4
+      },
+      {
+        "start": 20.94,
+        "end": 25.72,
+        "speaker": "Speaker",
+        "text": "A create feature flag, 10% rollout, that gives us time to watch the error rate.",
+        "id": 5
+      },
+      {
+        "start": 26.5,
+        "end": 32.4,
+        "speaker": "Speaker",
+        "text": "Good. What about the flaky end-to-end tests? They failed three times this week.",
+        "id": 6
+      },
+      {
+        "start": 33.14,
+        "end": 36.34,
+        "speaker": "Speaker",
+        "text": "I'd say we freeze new features until the test suite is green.",
+        "id": 7
+      },
+      {
+        "start": 37.1,
+        "end": 40.94,
+        "speaker": "Speaker",
+        "text": "Fine. We freeze new features until the tests pass.",
+        "id": 8
+      },
+      {
+        "start": 40.94,
+        "end": 45.6,
+        "speaker": "Speaker",
+        "text": "So, tasks. Tom, can you fix the mobile layout by Wednesday?",
+        "id": 9
+      },
+      {
+        "start": 46.52,
+        "end": 49.1,
+        "speaker": "Speaker",
+        "text": "Yes. I will fix the mobile layout by Wednesday.",
+        "id": 10
+      },
+      {
+        "start": 49.84,
+        "end": 53.64,
+        "speaker": "Speaker",
+        "text": "And I'll set up the feature flag and the error rate dashboard.",
+        "id": 11
+      },
+      {
+        "start": 54.58,
+        "end": 58.34,
+        "speaker": "Speaker",
+        "text": "Priya should own the flaky tests. Maya, can you ask her to fix them this week?",
+        "id": 12
+      },
+      {
+        "start": 59.08,
+        "end": 64.06,
+        "speaker": "Speaker",
+        "text": "Sure, I'll ask Priya to fix the end-to-end tests by Friday.",
+        "id": 13
+      },
+      {
+        "start": 64.06,
+        "end": 65.9,
+        "speaker": "Speaker",
+        "text": "That's it. Thanks, Tom.",
+        "id": 14
+      }
+    ],
+    "duration": 65.9,
+    "language": "en",
+    "model": "base"
+  },
+  "raw": {
+    "summary": [
+      {
+        "text": "The team discussed the sprint planning for the next two weeks, focusing on the checkout redesign and flaky tests.",
+        "segments": [1, 2, 3, 6, 7, 8]
+      },
+      {
+        "text": "It was decided to ship the redesign behind a feature flag with a 10% rollout and to freeze new features until the test suite is green.",
+        "segments": [3, 4, 5, 6, 7, 8]
+      },
+      {
+        "text": "Tasks were assigned: Tom to fix the mobile layout by Wednesday, and Priya to fix the flaky end-to-end tests by Friday.",
+        "segments": [9, 10, 11, 12, 13]
+      }
+    ],
+    "decisions": [
+      {
+        "text": "Ship the redesign behind a feature flag with a 10% rollout and freeze new features until the test suite is green.",
+        "quote": "I'd say we freeze new features until the test suite is green.",
+        "segments": [7, 8]
+      }
+    ],
+    "action_items": [
+      {
+        "task": "Fix the mobile layout by Wednesday.",
+        "owner": "Tom",
+        "quote": "Yes. I will fix the mobile layout by Wednesday.",
+        "segments": [9, 10]
+      },
+      {
+        "task": "Set up the feature flag and the error rate dashboard.",
+        "owner": "",
+        "quote": "I'll set up the feature flag and the error rate dashboard.",
+        "segments": [11]
+      },
+      {
+        "task": "Ask Priya to fix the end-to-end tests by Friday.",
+        "owner": "Maya",
+        "quote": "Sure, I'll ask Priya to fix the end-to-end tests by Friday.",
+        "segments": [13]
+      }
+    ]
+  }
+}

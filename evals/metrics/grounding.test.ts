@@ -57,4 +57,46 @@ describe('checkGrounding', () => {
     expect(r.grounded).toBe(0)
     expect(r.ungrounded.map((u) => u.kind)).toEqual(['decision', 'action'])
   })
+
+  it('flags an owner that is not a track, not a name that was said, or the single-track label', () => {
+    const task = (owner: string): Minutes => ({
+      summary: [],
+      decisions: [],
+      actionItems: [
+        { task: 'Send notes', owner, quote: 'I will send the release notes', segments: [1], at: 5 },
+      ],
+      rejected: [],
+      model: 'x',
+    })
+    const ok = (owner: string, t: Transcript = T) =>
+      checkGrounding(task(owner), t, []).grounded === 1
+    expect(['Me', 'Others', 'Maria', 'Unassigned'].map((o) => ok(o))).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ])
+    expect(ok('Pedro')).toBe(false)
+    // "the others" is said, but there is no Others track: still not an owner
+    const single = {
+      ...T,
+      segments: [
+        ...T.segments.map((s) => ({ ...s, speaker: 'Speaker' })),
+        {
+          id: 2,
+          start: 10,
+          end: 12,
+          speaker: 'Speaker',
+          text: 'Next speaker: ask me and the others to review it.',
+        },
+      ],
+    }
+    expect(['speaker', 'Speaker A'].map((o) => ok(o, single))).toEqual([false, false])
+    expect(['Me', 'Others', 'Speaker', 'Maria'].map((o) => ok(o, single))).toEqual([
+      false,
+      false,
+      false,
+      true,
+    ])
+  })
 })

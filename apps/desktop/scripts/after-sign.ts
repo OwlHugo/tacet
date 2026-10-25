@@ -16,18 +16,21 @@ interface AfterSignContext {
   }
 }
 
-const codesign = (args: readonly string[]) => {
+/** Runs codesign and returns stdout + stderr (codesign -dv writes to stderr). */
+export type Codesign = (args: readonly string[]) => string
+
+const codesign: Codesign = (args) => {
   const r = spawnSync('codesign', args, { encoding: 'utf8' })
   if (r.status !== 0) throw new Error(`codesign ${args.join(' ')} failed: ${r.stderr}`)
   return `${r.stdout}${r.stderr}`
 }
 
-export default function afterSign(context: AfterSignContext): void {
+export default function afterSign(context: AfterSignContext, run: Codesign = codesign): void {
   if (context.electronPlatformName !== 'darwin') return
   const app = join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`)
-  if (!codesign(['-dv', app]).includes('Signature=adhoc')) return
+  if (!run(['-dv', app]).includes('Signature=adhoc')) return
   const id = context.packager.appInfo.id
-  codesign([
+  run([
     '--force',
     '--sign',
     '-',

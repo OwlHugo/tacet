@@ -14,8 +14,8 @@ import {
   systemPreferences,
   Tray,
 } from 'electron'
+import { IMPORT_EXTENSIONS } from '../shared/audio-files.ts'
 import {
-  IMPORT_EXTENSIONS,
   INVOKE,
   type MeetingSummary,
   RECORDER,
@@ -24,6 +24,7 @@ import {
 } from '../shared/contract.ts'
 import { EVENTS } from '../shared/events.ts'
 import { config } from './config.ts'
+import { audioImporter, resolveImportPath } from './import-audio.ts'
 import {
   importedMeeting,
   locateWhisper,
@@ -200,26 +201,37 @@ async function processRecording(
   }
 }
 
-/** Same pipeline as a recording, from a file on disk. The IPC caller gets the error, the UI shows it. */
-async function importAudio(path: string): Promise<string> {
-  if (state.kind !== 'idle' && state.kind !== 'error')
-    throw new Error('Wait for the current meeting to finish.')
-  const input = importedMeeting(path)
-  setState({ kind: 'processing', stage: 'transcribing' })
-  const { meeting, notePath } = await runPipeline(
-    { ...input, date: new Date() },
-    settings,
-    pipelineEnv(),
-    (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
-  ).catch((e: unknown) => {
-    setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) })
+const importAudio = audioImporter({
+  getState: () => state,
+  setState,
+  resolve: (raw) => resolveImportPath(raw, process.platform),
+  run: async (path) => {
+    const { meeting, notePath } = await runPipeline(
+      { ...importedMeeting(path), date: new Date() },
+      settings,
+      pipelineEnv(),
+      (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
+    )
+    log('imported', path, '->', notePath)
+    broadcast(EVENTS.meetingsChanged)
+    return meeting.id
+  },
+})
+
+/** The window shows an import's error; with it closed (a tray app), a notification does instead. */
+const importFromWindow = (path: string) =>
+  importAudio(path).catch((e: unknown) => {
+    if (
+      (!mainWindow || mainWindow.isDestroyed() || !mainWindow.isVisible()) &&
+      Notification.isSupported()
+    )
+      new Notification({
+        title: 'Import failed',
+        body: e instanceof Error ? e.message : String(e),
+        silent: true,
+      }).show()
     throw e
   })
-  log('imported', path, '->', notePath)
-  setState({ kind: 'idle' })
-  broadcast(EVENTS.meetingsChanged)
-  return meeting.id
-}
 
 const controller = recordingController({
   recorder,
@@ -314,17 +326,21 @@ function wireIpc(): void {
   })
   handle('meetings:reveal', INVOKE['meetings:reveal'], DEV, (id) => {
     const m = library().get(id)
-    if (m) shell.showItemInFolder(library().notePath(m))
+    if (!m) return
+    // No note on disk any more (the user replaced or deleted it): show the folder instead.
+    const note = library().notePath(m)
+    if (note) shell.showItemInFolder(note)
+    else void shell.openPath(settings.outputDir)
   })
   handle('meetings:search', INVOKE['meetings:search'], DEV, (q) => library().search(q))
-  handle('meetings:import', INVOKE['meetings:import'], DEV, importAudio)
+  handle('meetings:import', INVOKE['meetings:import'], DEV, importFromWindow)
   handle('meetings:import-dialog', INVOKE['meetings:import-dialog'], DEV, async () => {
     const r = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [{ name: 'Audio', extensions: [...IMPORT_EXTENSIONS] }],
     })
     const [file] = r.filePaths
-    return r.canceled || !file ? undefined : importAudio(INVOKE['meetings:import'].parse([file])[0])
+    return r.canceled || !file ? undefined : importFromWindow(file)
   })
   handle('settings:get', INVOKE['settings:get'], DEV, () => settings)
   handle('settings:set', INVOKE['settings:set'], DEV, (patch) =>

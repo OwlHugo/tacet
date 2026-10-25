@@ -2,7 +2,8 @@ export interface CaseResult {
   readonly id: string
   readonly audioSeconds: number
   readonly wer: number
-  readonly speakerAccuracy: number
+  /** Undefined for one-track cases: every line lands on the only track, so there is nothing to measure. */
+  readonly speakerAccuracy: number | undefined
   readonly timestampErrorSeconds: number | undefined
   readonly transcribeSecondsPerAudioMinute: number | undefined
   readonly minutesSecondsPerAudioMinute: number | undefined
@@ -58,7 +59,7 @@ export function toMarkdown(r: Report): string {
   const t = totals(r)
   const rows = r.cases.map(
     (c) =>
-      `| ${c.id} | ${c.audioSeconds.toFixed(1)}s | ${pct(c.wer)} | ${pct(c.speakerAccuracy)} | ${num(c.timestampErrorSeconds, 's')} | ${num(c.transcribeSecondsPerAudioMinute)} | ${num(c.minutesSecondsPerAudioMinute)} | ${c.grounded}/${c.items} | ${c.expectedFound}/${c.expectedTotal} |`,
+      `| ${c.id} | ${c.audioSeconds.toFixed(1)}s | ${pct(c.wer)} | ${c.speakerAccuracy === undefined ? '–' : pct(c.speakerAccuracy)} | ${num(c.timestampErrorSeconds, 's')} | ${num(c.transcribeSecondsPerAudioMinute)} | ${num(c.minutesSecondsPerAudioMinute)} | ${c.grounded}/${c.items} | ${c.expectedFound}/${c.expectedTotal} |`,
   )
   return [
     '| Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |',

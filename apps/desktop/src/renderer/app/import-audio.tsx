@@ -1,48 +1,64 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { IMPORT_EXTENSIONS_LABEL } from '../../shared/audio-files.ts'
 import { audioFiles } from './format.ts'
 import { api } from './platform.ts'
 
-/** Drag a .wav/.m4a/.mp3 anywhere on the window. The overlay shows while a file is over it. */
-export function useAudioDrop(onImported: (id: string) => void, onError: (message: string) => void) {
+/** Outcome of an import the user started: the new meeting id, or the error it failed with. */
+export interface ImportCallbacks {
+  readonly onStart: () => void
+  readonly onImported: (id: string) => void
+  readonly onError: (e: unknown) => void
+}
+
+/**
+ * Drag a file anywhere on the window. dragenter/dragleave fire for every child the pointer crosses,
+ * so the overlay counts them and hides when the count is back to zero (left the window) or on drop.
+ */
+export function useAudioDrop(cb: ImportCallbacks, disabled: boolean) {
   const [over, setOver] = useState(false)
+  const depth = useRef(0)
+  const reset = () => {
+    depth.current = 0
+    setOver(false)
+  }
   const handlers = {
-    onDragOver: (e: React.DragEvent) => {
+    // Without preventDefault the window refuses the drop, and the cursor says so.
+    onDragEnter: (e: React.DragEvent) => {
+      if (disabled) return
       e.preventDefault()
+      depth.current += 1
       setOver(true)
     },
-    onDragLeave: (e: React.DragEvent) => {
-      if (e.currentTarget === e.target) setOver(false)
+    onDragOver: (e: React.DragEvent) => {
+      if (!disabled) e.preventDefault()
+    },
+    onDragLeave: () => {
+      depth.current = Math.max(0, depth.current - 1)
+      if (depth.current === 0) setOver(false)
     },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault()
-      setOver(false)
+      reset()
+      if (disabled) return
       const [file] = audioFiles(e.dataTransfer.files)
-      if (!file) return onError('Drop a .wav, .m4a or .mp3 file.')
-      void api.importAudio(file).then(onImported, (e: Error) => onError(e.message))
+      cb.onStart()
+      if (!file) return cb.onError(new Error(`Drop a ${IMPORT_EXTENSIONS_LABEL} file.`))
+      void api.importAudio(file).then(cb.onImported, cb.onError)
     },
   }
   return { over, handlers }
 }
 
-export function ImportButton({
-  disabled,
-  onImported,
-}: {
-  disabled: boolean
-  onImported: (id: string) => void
-}) {
+export function ImportButton({ disabled, ...cb }: { disabled: boolean } & ImportCallbacks) {
   return (
     <button
       type="button"
       className="import"
       disabled={disabled}
-      // Failures show up as the recorder's error state, like a failed recording.
-      onClick={() =>
-        void api.importAudioDialog().then(
-          (id) => id && onImported(id),
-          () => undefined,
-        )
-      }
+      onClick={() => {
+        cb.onStart()
+        void api.importAudioDialog().then((id) => id && cb.onImported(id), cb.onError)
+      }}
     >
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path
@@ -62,7 +78,7 @@ export function DropOverlay() {
   return (
     <div className="drop">
       <p>Drop audio to transcribe</p>
-      <span>.wav · .m4a · .mp3, processed on this machine</span>
+      <span>{IMPORT_EXTENSIONS_LABEL.replace(/,| or/g, ' ·')}, processed on this machine</span>
     </div>
   )
 }

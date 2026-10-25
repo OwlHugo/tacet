@@ -37,4 +37,10 @@ describe('eval report', () => {
     expect(md).toContain('| **Total** | 40.0s | 15.0% |')
     expect(md).toContain('Hallucination guard: 8/8')
   })
+
+  it('shows no speaker attribution for a one-track case', () => {
+    const md = toMarkdown(report([c(), c({ id: 'single', speakerAccuracy: undefined })]))
+    expect(md).toContain('| a | 30.0s | 10.0% | 100.0% |')
+    expect(md).toContain('| single | 30.0s | 10.0% | – |')
+  })
 })

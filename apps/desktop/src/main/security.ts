@@ -10,6 +10,7 @@ import {
   session,
 } from 'electron'
 import type { z } from 'zod'
+import { invalidArguments } from '../shared/contract.ts'
 
 /** The renderer is served from tacet://app/, never from file://. */
 const SCHEME = 'tacet'
@@ -58,7 +59,11 @@ export function handle<S extends z.ZodType<readonly unknown[]>, R>(
 ): void {
   ipcMain.handle(channel, (event, ...args: unknown[]) => {
     if (!trustedSender(event, devUrl)) throw new Error(`IPC ${channel} from an untrusted frame`)
-    return handler(...schema.parse(args))
+    const parsed = schema.safeParse(args)
+    // The renderer shows this message: the schema's own words, not zod's JSON dump.
+    if (!parsed.success)
+      throw new Error(invalidArguments(channel, parsed.error), { cause: parsed.error })
+    return handler(...parsed.data)
   })
 }
 

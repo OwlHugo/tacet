@@ -118,6 +118,57 @@ describe('groundMinutes', () => {
     expect(named.actionItems[0]?.owner).toBe('Maria')
   })
 
+  it('keeps CLI labels as owners and never maps "Me" onto tracks that are not Me/Others', () => {
+    const labelled = {
+      ...TRANSCRIPT,
+      segments: TRANSCRIPT.segments.map((s) => ({
+        ...s,
+        speaker: s.speaker === 'Me' ? 'Ana' : 'Bob',
+      })),
+    }
+    const said = groundMinutes(
+      one('Send the release notes', '', 'I will send the release notes', [3]),
+      labelled,
+      't',
+    )
+    const me = groundMinutes(
+      one('Send the release notes', 'Me', 'I will send the release notes', [3]),
+      labelled,
+      't',
+    )
+    expect(said.actionItems[0]?.owner).toBe('Ana')
+    expect(me.actionItems[0]?.owner).toBe('Ana')
+    // a label that was never spoken, on a line with no commitment, is not an owner
+    const bob = groundMinutes(
+      one('Update the pricing page', 'Bob', 'Maria will update the pricing page', [2]),
+      labelled,
+      't',
+    )
+    expect(bob.actionItems[0]?.owner).toBe('Unassigned')
+  })
+
+  it('never takes the single-track label as a name, even when "speaker" was said', () => {
+    const mixed = {
+      ...TRANSCRIPT,
+      segments: TRANSCRIPT.segments.map((s, i) => ({
+        ...s,
+        speaker: 'Speaker',
+        text:
+          i === 3
+            ? 'Next speaker please, a 1 minute update: I will send the release notes'
+            : s.text,
+      })),
+    }
+    for (const label of ['Speaker', 'speaker', ' SPEAKER ', 'Speaker A', 'speaker 1'])
+      expect(
+        groundMinutes(
+          one('Send the release notes', label, 'I will send the release notes', [3]),
+          mixed,
+          't',
+        ).actionItems[0]?.owner,
+      ).toBe('Unassigned')
+  })
+
   it('finds the source when the cited id does not exist', () => {
     const r = groundMinutes(
       one('Send the release notes', 'Me', 'send the release notes', [99]),

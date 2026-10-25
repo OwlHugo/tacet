@@ -124,6 +124,7 @@ function resolveOwner(owner: string, source: Lines, index: TranscriptIndex): str
     !NOBODY.has(n) &&
     !SELF.has(n) &&
     !OTHERS_WORDS.has(n) &&
+    !words(owner).includes(normalize(SPEAKER)) &&
     words(owner).every((w) => index.spoken.has(w))
   )
     return owner.trim()
