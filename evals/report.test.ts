@@ -36,10 +36,19 @@ describe('eval report', () => {
     expect(failures(r, 0.2)).toHaveLength(3)
   })
   it('fails on a task that carries a deadline nobody said for it', () => {
-    const r = report([c({ dueRight: 0, dueWrong: ['Send notes: "friday", expected "thursday"'] })])
+    const r = report([
+      c({ dueRight: 1, dueTotal: 1, dueWrong: ['Send notes: "friday", expected "thursday"'] }),
+    ])
     expect(failures(r, undefined)).toEqual([
       'wrong deadline: a: Send notes: "friday", expected "thursday"',
     ])
+  })
+  it('fails when too few of the deadlines said were found', () => {
+    expect(failures(report([c({ dueRight: 1, dueTotal: 2 })]), undefined)).toEqual([
+      'only 1/2 deadlines found',
+    ])
+    expect(failures(report([c({ dueRight: 7, dueTotal: 10 })]), undefined)).toEqual([])
+    expect(failures(report([c({ dueRight: 0, dueTotal: 0 })]), undefined)).toEqual([])
   })
   it('renders a weighted total row', () => {
     const md = toMarkdown(report([c(), c({ id: 'b', audioSeconds: 10, wer: 0.3 })]))

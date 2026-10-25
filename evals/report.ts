@@ -79,6 +79,13 @@ export function toMarkdown(r: Report): string {
   ].join('\n')
 }
 
+/**
+ * Below this share of the deadlines said in the scripts, the eval fails: a prompt change that makes
+ * the model stop giving deadlines (all dropped, none wrong) must not pass. The 7B model misses one
+ * now and then, hence the margin.
+ */
+const MIN_DUE_RECALL = 0.7
+
 /** Problems that fail the eval. Empty = pass. */
 export function failures(r: Report, maxWer: number | undefined): string[] {
   const t = totals(r)
@@ -86,6 +93,9 @@ export function failures(r: Report, maxWer: number | undefined): string[] {
     ...(t.grounded === t.items ? [] : [`${t.items - t.grounded} minutes item(s) without a source`]),
     ...(t.rejected === t.injected ? [] : ['the hallucination guard let a fabricated item through']),
     ...t.dueWrong.map((w) => `wrong deadline: ${w}`),
+    ...(t.dueTotal > 0 && t.dueRight / t.dueTotal < MIN_DUE_RECALL
+      ? [`only ${t.dueRight}/${t.dueTotal} deadlines found`]
+      : []),
     ...(maxWer !== undefined && t.wer > maxWer ? [`WER ${pct(t.wer)} above ${pct(maxWer)}`] : []),
   ]
 }
