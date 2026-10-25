@@ -24,6 +24,7 @@ import { IMPORT_EXTENSIONS } from '../shared/audio-files.ts'
 import {
   INVOKE,
   type MeetingSummary,
+  type ProcessingStage,
   RECORDER,
   type RecorderState,
   type Settings,
@@ -39,7 +40,7 @@ import {
   runPipeline,
 } from './pipeline.ts'
 import { recordingController } from './recording/controller.ts'
-import type { RecordedTrack } from './recording/session.ts'
+import { chunkLevel, type RecordedTrack } from './recording/session.ts'
 import {
   handle,
   listen,
@@ -166,7 +167,7 @@ function recorder(): BrowserWindow {
   return win
 }
 
-const STAGE_LABEL: Record<Stage, string> = {
+const STAGE_LABEL: Record<Stage, ProcessingStage> = {
   transcribing: 'transcribing',
   minutes: 'writing minutes',
 }
@@ -184,7 +185,7 @@ async function processRecording(
     },
     settings,
     pipelineEnv(),
-    (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
+    (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage], source: 'recording' }),
   )
   if (!settings.keepAudio) rmSync(rec.dir, { recursive: true, force: true })
   log(
@@ -216,7 +217,7 @@ const importAudio = audioImporter({
       { ...importedMeeting(path), date: new Date() },
       settings,
       pipelineEnv(),
-      (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage] }),
+      (stage) => setState({ kind: 'processing', stage: STAGE_LABEL[stage], source: 'import' }),
     )
     log('imported', path, '->', notePath)
     broadcast(EVENTS.meetingsChanged)
@@ -373,7 +374,11 @@ function wireIpc(): void {
   }))
 
   listen('recorder:open', RECORDER['recorder:open'], DEV, controller.open)
-  listen('recorder:chunk', RECORDER['recorder:chunk'], DEV, controller.chunk)
+  listen('recorder:chunk', RECORDER['recorder:chunk'], DEV, (track, data) => {
+    controller.chunk(track, data)
+    if (mainWindow && !mainWindow.isDestroyed())
+      mainWindow.webContents.send(EVENTS.level, track, chunkLevel(data))
+  })
   listen('recorder:started', RECORDER['recorder:started'], DEV, (tracks, warnings) => {
     log('recording', tracks, warnings)
     controller.started(tracks, warnings)

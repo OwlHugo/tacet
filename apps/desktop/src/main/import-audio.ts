@@ -48,7 +48,7 @@ export function audioImporter(deps: ImportDeps): (path: string) => Promise<strin
     if (busy !== 'idle' && busy !== 'error')
       throw new Error('Wait for the current meeting to finish.')
     const file = deps.resolve(path)
-    deps.setState({ kind: 'processing', stage: 'transcribing' })
+    deps.setState({ kind: 'processing', stage: 'transcribing', source: 'import' })
     const id = await deps.run(file).finally(() => deps.setState({ kind: 'idle' }))
     return id
   }

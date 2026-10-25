@@ -8,6 +8,18 @@ export interface RecordedTrack {
   readonly seconds: number
 }
 
+/**
+ * How loud a chunk is, 0..1, for the level meter: RMS on a dB scale from -60 dB (silence) to 0 dB,
+ * so a quiet voice still moves the bar.
+ */
+export function chunkLevel(data: Float32Array): number {
+  if (data.length === 0) return 0
+  let sum = 0
+  for (const s of data) sum += s * s
+  const db = 10 * Math.log10(sum / data.length + 1e-12)
+  return Math.min(1, Math.max(0, (db + 60) / 60))
+}
+
 /** Receives PCM chunks from the recorder window and writes one WAV per track. */
 export class RecordingSession {
   readonly id: string

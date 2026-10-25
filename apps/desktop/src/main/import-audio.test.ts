@@ -72,7 +72,7 @@ describe('audioImporter', () => {
 
   it('refuses while recording or processing and leaves that state alone', async () => {
     for (const busy of [
-      { kind: 'processing', stage: 'transcribing' },
+      { kind: 'processing', stage: 'transcribing', source: 'import' },
       { kind: 'recording', startedAt: 1, tracks: ['mic'], warnings: [] },
       { kind: 'starting' },
     ] satisfies RecorderState[]) {

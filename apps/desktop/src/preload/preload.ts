@@ -17,6 +17,7 @@ const api = {
     return on<[RecorderState]>(EVENTS.state, cb)
   },
   onMeetingsChanged: (cb: () => void) => on(EVENTS.meetingsChanged, cb),
+  onLevel: (cb: (track: Track, level: number) => void) => on(EVENTS.level, cb),
   listMeetings: (): Promise<MeetingSummary[]> => ipcRenderer.invoke('meetings:list'),
   getMeeting: (id: string): Promise<Meeting | undefined> => ipcRenderer.invoke('meetings:get', id),
   renameMeeting: (id: string, title: string): Promise<void> =>
