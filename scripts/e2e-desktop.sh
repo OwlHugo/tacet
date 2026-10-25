@@ -14,7 +14,8 @@ cd "$root/apps/desktop"
 pnpm run build >/dev/null
 
 player=""
-if command -v afplay >/dev/null; then player="afplay"; elif command -v paplay >/dev/null; then player="paplay"; fi
+if [ "${PLAYBACK:-1}" = "0" ]; then :
+elif command -v afplay >/dev/null; then player="afplay"; elif command -v paplay >/dev/null; then player="paplay"; fi
 
 TACET_OUTPUT_DIR="$out" TACET_AUTORECORD="$seconds" TACET_FAKE_MIC="$case_dir/me.wav" TACET_HIDDEN=1 \
   npx electron . 2>&1 | tee "$out/app.log" &
@@ -25,7 +26,7 @@ for _ in $(seq 1 60); do
   grep -q "\[tacet\] recording" "$out/app.log" 2>/dev/null && break
   sleep 0.5
 done
-if [ -n "$player" ]; then "$player" "$case_dir/others.wav" || true; fi
+if [ -n "$player" ]; then "$player" "$case_dir/others.wav" & fi
 wait $app || true
 
 echo
