@@ -4,7 +4,6 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
-  rmSync,
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
@@ -81,24 +80,29 @@ export class MeetingLibrary {
 
   /**
    * Which meeting wrote each note in the folder: by the `tacet_id` in its frontmatter, or for notes
-   * from before that field, by the meeting's exact date when exactly one meeting has it.
+   * from before that field, by the meeting's exact date when exactly one meeting has it. A meeting
+   * claimed by more than one file (the user copied a note in Obsidian) has no owner entry: none of
+   * those files is Tacet's to move, so they are all left alone.
    */
   #owners(all: readonly NoteKey[]): Map<string, string> {
-    const owners = new Map<string, string>()
-    if (!existsSync(this.folder)) return owners
+    const claims = new Map<string, string[]>()
+    if (!existsSync(this.folder)) return new Map()
     const byDate = new Map<string, string[]>()
     for (const x of all) byDate.set(x.date, [...(byDate.get(x.date) ?? []), x.id])
-    for (const f of readdirSync(this.folder)
-      .filter((x) => x.endsWith('.md'))
-      .sort()) {
+    for (const f of readdirSync(this.folder).filter((x) => x.endsWith('.md'))) {
       const path = join(this.folder, f)
       const owner = noteOwner(readFileSync(path, 'utf8'))
       const ids =
         owner === undefined ? [] : 'id' in owner ? [owner.id] : (byDate.get(owner.date) ?? [])
       const [id] = ids
-      if (ids.length === 1 && id !== undefined && !owners.has(id)) owners.set(id, path)
+      if (ids.length === 1 && id !== undefined) claims.set(id, [...(claims.get(id) ?? []), path])
     }
-    return owners
+    return new Map(
+      [...claims].flatMap(([id, paths]) => {
+        const [only] = paths
+        return paths.length === 1 && only !== undefined ? [[id, only] as const] : []
+      }),
+    )
   }
 
   /**
@@ -140,8 +144,9 @@ export class MeetingLibrary {
     const owners = this.#owners(all)
     const note = this.#target(m, all, owners)
     const previous = owners.get(m.id)
+    // Our own note moves (keeping whatever the user added is not possible: Tacet rewrites it).
+    if (previous !== undefined && previous !== note) renameSync(previous, note)
     writeFileSync(note, toMarkdown(m))
-    if (previous !== undefined && previous !== note) rmSync(previous)
     owners.set(m.id, note)
     // Meetings that now clash with (or no longer clash with) this one move to their new name.
     for (const x of all) {

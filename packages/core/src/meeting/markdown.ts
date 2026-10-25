@@ -21,12 +21,12 @@ function section(title: string, items: readonly string[], empty: string): string
 export function noteOwner(
   markdown: string,
 ): { readonly id: string } | { readonly date: string } | undefined {
-  const front = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(markdown)?.[1]
+  const front = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(markdown)?.[1]
   if (front === undefined) return undefined
-  const id = /^tacet_id: ([A-Za-z0-9_-]{1,64})$/m.exec(front)?.[1]
+  const id = /^tacet_id: ([A-Za-z0-9_-]{1,64})\r?$/m.exec(front)?.[1]
   if (id !== undefined) return { id }
-  const date = /^date: (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z)$/m.exec(front)?.[1]
-  return date !== undefined && /^tacet: 1$/m.test(front) ? { date } : undefined
+  const date = /^date: (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z)\r?$/m.exec(front)?.[1]
+  return date !== undefined && /^tacet: 1\r?$/m.test(front) ? { date } : undefined
 }
 
 /** Obsidian Markdown: YAML frontmatter, a block id on every transcript line, timestamps linking to them. */

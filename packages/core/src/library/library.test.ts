@@ -181,4 +181,28 @@ describe('MeetingLibrary', () => {
     expect(readFileSync(path, 'utf8')).toContain('tacet_id: m1')
     expect(md(lib)).toHaveLength(1)
   })
+
+  it('leaves both files alone when the user copied a note, and writes the meeting somewhere new', () => {
+    const lib = library()
+    const retro = { ...MEETING, id: 'retro0001', title: 'Retro' }
+    const original = lib.save(retro)
+    const copy = original.replace('Retro.md', 'Retro 1.md')
+    writeFileSync(copy, `${readFileSync(original, 'utf8')}\nmy annotations\n`)
+    const renamed = lib.save({ ...retro, title: 'Planning' })
+    expect(renamed.endsWith('1430 Planning.md')).toBe(true)
+    expect(readFileSync(copy, 'utf8')).toContain('my annotations')
+    expect(md(lib)).toEqual([
+      '2026-10-24 1430 Planning.md',
+      '2026-10-24 1430 Retro 1.md',
+      '2026-10-24 1430 Retro.md',
+    ])
+  })
+
+  it('recognizes its notes when an editor saved them with CRLF line endings', () => {
+    const lib = library()
+    const path = lib.save(MEETING)
+    writeFileSync(path, readFileSync(path, 'utf8').replaceAll('\n', '\r\n'))
+    expect(lib.save({ ...MEETING, title: 'Renamed' }).endsWith('1430 Renamed.md')).toBe(true)
+    expect(md(lib)).toEqual(['2026-10-24 1430 Renamed.md'])
+  })
 })
