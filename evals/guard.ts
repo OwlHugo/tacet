@@ -40,8 +40,21 @@ const FAKE = new Set([
 const FAKE_DUE = 'before the Lisbon offsite'
 
 /**
- * Mix the fabricated items into real model output, and a made-up deadline into each real task, and
- * count how many the guard throws away.
+ * Deadlines that were said, each moved onto another real task of the same meeting, as a model that
+ * mixes up who promised what would do: Maria's "before that" on the release notes. A moved deadline
+ * may only survive on a task whose own line or reply says it too.
+ */
+function swapped(raw: RawMinutes): RawMinutes['action_items'] {
+  const said = raw.action_items.map((a) => a.due).filter((d) => d.trim() !== '')
+  return raw.action_items.flatMap((a) => {
+    const other = said.find((d) => d !== a.due)
+    return other === undefined ? [] : [{ ...a, due: other }]
+  })
+}
+
+/**
+ * Mix the fabricated items into real model output, a made-up deadline into each real task, and a
+ * deadline said for another task into each real task, and count how many the guard throws away.
  */
 export function guardCheck(
   raw: RawMinutes,
@@ -67,6 +80,19 @@ export function guardCheck(
   // Only tasks that reach the minutes test the deadline check; a task dropped for its wording does not.
   const real = m.actionItems.filter((a) => !FAKE.has(a.task))
   const fakeDue = real.filter((a) => a.due === FAKE_DUE).length
-  const injected = FAKE.size + real.length
-  return { injected, rejected: injected - survived - fakeDue }
+  const moved = swappedCheck(raw, transcript)
+  const injected = FAKE.size + real.length + moved.injected
+  return { injected, rejected: injected - survived - fakeDue - moved.survived }
+}
+
+/** A deadline moved to another task survives only where the transcript says it for that task too. */
+function swappedCheck(raw: RawMinutes, transcript: Transcript) {
+  const tasks = swapped(raw)
+  const m = groundMinutes({ summary: [], decisions: [], action_items: tasks }, transcript, 'guard')
+  const honest = groundMinutes(raw, transcript, 'guard')
+  const ownDue = new Map(honest.actionItems.map((a) => [a.task, a.due]))
+  const kept = m.actionItems.filter((a) => a.due !== undefined)
+  // Two tasks can share a deadline that was said for both ("both by Friday"): not a leak.
+  const survived = kept.filter((a) => a.due !== ownDue.get(a.task)).length
+  return { injected: m.actionItems.length, survived }
 }

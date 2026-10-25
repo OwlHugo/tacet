@@ -78,8 +78,13 @@ describe('checkDeadlines', () => {
   })
 
   it('lists a task whose deadline is not the expected one', () => {
-    const r = checkDeadlines(minutes('notes'), [{ task: ['release', 'notes'], due: 'thursday' }])
+    const m = minutes('by Thursday')
+    const off = { ...m, actionItems: m.actionItems.map((a) => ({ ...a, due: 'by Friday' })) }
+    const r = checkDeadlines(off, [{ task: ['release', 'notes'], due: 'thursday' }])
     expect(r.right).toBe(0)
-    expect(r.wrong).toEqual(['Send the release notes: "notes", expected "thursday"'])
+    expect(r.wrong).toEqual([
+      'Update the pricing page: "by Friday", expected no deadline',
+      'Send the release notes: "by Friday", expected "thursday"',
+    ])
   })
 })
