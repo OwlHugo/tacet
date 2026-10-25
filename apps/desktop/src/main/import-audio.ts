@@ -3,6 +3,8 @@ import { posix, win32 } from 'node:path'
 import { IMPORT_EXTENSIONS_LABEL, isImportableAudio } from '../shared/audio-files.ts'
 import type { RecorderState } from '../shared/contract.ts'
 
+type PathKind = 'file' | 'missing' | 'other'
+
 /**
  * The renderer never sends a path it typed: the preload only forwards `webUtils.getPathForFile` of
  * a dropped File, and the button goes through the native dialog in the main process. The path is
@@ -12,13 +14,17 @@ import type { RecorderState } from '../shared/contract.ts'
 export function resolveImportPath(
   raw: string,
   platform: NodeJS.Platform,
-  isFile: (path: string) => boolean = (p) =>
-    statSync(p, { throwIfNoEntry: false })?.isFile() === true,
+  whatIs: (path: string) => PathKind = (p) => {
+    const s = statSync(p, { throwIfNoEntry: false })
+    return s === undefined ? 'missing' : s.isFile() ? 'file' : 'other'
+  },
 ): string {
   const path = platform === 'win32' ? win32.resolve(raw) : posix.resolve(raw)
   if (!isImportableAudio(path))
     throw new Error(`Only ${IMPORT_EXTENSIONS_LABEL} files can be imported.`)
-  if (!isFile(path)) throw new Error(`File not found: ${path}`)
+  const kind = whatIs(path)
+  if (kind === 'missing') throw new Error(`File not found: ${path}`)
+  if (kind === 'other') throw new Error(`Not an audio file (it is a folder or a device): ${path}`)
   return path
 }
 

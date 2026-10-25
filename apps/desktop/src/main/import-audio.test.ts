@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import type { RecorderState } from '../shared/contract.ts'
 import { audioImporter, resolveImportPath } from './import-audio.ts'
 
-const exists = () => true
+const exists = () => 'file' as const
 
 describe('resolveImportPath', () => {
   it('resolves dot segments before checking the extension', () => {
@@ -26,7 +26,7 @@ describe('resolveImportPath', () => {
     expect(() => resolveImportPath('/a/b.wav/..', 'darwin', exists)).toThrow(
       /\.wav, \.m4a or \.mp3/,
     )
-    expect(() => resolveImportPath('/a/b.wav', 'darwin', () => false)).toThrow(
+    expect(() => resolveImportPath('/a/b.wav', 'darwin', () => 'missing')).toThrow(
       'File not found: /a/b.wav',
     )
   })
@@ -37,7 +37,7 @@ describe('resolveImportPath', () => {
     )
     const dir = join(mkdtempSync(join(tmpdir(), 'tacet-imp-')), 'folder.wav')
     mkdirSync(dir)
-    expect(() => resolveImportPath(dir, process.platform)).toThrow(/File not found/)
+    expect(() => resolveImportPath(dir, process.platform)).toThrow(/it is a folder or a device/)
     const file = join(dir, '..', 'real.wav')
     writeFileSync(file, '')
     expect(resolveImportPath(file, process.platform)).toBe(resolve(file))
@@ -104,7 +104,7 @@ describe('audioImporter', () => {
         ran = true
         return 'x'
       },
-      (raw) => resolveImportPath(raw, 'darwin', () => false),
+      (raw) => resolveImportPath(raw, 'darwin', () => 'missing'),
     )
     await expect(t.importAudio('/gone.wav')).rejects.toThrow('File not found: /gone.wav')
     expect({ ran, seen: t.seen }).toEqual({ ran: false, seen: [] })
