@@ -88,8 +88,9 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
   const [importMessage, setImportMessage] = useState<string>()
+  // The newest recorder state as it arrives over IPC, ahead of React's render: an import's rejection
+  // can be handled before the render that applies the error state it follows.
   const latest = useRef(state)
-  latest.current = state
   // A new recording or import replaces whatever the last import said.
   useEffect(() => {
     if (state.kind === 'starting' || state.kind === 'processing') setImportMessage(undefined)
@@ -102,7 +103,7 @@ export function App() {
       setShowSettings(false)
       setSelected(id)
     },
-    // The main process broadcasts the error state before the import rejects; read the latest one.
+    // The main process sends the error state before the import rejects; latest has it already.
     onError: (e: unknown) => {
       const now = latest.current
       setImportMessage(importError(e, now.kind === 'error' ? now.message : undefined))
@@ -122,7 +123,10 @@ export function App() {
     void refresh(false)
     void api.getSettings().then(setSettings)
     void api.health().then(setHealth)
-    const offState = api.onState(setState)
+    const offState = api.onState((s) => {
+      latest.current = s
+      setState(s)
+    })
     const offChanged = api.onMeetingsChanged(() => void refresh(true))
     return () => {
       offState()
