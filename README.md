@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <!-- DEMO GIF: record 20-30 s (press the shortcut, talk, stop, minutes appear), save as docs/demo.gif
-       and replace the screenshot below with <img src="docs/demo.gif" width="860" alt="Tacet demo" /> -->
-  <img src="docs/screenshot.png" width="860" alt="Tacet: minutes with timestamps next to the transcript" />
+  <img src="docs/demo.gif" width="860" alt="Tacet: importing a 67 s sprint meeting, the minutes appear with timestamps, a click jumps to the source line, then a search" />
+  <br/>
+  <sub>A 67 s meeting (<a href="docs/demo/meeting.wav">docs/demo/meeting.wav</a>) imported on a MacBook Pro M4. The wait for whisper.cpp and the local LLM (about 20 s) is sped up 6×.</sub>
 </p>
 
 ## Install
@@ -59,6 +59,7 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
 - **Global shortcut** `⌘⇧M` / `Ctrl+Shift+M` to start and stop from anywhere.
+- **Import audio.** Drop a `.wav`, `.m4a` or `.mp3` on the window (or use *Import audio*) to run the same pipeline on a recording you already have. No microphone or screen permission needed. An imported file is one mixed track, so lines are labelled "Speaker" and tasks only get an owner whose name was said.
 
 ## Eval
 
@@ -177,7 +178,7 @@ tacet doctor
 
 ## Known issues (v0.1)
 
-- macOS builds are not signed or notarized yet: right-click → Open the first time.
+- macOS builds are signed ad-hoc, not notarized: right-click → Open the first time. Local builds keep the identifier `dev.tacet.app`, so permissions granted once survive rebuilds.
 - On macOS 14.2+ Electron can use either ScreenCaptureKit or the Core Audio tap for loopback. Tacet uses ScreenCaptureKit by default (it only needs the Screen Recording permission). Set `TACET_CATAP=1` to try the Core Audio tap, which only works from the packaged `.app`.
 - If recording or playback hangs on macOS, Core Audio is wedged: `sudo killall coreaudiod` fixes it.
 
