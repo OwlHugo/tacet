@@ -10,7 +10,7 @@ export function modelPath(model: string, modelsDir: string): string {
 }
 
 /** Best first, all multilingual. The default never downloads: it is the best one already on disk. */
-const BY_QUALITY = ['large-v3-turbo', 'small', 'base'] as const
+const BY_QUALITY = ['large-v3-turbo', 'small', 'base', 'tiny'] as const
 
 /** Whisper models already downloaded to `modelsDir`, best first. */
 export function installedModels(modelsDir: string) {

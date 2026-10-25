@@ -4,6 +4,7 @@ import { api } from './platform.ts'
 type Patch = Partial<Omit<Settings, 'outputDir'>>
 
 const WHISPER_MODELS = [
+  ['tiny', 'tiny · fastest, 75 MB'],
   ['base', 'base · fast, 142 MB'],
   ['small', 'small · 466 MB'],
   ['large-v3-turbo', 'large-v3-turbo · best, 1.6 GB'],
