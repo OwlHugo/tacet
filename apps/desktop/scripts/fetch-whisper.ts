@@ -1,0 +1,58 @@
+/**
+ * Download a prebuilt whisper.cpp into resources/bin so electron-builder ships it.
+ * macOS has no official prebuilt CLI: the app uses Homebrew's whisper-cli or TACET_WHISPER_BIN.
+ * Windows and Linux get the official release binaries.
+ */
+import { execFileSync } from 'node:child_process'
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+const TAG = 'b5454'
+const OUT = join(import.meta.dirname, '..', 'resources', 'bin')
+const ASSETS: Readonly<Record<string, string>> = {
+  'win32-x64': 'whisper-bin-x64.zip',
+  'win32-arm64': 'whisper-bin-win-cpu-arm64.zip',
+  'linux-x64': 'whisper-bin-ubuntu-x64.tar.gz',
+  'linux-arm64': 'whisper-bin-ubuntu-arm64.tar.gz',
+}
+const BINARY = process.platform === 'win32' ? 'whisper-cli.exe' : 'whisper-cli'
+const KEEP = /^(whisper-cli(\.exe)?|.*\.(dll|so(\.\d+)*)|LICENSE)$/
+
+/** The folder inside the extracted archive that holds whisper-cli. */
+function folderWithBinary(dir: string): string | undefined {
+  const entries = readdirSync(dir, { withFileTypes: true })
+  if (entries.some((e) => e.isFile() && e.name === BINARY)) return dir
+  for (const e of entries.filter((x) => x.isDirectory())) {
+    const found = folderWithBinary(join(dir, e.name))
+    if (found) return found
+  }
+  return undefined
+}
+
+mkdirSync(OUT, { recursive: true })
+const asset = ASSETS[`${process.platform}-${process.arch}`]
+if (!asset) {
+  writeFileSync(
+    join(OUT, 'README.txt'),
+    'macOS uses whisper-cli from Homebrew (brew install whisper-cpp) or TACET_WHISPER_BIN.\n',
+  )
+  console.log(`[fetch-whisper] no prebuilt for ${process.platform}-${process.arch}, skipping`)
+} else if (existsSync(join(OUT, BINARY))) {
+  console.log('[fetch-whisper] already present')
+} else {
+  const url = `https://github.com/ggml-org/whisper.cpp/releases/download/${TAG}/${asset}`
+  const work = join(tmpdir(), `tacet-whisper-${Date.now()}`)
+  mkdirSync(work, { recursive: true })
+  console.log(`[fetch-whisper] ${url}`)
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`)
+  writeFileSync(join(work, asset), Buffer.from(await res.arrayBuffer()))
+  execFileSync('tar', ['-xf', join(work, asset), '-C', work])
+  const bin = folderWithBinary(work)
+  if (!bin) throw new Error(`${BINARY} not found in ${asset}`)
+  for (const f of readdirSync(bin).filter((n) => KEEP.test(n)))
+    cpSync(join(bin, f), join(OUT, f), { dereference: true })
+  rmSync(work, { recursive: true, force: true })
+  console.log(`[fetch-whisper] installed into ${OUT}`)
+}

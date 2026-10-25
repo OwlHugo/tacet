@@ -13,6 +13,15 @@ extraResources:
     filter: ['**/*']
 asar: true
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+# Electron security checklist: no ELECTRON_RUN_AS_NODE, no --inspect, app only from the asar.
+electronFuses:
+  runAsNode: false
+  enableNodeCliInspectArguments: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableCookieEncryption: true
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
 mac:
   category: public.app-category.productivity
   target:
