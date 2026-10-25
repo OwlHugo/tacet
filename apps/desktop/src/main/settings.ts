@@ -45,11 +45,30 @@ export function loadSettings(file: string, defaults: Settings): Settings {
   return withPatch(defaults, chosen ? { ...rest, whisperModel } : rest)
 }
 
-/** Write only the fields that differ from the defaults, so a better default still reaches the user. */
-export function saveSettings(file: string, settings: Settings, defaults: Settings): void {
+/**
+ * Write the fields that differ from the defaults, plus the whisper model whenever the user picked one
+ * (`chose`): "base" picked on purpose on a machine where base is the default must stay base after
+ * a better model is downloaded. A model never picked follows the best one downloaded.
+ */
+export function saveSettings(
+  file: string,
+  settings: Settings,
+  defaults: Settings,
+  chose: { readonly whisperModel: boolean },
+): void {
   const changed = Object.fromEntries(
-    Object.entries(settings).filter(([k, v]) => defaults[k as keyof Settings] !== v),
+    Object.entries(settings).filter(
+      ([k, v]) =>
+        defaults[k as keyof Settings] !== v || (k === 'whisperModel' && chose.whisperModel),
+    ),
   )
   mkdirSync(dirname(file), { recursive: true })
   writeFileSync(file, JSON.stringify({ version: VERSION, ...changed }, null, 2))
+}
+
+/** Whether the saved file holds a whisper model the user picked. */
+export function choseWhisperModel(file: string): boolean {
+  if (!existsSync(file)) return false
+  const saved = SavedSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')))
+  return saved.success && saved.data.version === VERSION && saved.data.whisperModel !== undefined
 }

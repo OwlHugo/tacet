@@ -51,7 +51,13 @@ import {
   SECURE_PREFERENCES,
   serveRenderer,
 } from './security.ts'
-import { defaultSettings, loadSettings, saveSettings, withPatch } from './settings.ts'
+import {
+  choseWhisperModel,
+  defaultSettings,
+  loadSettings,
+  saveSettings,
+  withPatch,
+} from './settings.ts'
 import { trayIcons } from './tray/icons.ts'
 
 // System audio without a virtual driver: Chromium loopback. ScreenCaptureKit on macOS 13+, WASAPI on
@@ -318,10 +324,11 @@ const summaries = (): MeetingSummary[] =>
       actionItems: m.minutes?.actionItems.length ?? 0,
     }))
 
-function updateSettings(next: Settings): Settings {
+function updateSettings(next: Settings, picked: { whisperModel: boolean }): Settings {
   const shortcutChanged = next.shortcut !== settings.shortcut
   settings = next
-  saveSettings(settingsFile(), settings, defaults)
+  const whisperModel = picked.whisperModel || choseWhisperModel(settingsFile())
+  saveSettings(settingsFile(), settings, defaults, { whisperModel })
   if (shortcutChanged) registerShortcut()
   updateTray()
   return settings
@@ -356,7 +363,7 @@ function wireIpc(): void {
   })
   handle('settings:get', INVOKE['settings:get'], DEV, () => settings)
   handle('settings:set', INVOKE['settings:set'], DEV, (patch) =>
-    updateSettings(withPatch(settings, patch)),
+    updateSettings(withPatch(settings, patch), { whisperModel: patch.whisperModel !== undefined }),
   )
   handle('settings:choose-folder', INVOKE['settings:choose-folder'], DEV, async () => {
     const r = await dialog.showOpenDialog({
@@ -364,7 +371,9 @@ function wireIpc(): void {
       defaultPath: settings.outputDir,
     })
     const [folder] = r.filePaths
-    return r.canceled || !folder ? settings : updateSettings({ ...settings, outputDir: folder })
+    return r.canceled || !folder
+      ? settings
+      : updateSettings({ ...settings, outputDir: folder }, { whisperModel: false })
   })
   handle('health', INVOKE.health, DEV, async () => ({
     whisper: locateWhisper(pipelineEnv()),
