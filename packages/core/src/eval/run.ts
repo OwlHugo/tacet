@@ -12,8 +12,8 @@ export interface EvalCase {
   title: string;
   language: string;
   tracks: { file: string; speaker: Speaker }[];
-  /** The script that was spoken, in order. */
-  reference: { speaker: Speaker; text: string }[];
+  /** The script that was spoken, in order, with the second each line starts at. */
+  reference: { speaker: Speaker; text: string; start?: number }[];
   /** Each expected action item as a list of keywords that must appear in the task or its quote. */
   expected_actions: string[][];
 }
@@ -24,6 +24,8 @@ export interface CaseResult {
   wer: number;
   werBySpeaker: Record<string, number>;
   speakerAccuracy: number;
+  /** Mean absolute error (s) between when a line was spoken and the start of the segment that holds it. */
+  timestampErrorSeconds?: number;
   transcribeSecondsPerAudioMinute: number;
   minutes?: {
     mode: 'live' | 'replay';
@@ -102,25 +104,29 @@ export async function runEval(opts: EvalOptions): Promise<EvalReport> {
     );
     const tSec = (performance.now() - t0) / 1000;
     const audioSeconds = transcript.duration;
-    const hyp = transcript.segments.map((s) => s.text).join(' ');
-    const ref = c.reference.map((r) => r.text).join(' ');
+    // WER is computed per track and pooled: each track is transcribed on its own, so cross-track
+    // ordering (which depends on timestamps, measured separately) must not count as word errors.
     const werBySpeaker: Record<string, number> = {};
+    let errors = 0;
+    let refWords = 0;
     for (const sp of new Set(c.reference.map((r) => r.speaker))) {
-      werBySpeaker[sp] = round(
-        wer(
-          c.reference.filter((r) => r.speaker === sp).map((r) => r.text).join(' '),
-          transcript.segments.filter((s) => s.speaker === sp).map((s) => s.text).join(' '),
-        ).wer,
+      const w = wer(
+        c.reference.filter((r) => r.speaker === sp).map((r) => r.text).join(' '),
+        transcript.segments.filter((s) => s.speaker === sp).map((s) => s.text).join(' '),
       );
+      werBySpeaker[sp] = round(w.wer);
+      errors += w.substitutions + w.deletions + w.insertions;
+      refWords += w.referenceWords;
     }
     const speakerAccuracy = speakerAttributionAccuracy(c, transcript);
 
     const result: CaseResult = {
       id: c.id,
       audioSeconds: round(audioSeconds, 1),
-      wer: round(wer(ref, hyp).wer),
+      wer: round(refWords ? errors / refWords : 0),
       werBySpeaker,
       speakerAccuracy: round(speakerAccuracy),
+      timestampErrorSeconds: timestampError(c, transcript),
       transcribeSecondsPerAudioMinute: round(tSec / (audioSeconds / 60), 2),
       hallucinationGuard: { injected: 0, rejected: 0 },
     };
@@ -208,6 +214,21 @@ function guardCheck(raw: RawMinutes, transcript: Transcript): { injected: number
   return { injected, rejected: injected - survived };
 }
 
+function timestampError(c: EvalCase, t: Transcript): number | undefined {
+  const errs: number[] = [];
+  for (const line of c.reference) {
+    if (line.start === undefined) continue;
+    const own = t.segments.filter((s) => s.speaker === line.speaker);
+    let best: { score: number; start: number } | undefined;
+    for (const s of own) {
+      const score = wordHit(s.text, line.text);
+      if (!best || score > best.score) best = { score, start: s.start };
+    }
+    if (best && best.score > 0.3) errs.push(Math.abs(best.start - line.start));
+  }
+  return errs.length ? round(errs.reduce((a, b) => a + b, 0) / errs.length, 2) : undefined;
+}
+
 /** Share of reference lines whose words land mostly in segments of the right speaker. */
 function speakerAttributionAccuracy(c: EvalCase, t: Transcript): number {
   if (!c.reference.length) return 1;
@@ -232,18 +253,18 @@ function wordHit(needle: string, hay: string): number {
 export function reportToMarkdown(r: EvalReport): string {
   const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
   const lines = [
-    `| Case | Audio | WER | Speaker attribution | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |`,
-    `|---|---|---|---|---|---|---|---|`,
+    `| Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |`,
+    `|---|---|---|---|---|---|---|---|---|`,
   ];
   for (const c of r.cases) {
     const g = c.minutes?.grounding;
     lines.push(
-      `| ${c.id} | ${c.audioSeconds}s | ${pct(c.wer)} | ${pct(c.speakerAccuracy)} | ${c.transcribeSecondsPerAudioMinute} | ${c.minutes?.secondsPerAudioMinute ?? '–'} | ${g ? `${g.grounded}/${g.items}` : '–'} | ${g ? `${g.expectedFound}/${g.expectedTotal}` : '–'} |`,
+      `| ${c.id} | ${c.audioSeconds}s | ${pct(c.wer)} | ${pct(c.speakerAccuracy)} | ${c.timestampErrorSeconds === undefined ? '–' : `${c.timestampErrorSeconds}s`} | ${c.transcribeSecondsPerAudioMinute} | ${c.minutes?.secondsPerAudioMinute ?? '–'} | ${g ? `${g.grounded}/${g.items}` : '–'} | ${g ? `${g.expectedFound}/${g.expectedTotal}` : '–'} |`,
     );
   }
   const t = r.totals;
   lines.push(
-    `| **Total** | ${t.audioSeconds}s | ${pct(t.wer)} | | ${t.transcribeSecondsPerAudioMinute} | ${t.minutesSecondsPerAudioMinute ?? '–'} | ${t.actionItemsGrounded}/${t.actionItems} | ${t.expectedActionRecall === undefined ? '–' : pct(t.expectedActionRecall)} |`,
+    `| **Total** | ${t.audioSeconds}s | ${pct(t.wer)} | | | ${t.transcribeSecondsPerAudioMinute} | ${t.minutesSecondsPerAudioMinute ?? '–'} | ${t.actionItemsGrounded}/${t.actionItems} | ${t.expectedActionRecall === undefined ? '–' : pct(t.expectedActionRecall)} |`,
   );
   lines.push('', `Hallucination guard: ${t.hallucinationsRejected}/${t.hallucinationsInjected} fabricated items rejected.`);
   lines.push(`Platform ${r.platform}, whisper \`${r.whisperModel}\`${r.llmModel ? `, LLM \`${r.llmModel}\`` : ''}.`);
