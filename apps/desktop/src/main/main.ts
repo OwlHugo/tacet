@@ -201,9 +201,10 @@ async function processRecording(
   }
 }
 
-const importer = audioImporter({
+const importAudio = audioImporter({
   getState: () => state,
   setState,
+  resolve: (raw) => resolveImportPath(raw, process.platform),
   run: async (path) => {
     const { meeting, notePath } = await runPipeline(
       { ...importedMeeting(path), date: new Date() },
@@ -216,7 +217,6 @@ const importer = audioImporter({
     return meeting.id
   },
 })
-const importAudio = (raw: string) => importer(resolveImportPath(raw, process.platform))
 
 const controller = recordingController({
   recorder,

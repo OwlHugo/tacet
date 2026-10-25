@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { RecorderState } from '../shared/contract.ts'
 import { audioImporter, resolveImportPath } from './import-audio.ts'
@@ -28,14 +31,24 @@ describe('resolveImportPath', () => {
     )
   })
 
-  it('checks the real disk by default', () => {
+  it('checks the real disk by default: a missing file or a folder named like audio is refused', () => {
     expect(() => resolveImportPath('/no/such/dir/x.wav', process.platform)).toThrow(
       /File not found/,
     )
+    const dir = join(mkdtempSync(join(tmpdir(), 'tacet-imp-')), 'folder.wav')
+    mkdirSync(dir)
+    expect(() => resolveImportPath(dir, process.platform)).toThrow(/File not found/)
+    const file = join(dir, '..', 'real.wav')
+    writeFileSync(file, '')
+    expect(resolveImportPath(file, process.platform)).toBe(resolve(file))
   })
 })
 
-function setup(initial: RecorderState, run: (path: string) => Promise<string>) {
+function setup(
+  initial: RecorderState,
+  run: (path: string) => Promise<string>,
+  resolve: (raw: string) => string = (raw) => raw,
+) {
   let state = initial
   const seen: RecorderState[] = []
   const importAudio = audioImporter({
@@ -44,6 +57,7 @@ function setup(initial: RecorderState, run: (path: string) => Promise<string>) {
       state = s
       seen.push(s)
     },
+    resolve,
     run,
   })
   return { importAudio, seen, state: () => state }
@@ -80,5 +94,31 @@ describe('audioImporter', () => {
     })
     await expect(t.importAudio('/x.mp3')).rejects.toThrow('ffmpeg: invalid data')
     expect(t.state()).toEqual({ kind: 'error', message: 'ffmpeg: invalid data' })
+  })
+
+  it('replaces an older error when the new path is refused, without running the pipeline', async () => {
+    let ran = false
+    const t = setup(
+      { kind: 'error', message: 'ffmpeg: invalid data' },
+      async () => {
+        ran = true
+        return 'x'
+      },
+      (raw) => resolveImportPath(raw, 'darwin', () => false),
+    )
+    await expect(t.importAudio('/gone.wav')).rejects.toThrow('File not found: /gone.wav')
+    expect({ ran, state: t.state() }).toEqual({
+      ran: false,
+      state: { kind: 'error', message: 'File not found: /gone.wav' },
+    })
+  })
+
+  it('hands the resolved path to the pipeline', async () => {
+    const t = setup(
+      { kind: 'idle' },
+      async (p) => p,
+      (raw) => resolveImportPath(raw, 'linux', exists),
+    )
+    await expect(t.importAudio('/a/../b.wav')).resolves.toBe('/b.wav')
   })
 })

@@ -25,6 +25,8 @@ export function resolveImportPath(
 export interface ImportDeps {
   readonly getState: () => RecorderState
   readonly setState: (s: RecorderState) => void
+  /** resolveImportPath for this platform. */
+  readonly resolve: (raw: string) => string
   /** The transcription + minutes pipeline. Resolves with the new meeting id. */
   readonly run: (path: string) => Promise<string>
 }
@@ -41,11 +43,18 @@ export function audioImporter(deps: ImportDeps): (path: string) => Promise<strin
     const busy = deps.getState().kind
     if (busy !== 'idle' && busy !== 'error')
       throw new Error('Wait for the current meeting to finish.')
-    deps.setState({ kind: 'processing', stage: 'transcribing' })
-    const id = await deps.run(path).catch((e: unknown) => {
+    // From here on this import owns the error line: an older error is replaced, never shown twice.
+    const fail = (e: unknown): never => {
       deps.setState({ kind: 'error', message: message(e) })
       throw e
-    })
+    }
+    const id = await Promise.resolve(path)
+      .then(deps.resolve)
+      .then((file) => {
+        deps.setState({ kind: 'processing', stage: 'transcribing' })
+        return deps.run(file)
+      })
+      .catch(fail)
     deps.setState({ kind: 'idle' })
     return id
   }
