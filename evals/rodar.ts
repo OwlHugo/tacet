@@ -133,7 +133,7 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
     id: c.id,
     audioSeconds: run.transcript.duration,
     wer: pooledWer(c, run.transcript),
-    speakerAccuracy: speakerAccuracy(c.reference, run.transcript),
+    speakerAccuracy: c.tracks.length > 1 ? speakerAccuracy(c.reference, run.transcript) : undefined,
     timestampErrorSeconds: timestampError(c.reference, run.transcript),
     transcribeSecondsPerAudioMinute: perMinute(run.transcribeSeconds),
     minutesSecondsPerAudioMinute: perMinute(run.minutesSeconds),

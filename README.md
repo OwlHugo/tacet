@@ -72,7 +72,7 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 | 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.35 | 27.53 | 4/4 | 3/3 |
 | 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.42 | 33.52 | 3/3 | 2/2 |
 | 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.06 | 27.91 | 2/2 | 1/2 |
-| 04-sprint-import-en | 65.9s | 4.1% | 100.0% | 0.02s | 1.12 | 17.84 | 4/4 | 3/3 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.12 | 17.84 | 4/4 | 3/3 |
 | **Total** | 138.2s | **5.2%** | **100%** | | **1.7** | 23.8 | **13/13** | 90.0% |
 
 Hallucination guard: **16/16** fabricated items rejected (four made-up items citing real line ids are injected into every case).
@@ -82,7 +82,7 @@ On the three two-track cases (01 to 03), `large-v3-turbo` brings the WER down to
 What the columns mean:
 
 - **WER**: word error rate per track against the script, pooled over all words.
-- **Speaker attribution**: share of script lines that land on the right track.
+- **Speaker attribution**: share of script lines that land on the right track (two-track cases only; the one-track import has nothing to attribute).
 - **Timestamp error**: mean distance between when a line was spoken and the start of the segment holding it.
 - **Grounded items**: decisions and action items that cite real lines, carry the timestamp of the first cited line and whose quote is found there; a task's owner must be a track of that meeting, a name that was said, or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output. CI fails if any item is ungrounded or any injected item survives.
 - **Expected tasks found**: recall of the action items written in the script. The miss in the Portuguese case is on purpose kept visible: whisper `base` heard "como fornecedor" as "como for necedor", and Tacet would rather drop a task than write one the transcript does not say.
