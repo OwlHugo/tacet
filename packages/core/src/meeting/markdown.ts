@@ -12,6 +12,25 @@ function section(title: string, items: readonly string[], empty: string): string
   return [`## ${title}`, '', ...(items.length > 0 ? items : [empty]), '']
 }
 
+const PLAIN_ID = /^[A-Za-z0-9_-]+$/
+
+/** Plain ids are written as is; anything else as a JSON string, so YAML and the reader agree. */
+const frontmatterId = (id: string) => (PLAIN_ID.test(id) ? id : JSON.stringify(id))
+
+/** The id from a `tacet_id:` value, or undefined for anything that is not one Tacet wrote. */
+function readId(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined
+  if (PLAIN_ID.test(value)) return value
+  const quoted = /^"(?:[^"\\]|\\.)*"$/.test(value) ? value : undefined
+  if (quoted === undefined) return undefined
+  try {
+    const id: unknown = JSON.parse(quoted)
+    return typeof id === 'string' && id !== '' ? id : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * Who a note was written for, from its own frontmatter (the block between the first two `---`
  * lines): `{ id }` for current notes, `{ date }` for notes Tacet wrote before notes carried their id
@@ -23,7 +42,7 @@ export function noteOwner(
 ): { readonly id: string } | { readonly date: string } | undefined {
   const front = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(markdown)?.[1]
   if (front === undefined) return undefined
-  const id = /^tacet_id: ([A-Za-z0-9_-]{1,64})\r?$/m.exec(front)?.[1]
+  const id = readId(/^tacet_id: (.+?)\r?$/m.exec(front)?.[1])
   if (id !== undefined) return { id }
   const date = /^date: (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z)\r?$/m.exec(front)?.[1]
   return date !== undefined && /^tacet: 1\r?$/m.test(front) ? { date } : undefined
@@ -41,7 +60,7 @@ export function toMarkdown(m: Meeting): string {
     ...(m.minutes ? [`llm: ${m.minutes.model}`] : []),
     'tags: [meeting, tacet]',
     'tacet: 1',
-    `tacet_id: ${m.id}`,
+    `tacet_id: ${frontmatterId(m.id)}`,
     '---',
     '',
     `# ${m.title}`,

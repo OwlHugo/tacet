@@ -45,6 +45,8 @@ describe('toMarkdown', () => {
 
   it('reads back the meeting a note belongs to, only from its own frontmatter', () => {
     expect(noteOwner(toMarkdown(base))).toEqual({ id: 'm' })
+    for (const id of ['weekly.sync', 'a"b', 'with space', 'ação'])
+      expect(noteOwner(toMarkdown({ ...base, id }))).toEqual({ id })
     const legacy = toMarkdown(base).replace('tacet_id: m\n', '')
     expect(noteOwner(legacy)).toEqual({ date: '2026-10-24T14:30:00.000Z' })
     expect(noteOwner(legacy.replace('tacet: 1\n', ''))).toBeUndefined()
@@ -53,7 +55,7 @@ describe('toMarkdown', () => {
       '---\ntitle: x\n---\n\ntacet_id: x\n\n---\nmore\n',
       '---\ntacet_id: "a" "b"\n---\n',
       '---\ntacet_id: \\q\n---\n',
-      '---\ntacet_id: ../../etc\n---\n',
+      '---\ntacet_id: "unterminated\n---\n',
       '',
     ])
       expect(noteOwner(other)).toBeUndefined()
