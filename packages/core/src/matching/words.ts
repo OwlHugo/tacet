@@ -1,4 +1,4 @@
-export const STOPWORDS = new Set(
+const STOPWORDS = new Set(
   (
     'a an the and or but of to in on at for with is are was were be been it this that these those i you he she we they ' +
     'me my your our their us them so do does did will would can could should just ok okay yeah yes no not ' +

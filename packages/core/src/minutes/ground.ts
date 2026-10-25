@@ -1,11 +1,4 @@
-import {
-  coverage,
-  findPhrase,
-  normalize,
-  STOPWORDS as STOP,
-  similarity,
-  words,
-} from '../matching/words.ts'
+import { coverage, findPhrase, normalize, similarity, words } from '../matching/words.ts'
 import {
   ME,
   OTHERS as OTHERS_LABEL,
@@ -202,25 +195,8 @@ interface Candidate {
   readonly raw: RawMinutes['action_items'][number]
   readonly task: string
   readonly lines: Lines
-  /** The cited line that carries the quote best: the line the task was said on. */
-  readonly core: Segment
 }
 
-/** The line among `lines` that says `quote` in a row, else the one that supports it best (first on a tie). */
-const coreLine = (quote: string, lines: Lines): Segment =>
-  lines.find((s) => findPhrase(quote, s.text) !== undefined) ??
-  lines.reduce((best, s) => (coverage(quote, s.text) > coverage(quote, best.text) ? s : best))
-
-/**
- * A deadline is kept only if it was said about the task: in a clause of the task's own line, or of
- * the cited next line (the reply, or the rest of a sentence whisper split), whose other words are all
- * the task's, its owner's or of taking it on ("Sure, by Wednesday"). The quote is no evidence, since
- * it can be the whole line. The next line must not be another task's line; it then joins the
- * citation. A deadline elsewhere on the line
- * ("I'll send the notes, by the way Thursday is a holiday") or said for another task on the same line
- * ("Ana reviews the contract and Pedro deploys by Friday") is dropped. What is kept is the wording of
- * the transcript, not the model's.
- */
 /** Words that introduce a deadline at the end of a task, cut with it. */
 const LEAD = /\s+(?:by|on|before|until|até|ate|pra|antes de)$/iu
 
@@ -242,69 +218,39 @@ function withoutDeadline(task: string, due: string): string {
   return words(cut).length > 0 ? `${cut}${end}` : task
 }
 
-/** Words a reply uses to take a task on without naming it ("Sure, by Wednesday", "Fechado, entrego até quarta"). */
-const TAKING_IT = new Set(
-  (
-    'sure fine deal done will ill have can do deliver send finish get it that this yes by on before until ' +
-    'claro certo fechado combinado beleza pode deixa comigo consigo da entrego faco fecho mando termino ate pra antes'
-  ).split(' '),
-)
+/** Owner labels that are not a person's name. */
+const NOT_A_NAME = new Set([ME, OTHERS_LABEL, SPEAKER, 'Unassigned'].map(normalize))
 
-/** A light stem, so "reviso" answers "revisa" and "sending" answers "send". */
-const stem = (w: string) => w.slice(0, 5)
-
-/**
- * The deadline in a line, as said, when the clause that says it is about the task: more than half
- * of its other content words are the task's (words of taking it on aside). "Reviso. Ah, e o deploy fica
- * pra sexta" gives the deploy's deadline, not the review's; "Sure. By the way Thursday is a holiday"
- * gives none.
- */
-function answerDeadline(due: string, reply: string, task: string): string | undefined {
-  const ofTask = new Set(words(task).map(stem))
-  // A sentence, and each of its parts joined by "and"/"e": one line can give two tasks their deadlines.
-  const sentences = reply.split(/[.,;!?]|\s(?:but|mas)\s/iu)
-  for (const clause of [...sentences, ...sentences.flatMap((x) => x.split(/\s(?:and|e)\s/iu))]) {
-    const said = findPhrase(due, clause)
-    if (said === undefined) continue
-    const rest = words(clause.replace(said, ' ')).filter((w) => !STOP.has(w) && !TAKING_IT.has(w))
-    // Most of what else the clause says is the task: "I will look at the crash reports tomorrow"
-    // is about "Check the crash reports"; "Ana revisa o contrato e o Pedro faz o deploy até sexta"
-    // is as much about the deploy, so it is not the review's deadline.
-    const onTask = rest.filter((w) => ofTask.has(stem(w))).length
-    if (rest.length === 0 || onTask * 2 > rest.length) return said
-  }
-  return undefined
+/** How many of the owners the model gave a line names: "Ana revisa e o Pedro faz o deploy" names two. */
+function namesOn(line: Segment, owners: ReadonlySet<string>): number {
+  const said = new Set(words(line.text))
+  return [...owners].filter((o) => said.has(o)).length
 }
 
+/**
+ * A deadline is kept only when there is no doubt whose it is: it is said, as a run of words, on a
+ * cited line of this task that no other task cites and that names at most one person. A line shared
+ * by two tasks, or naming two people, drops it. A missing deadline is acceptable; a wrong one is not.
+ * What is kept is the transcript's wording.
+ */
 function groundDue(
   c: Candidate,
-  taskLines: ReadonlySet<number>,
-  index: TranscriptIndex,
+  citedBy: ReadonlyMap<number, number>,
+  owners: ReadonlySet<string>,
   rejected: Rejected[],
-): { readonly due?: string; readonly lines: Lines } {
+): string | undefined {
   const text = c.raw.due.trim()
-  if (!text) return { lines: c.lines }
-  // The task as the model worded it, and who: never the quote, which may be the whole line.
-  const about = `${c.task} ${c.raw.owner}`
-  const own = answerDeadline(text, c.core.text, about)
-  if (own !== undefined) return { due: own, lines: c.lines }
-  // The reply: the line right after the task ("Sure, by Wednesday"), or the rest of the same sentence
-  // when whisper split it in two.
-  const [reply] = index.pick([c.core.id + 1])
-  const said =
-    reply && c.raw.segments.includes(reply.id) && !taskLines.has(reply.id)
-      ? answerDeadline(text, reply.text, about)
-      : undefined
-  if (reply && said !== undefined) {
-    const joined: [Segment, ...Segment[]] = [reply, ...c.lines.filter((x) => x.id !== reply.id)]
-    return { due: said, lines: joined.sort((x, y) => x.id - y.id) }
+  if (!text) return undefined
+  for (const line of c.lines) {
+    const said = findPhrase(text, line.text)
+    if (said !== undefined && citedBy.get(line.id) === 1 && namesOn(line, owners) <= 1) return said
   }
   rejected.push({
     kind: 'deadline',
     text: `${c.task}: ${text}`,
-    reason: 'deadline not said in the cited lines',
+    reason: 'deadline not said on a line of this task alone',
   })
-  return { lines: c.lines }
+  return undefined
 }
 
 function groundTasks(
@@ -333,18 +279,9 @@ function groundTasks(
         kept.map((x) => x.task),
       )
     )
-      kept.push({ raw: t, task, lines: a.lines, core: coreLine(source, a.lines) })
+      kept.push({ raw: t, task, lines: a.lines })
   }
   return kept
-}
-
-/**
- * The task's wording without the deadline the model gave it at its end: a kept deadline is shown on
- * its own, and a dropped one, made up or said for another task, must not come back through the
- * wording.
- */
-function taskWording(c: Candidate, kept: string | undefined): string {
-  return withoutDeadline(c.task, kept ?? c.raw.due)
 }
 
 function groundActions(
@@ -354,17 +291,22 @@ function groundActions(
   rejected: Rejected[],
 ): Action[] {
   const tasks = groundTasks(raw, index, threshold, rejected)
-  // A line that carries a task is never the evidence for another task's deadline.
-  const taskLines = new Set(tasks.map((c) => c.core.id))
+  // Every task the model gave counts, kept or not: a line it shares with any other is in doubt.
+  const citedBy = new Map<number, number>()
+  for (const t of raw.action_items)
+    for (const id of new Set(t.segments)) citedBy.set(id, (citedBy.get(id) ?? 0) + 1)
+  const owners = new Set(
+    raw.action_items.flatMap((t) => words(t.owner).slice(0, 1)).filter((o) => !NOT_A_NAME.has(o)),
+  )
   return byTime(
     tasks.map((c) => {
-      const d = groundDue(c, taskLines, index, rejected)
+      const due = groundDue(c, citedBy, owners, rejected)
       return {
-        task: taskWording(c, d.due),
+        task: withoutDeadline(c.task, due ?? c.raw.due),
         owner: resolveOwner(c.raw.owner, c.lines, index),
-        ...(d.due === undefined ? {} : { due: d.due }),
+        ...(due === undefined ? {} : { due }),
         quote: c.raw.quote.trim(),
-        ...cite(d.lines),
+        ...cite(c.lines),
       }
     }),
   )
