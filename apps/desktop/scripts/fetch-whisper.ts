@@ -29,10 +29,12 @@ const BINARY = process.platform === 'win32' ? 'whisper-cli.exe' : 'whisper-cli'
 const KEEP = /^(whisper-cli(\.exe)?|.*\.(dll|so(\.\d+)*)|LICENSE)$/
 // Windows' own bsdtar reads .zip; the GNU tar that Git Bash puts first on PATH reads neither .zip nor
 // "C:\..." (it takes "C:" for a remote host).
-const TAR =
-  process.platform === 'win32'
-    ? join(process.env['SystemRoot'] ?? 'C:\\Windows', 'System32', 'tar.exe')
-    : 'tar'
+function tar(): string {
+  if (process.platform !== 'win32') return 'tar'
+  const root = process.env['SystemRoot']
+  if (root === undefined) throw new Error('SystemRoot is not set: cannot find Windows tar.exe')
+  return join(root, 'System32', 'tar.exe')
+}
 
 /** The folder inside the extracted archive that holds whisper-cli. */
 function folderWithBinary(dir: string): string | undefined {
@@ -63,18 +65,21 @@ if (!asset) {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`)
   writeFileSync(join(work, asset), Buffer.from(await res.arrayBuffer()))
-  execFileSync(TAR, ['-xf', asset], { cwd: work })
+  execFileSync(tar(), ['-xf', asset], { cwd: work })
   const bin = folderWithBinary(work)
   if (!bin) throw new Error(`${BINARY} not found in ${asset}`)
   // The Linux archive ships libfoo.so -> libfoo.so.1 symlinks: copy what each one points to, as a file.
   // Only targets inside the archive, and only files: anything else is a broken release, so stop.
+  // Everything is checked before the first copy, so a bad release never leaves a half-filled bin/
+  // that the next run would take as "already present".
   const root = realpathSync(work)
-  for (const f of readdirSync(bin).filter((n) => KEEP.test(n))) {
-    const src = realpathSync(join(bin, f))
+  const files = readdirSync(bin)
+    .filter((n) => KEEP.test(n))
+    .map((f) => ({ f, src: realpathSync(join(bin, f)) }))
+  for (const { f, src } of files)
     if (!src.startsWith(root + sep) || !statSync(src).isFile())
       throw new Error(`${asset}: ${f} does not point to a file inside the archive (${src})`)
-    copyFileSync(src, join(OUT, f))
-  }
+  for (const { f, src } of files) copyFileSync(src, join(OUT, f))
   rmSync(work, { recursive: true, force: true })
   console.log(`[fetch-whisper] installed into ${OUT}`)
 }
