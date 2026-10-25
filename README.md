@@ -77,7 +77,7 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 Hallucination guard: **16/16** fabricated items rejected (four made-up items citing real line ids are injected into every case).
 
-With `large-v3-turbo` the WER drops to **2.7%** (0.0% / 3.4% / 5.7%) at 11.2 s per audio minute.
+On the three two-track cases (01 to 03), `large-v3-turbo` brings the WER down to **2.7%** (0.0% / 3.4% / 5.7%) at 11.2 s per audio minute.
 
 What the columns mean:
 
