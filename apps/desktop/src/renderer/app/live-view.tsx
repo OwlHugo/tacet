@@ -84,7 +84,12 @@ function RecordingView({ state, shortcut }: { state: Recording; shortcut: string
       <p className="live-kicker" aria-live="polite">
         <span className="live-dot" /> Recording
       </p>
-      <time className="live-clock">{timestamp(Math.max(0, now - state.startedAt) / 1000)}</time>
+      <time
+        className="live-clock"
+        dateTime={`PT${Math.max(0, Math.floor((now - state.startedAt) / 1000))}S`}
+      >
+        {timestamp(Math.max(0, now - state.startedAt) / 1000)}
+      </time>
       <div className="meters">
         {TRACKS.map((t) => (
           <Meter
@@ -215,8 +220,8 @@ function FailedView({ state, onSettings }: { state: Failed; onSettings: () => vo
             Open Settings
           </button>
           <p className="muted">
-            Fix it there, then record again with the button on the left. Any audio already recorded
-            is kept in the notes folder, under .tacet/audio, and can be imported.
+            Fix it there, then record again with the button on the left. The audio recorded so far
+            stays in the notes folder, in the hidden .tacet/audio folder.
           </p>
         </>
       )}
