@@ -45,7 +45,6 @@ function tokens(text: string): Token[] {
  */
 export function findPhrase(phrase: string, text: string): string | undefined {
   const want = words(phrase).join(' ')
-  if (!want) return undefined
   const have = tokens(text)
   for (const [i, first] of have.entries()) {
     const run = have.slice(i, i + want.split(' ').length)

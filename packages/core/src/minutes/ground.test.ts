@@ -451,41 +451,44 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]).not.toHaveProperty('due')
     })
 
-    it('reads the deadline around the line that carries the quote, the first one on a tie', () => {
-      const lines = (texts: string[]): Transcript => ({
-        ...DIALOGUE,
-        segments: texts.map((text, id) => ({
-          id,
-          start: id * 2,
-          end: id * 2 + 1,
-          speaker: 'Me',
-          text,
-        })),
-      })
-      const t = lines([
-        'Até segunda alguém revisa.',
-        'Ana revisa o contrato do fornecedor.',
-        'Ana revisa o contrato do fornecedor, combinado.',
-        'Entrego até quarta.',
-        'Bom dia.',
-        'Bom dia.',
-      ])
-      const due = (d: string, quote: string) =>
-        groundMinutes(
-          one('Revisar o contrato do fornecedor', 'Ana', quote, [0, 1, 2, 3], d),
-          t,
-          't',
-        ).actionItems[0]?.due
-      expect(due('até segunda', 'Ana revisa o contrato do fornecedor')).toBe('Até segunda')
-      expect(due('até quarta', 'Ana revisa o contrato do fornecedor')).toBeUndefined()
-      expect(due('até quarta', 'contrato do fornecedor, combinado')).toBe('até quarta')
-    })
-
-    it('adds the cited question that held the deadline to the citation, in transcript order', () => {
+    it('reads the reply after the line that says the quote, not after a line that only shares its words', () => {
       const t: Transcript = {
         ...DIALOGUE,
         segments: [
-          { id: 0, start: 0, end: 3, speaker: 'Me', text: 'Quem fecha isso até quarta-feira?' },
+          { id: 0, start: 0, end: 2, speaker: 'Me', text: 'Ana, contrato do fornecedor?' },
+          { id: 1, start: 2.5, end: 4, speaker: 'Others', text: 'Até segunda.' },
+          {
+            id: 2,
+            start: 4.5,
+            end: 6,
+            speaker: 'Me',
+            text: 'Então Ana revisa o contrato do fornecedor.',
+          },
+          { id: 3, start: 6.5, end: 8, speaker: 'Others', text: 'Entrego até quarta.' },
+        ],
+      }
+      const due = (d: string) =>
+        groundMinutes(
+          one(
+            'Revisar o contrato do fornecedor',
+            'Ana',
+            'Ana revisa o contrato do fornecedor',
+            [0, 1, 2, 3],
+            d,
+          ),
+          t,
+          't',
+        ).actionItems[0]
+      expect(due('até quarta')).toMatchObject({ due: 'até quarta' })
+      expect(due('até quarta')?.segments).toContain(3)
+      expect(due('até segunda')).not.toHaveProperty('due')
+    })
+
+    it('takes a deadline only from the reply after the task, by someone else, never from a line before it', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        segments: [
+          { id: 0, start: 0, end: 3, speaker: 'Others', text: 'O deploy fica pra sexta.' },
           {
             id: 1,
             start: 3.5,
@@ -493,21 +496,23 @@ describe('groundMinutes', () => {
             speaker: 'Me',
             text: 'Ana, você fica com o contrato do fornecedor.',
           },
-          { id: 2, start: 7.5, end: 9, speaker: 'Others', text: 'Fechado.' },
+          { id: 2, start: 7.5, end: 9, speaker: 'Me', text: 'Até quarta-feira, tá?' },
         ],
       }
-      const r = groundMinutes(
-        one(
-          'Revisar o contrato do fornecedor',
-          'Ana',
-          'você fica com o contrato do fornecedor',
-          [0],
-          'até quarta-feira',
-        ),
-        t,
-        't',
-      )
-      expect(r.actionItems[0]).toMatchObject({ due: 'até quarta-feira', segments: [0, 1], at: 0 })
+      const due = (d: string, segments: number[]) =>
+        groundMinutes(
+          one(
+            'Revisar o contrato do fornecedor',
+            'Ana',
+            'você fica com o contrato do fornecedor',
+            segments,
+            d,
+          ),
+          t,
+          't',
+        ).actionItems[0]?.due
+      expect(due('sexta', [0, 1])).toBeUndefined()
+      expect(due('até quarta-feira', [1, 2])).toBeUndefined()
     })
 
     it('never moves the deadline of one task onto the next one cited with it', () => {

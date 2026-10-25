@@ -199,14 +199,15 @@ interface Candidate {
   readonly core: Segment
 }
 
-/** The line among `lines` that supports `quote` best, the first one on a tie. */
+/** The line among `lines` that says `quote` in a row, else the one that supports it best (first on a tie). */
 const coreLine = (quote: string, lines: Lines): Segment =>
+  lines.find((s) => findPhrase(quote, s.text) !== undefined) ??
   lines.reduce((best, s) => (coverage(quote, s.text) > coverage(quote, best.text) ? s : best))
 
 /**
  * A deadline is kept only if it was said in a row inside the task's quote, found as a run of words on
- * the task's own line, or in a cited line right next to it that is not another task's line ("Can you
- * do it?" / "Yes, by Wednesday"), which then joins the citation. A deadline elsewhere on the line
+ * the task's own line, or in the cited reply: the next line, said by someone else, that is not another
+ * task's line ("Can you do it?" / "Yes, by Wednesday"), which then joins the citation. A deadline elsewhere on the line
  * ("I'll send the notes, by the way Thursday is a holiday") or said for another task on the same line
  * ("Ana reviews the contract and Pedro deploys by Friday") is dropped. What is kept is the wording of
  * the transcript, not the model's.
@@ -222,11 +223,17 @@ function groundDue(
   const quoted = findPhrase(c.raw.quote, c.core.text)
   const own = quoted === undefined ? undefined : findPhrase(text, quoted)
   if (own !== undefined) return { due: own, lines: c.lines }
-  const near = new Set(index.around([c.core]).map((s) => s.id))
-  for (const s of index.pick(c.raw.segments)) {
-    const said = near.has(s.id) && !taskLines.has(s.id) ? findPhrase(text, s.text) : undefined
-    if (said === undefined) continue
-    const joined: [Segment, ...Segment[]] = [s, ...c.lines.filter((x) => x.id !== s.id)]
+  // The reply: the line right after the task, said by someone else ("Sure, by Wednesday"). One mixed
+  // track ("Speaker") does not say who spoke, so there the next line is enough.
+  const reply = index
+    .pick([c.core.id + 1])
+    .find((s) => s.speaker !== c.core.speaker || s.speaker === SPEAKER)
+  const said =
+    reply && c.raw.segments.includes(reply.id) && !taskLines.has(reply.id)
+      ? findPhrase(text, reply.text)
+      : undefined
+  if (reply && said !== undefined) {
+    const joined: [Segment, ...Segment[]] = [reply, ...c.lines.filter((x) => x.id !== reply.id)]
     return { due: said, lines: joined.sort((x, y) => x.id - y.id) }
   }
   rejected.push({
