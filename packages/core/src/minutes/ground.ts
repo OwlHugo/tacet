@@ -223,7 +223,7 @@ function groundDue(
   const spaced = (t: string) => ` ${words(t).join(' ')} `
   const phrase = spaced(text)
   const inQuote = spaced(c.raw.quote).includes(phrase) && spaced(c.core.text).includes(phrase)
-  if (inQuote || evidence.some((s) => s.id !== c.core.id && spaced(s.text).includes(phrase))) {
+  if (inQuote || evidence.some((s) => spaced(s.text).includes(phrase))) {
     const extra = evidence.filter((s) => !c.lines.includes(s))
     const joined: [Segment, ...Segment[]] = [...c.lines, ...extra]
     return { due: text, lines: joined.sort((a, b) => a.id - b.id) }
