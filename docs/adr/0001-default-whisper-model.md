@@ -22,7 +22,7 @@ if the user had chosen it.
 
 ## Consequences
 
-A machine with the turbo model transcribes with it by default, slower (about 8.5 s per audio minute on
-an M4 against 1.5 s with `base`, see the README eval) but with less than two thirds of the WER (3.1%
+A machine with the turbo model transcribes with it by default, slower (about 8 s per audio minute on
+an M4 against 1.6 s with `base`, see the README eval) but with less than two thirds of the WER (3.1%
 against 5.2%), and the Portuguese case finds both tasks. Someone who really wants `base` picks it in
 Settings, and that choice is now saved as a choice.
