@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
 import { ipcErrorMessage, shortcutLabel } from './format.ts'
 import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
-import { isActive, LiveView } from './live-view.tsx'
+import { isActive, LiveItem, LiveView, useLiveView } from './live-view.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
 import { RecordButton } from './record-button.tsx'
@@ -89,11 +89,7 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [focus, setFocus] = useState<number>()
   const [importMessage, setImportMessage] = useState<string>()
-  // Opening a meeting while recording shows it; stopping or a new recording brings the live panel back.
-  const [browsing, setBrowsing] = useState(false)
-  useEffect(() => {
-    if (state.kind === 'starting' || state.kind === 'processing') setBrowsing(false)
-  }, [state.kind])
+  const liveView = useLiveView(state)
   // A new recording or import replaces whatever the last import said. Only the start of one: the end
   // of an import is the same transition that delivers its own error, which must stay on screen.
   useEffect(() => {
@@ -111,7 +107,7 @@ export function App() {
     onError: (e: unknown) => setImportMessage(ipcErrorMessage(e)),
   }
   const busy = isActive(state)
-  const live = busy && !browsing
+  const live = liveView.shown
   // Like the button: while a meeting is recording or processing, dropping is not offered at all.
   const drop = useAudioDrop(importCallbacks, busy)
 
@@ -145,7 +141,7 @@ export function App() {
   }, [selected])
 
   const open = (id: string, at?: number) => {
-    setBrowsing(true)
+    liveView.leave()
     setSelected(id)
     setFocus(at)
     setQuery('')
@@ -169,6 +165,7 @@ export function App() {
           hint={IS_MAC ? '⌘K' : 'Ctrl K'}
         />
         <nav className="list">
+          {busy && <LiveItem state={state} active={live !== undefined} onOpen={liveView.back} />}
           {query.trim() ? (
             <SearchResults hits={hits} onOpen={open} />
           ) : (
@@ -195,7 +192,7 @@ export function App() {
             onClose={() => setShowSettings(false)}
           />
         ) : live ? (
-          <LiveView state={state} shortcut={settings?.shortcut} />
+          <LiveView state={live} shortcut={settings?.shortcut} />
         ) : meeting ? (
           <MeetingView meeting={meeting} focus={focus} onRenamed={renamed(meeting.id)} />
         ) : (

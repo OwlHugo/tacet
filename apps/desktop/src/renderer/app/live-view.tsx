@@ -99,7 +99,7 @@ function RecordingView({ state, shortcut }: { state: Recording; shortcut: string
         <span className="live-square" /> Stop and write minutes
         {shortcut && <kbd>{shortcutLabel(shortcut, IS_MAC)}</kbd>}
       </button>
-      <p className="muted">Audio stays on this Mac.</p>
+      <p className="muted">Audio stays on this {DEVICE}.</p>
     </section>
   )
 }
@@ -115,9 +115,11 @@ const STEP_LABEL: Record<ProcessingStage, string> = {
   'writing minutes': 'Writing minutes',
 }
 
+const DEVICE = IS_MAC ? 'Mac' : 'computer'
+
 const STEP_HINT: Record<ProcessingStage, string> = {
-  'saving audio': 'Closing the two tracks.',
-  transcribing: 'whisper.cpp is transcribing each track on this Mac.',
+  'saving audio': 'Closing the audio files.',
+  transcribing: `whisper.cpp is transcribing each track on this ${DEVICE}.`,
   'writing minutes': 'The local model is writing the minutes. The notes open when they are ready.',
 }
 
@@ -140,6 +142,40 @@ function ProcessingView({ state }: { state: Processing }) {
       <div className="progress" />
       <p className="muted">{STEP_HINT[state.stage]}</p>
     </section>
+  )
+}
+
+/**
+ * Whether the main panel shows the live view. Opening a meeting while recording shows that meeting;
+ * the live row in the list, stopping or a new recording bring the live view back.
+ */
+export function useLiveView(state: RecorderState) {
+  const [browsing, setBrowsing] = useState(false)
+  useEffect(() => {
+    if (state.kind === 'starting' || state.kind === 'processing') setBrowsing(false)
+  }, [state.kind])
+  return {
+    /** The live state while the panel should show it, undefined otherwise. */
+    shown: isActive(state) && !browsing ? state : undefined,
+    leave: () => setBrowsing(true),
+    back: () => setBrowsing(false),
+  }
+}
+
+/** First row of the meeting list while a meeting is live: the way back to the live panel. */
+export function LiveItem(props: { state: Active; active: boolean; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      className={`item live-item ${props.active ? 'active' : ''}`}
+      onClick={props.onOpen}
+    >
+      <span className="item-title">
+        <i className="live-dot" />{' '}
+        {props.state.kind === 'processing' ? 'Processing' : 'Recording now'}
+      </span>
+      <span className="item-meta">Back to the live view</span>
+    </button>
   )
 }
 

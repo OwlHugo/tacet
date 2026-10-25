@@ -276,6 +276,14 @@ code {
   font-size: 12px;
   color: var(--text-3);
 }
+.live-item .item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-item .item-meta {
+  padding-left: 16px;
+}
 .hit-text {
   font-size: 12px;
   color: var(--text-2);
