@@ -22,7 +22,7 @@ const minutes = (due: string) =>
           task: 'Send the release notes',
           owner: 'Me',
           due,
-          quote: 'I will send the release notes',
+          quote: 'I will send the release notes by Thursday',
           segments: [1],
         },
         {

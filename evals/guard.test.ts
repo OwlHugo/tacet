@@ -68,7 +68,7 @@ describe('guardCheck', () => {
       task: 'Send the release notes',
       owner: 'Me',
       due: '',
-      quote: 'I will send the release notes',
+      quote: 'I will send the release notes before the Lisbon offsite',
       segments: [1],
     }
     expect(guardCheck({ summary: [], decisions: [], action_items: [task] }, said)).toEqual({

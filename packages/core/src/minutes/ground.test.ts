@@ -240,11 +240,23 @@ describe('groundMinutes', () => {
   describe('deadlines', () => {
     it('keeps a deadline said in the task line, as it was said', () => {
       const r = groundMinutes(
-        one('Send the release notes', 'Me', 'I will send the release notes', [3], ' by Thursday '),
+        one(
+          'Send the release notes',
+          'Me',
+          'I will send the release notes to the team by Thursday',
+          [3],
+          ' by Thursday ',
+        ),
         TRANSCRIPT,
         't',
       )
       expect(r.actionItems[0]).toMatchObject({ due: 'by Thursday', segments: [3], at: 14.5 })
+      const outside = groundMinutes(
+        one('Send the release notes', 'Me', 'I will send the release notes', [3], 'by Thursday'),
+        TRANSCRIPT,
+        't',
+      )
+      expect(outside.actionItems[0]).not.toHaveProperty('due')
       const spaced = groundMinutes(
         one('Send the release notes', 'Me', '  I will send the release notes ', [3], 'by Thursday'),
         TRANSCRIPT,
@@ -337,8 +349,51 @@ describe('groundMinutes', () => {
           't',
         ).actionItems[0]?.due
       expect(due('by Thursday')).toBeUndefined()
-      expect(due('Thursday')).toBe('Thursday')
+      expect(due('Thursday')).toBeUndefined()
       expect(due('—')).toBeUndefined()
+    })
+
+    it('keeps a deadline only on the task whose part of the line says it', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        segments: [
+          {
+            id: 0,
+            start: 0,
+            end: 5,
+            speaker: 'Me',
+            text: 'Ana revisa o contrato e o Pedro faz o deploy até sexta.',
+          },
+        ],
+      }
+      const r = groundMinutes(
+        {
+          summary: [],
+          decisions: [],
+          action_items: [
+            {
+              task: 'Revisar o contrato',
+              owner: 'Ana',
+              due: 'até sexta',
+              quote: 'Ana revisa o contrato',
+              segments: [0],
+            },
+            {
+              task: 'Fazer o deploy',
+              owner: 'Pedro',
+              due: 'até sexta',
+              quote: 'o Pedro faz o deploy até sexta',
+              segments: [0],
+            },
+          ],
+        },
+        t,
+        't',
+      )
+      expect(r.actionItems.map((a) => [a.owner, a.due])).toEqual([
+        ['Ana', undefined],
+        ['Pedro', 'até sexta'],
+      ])
     })
 
     it('needs every word of the deadline: "sexta-feira" is not "sexta"', () => {
@@ -439,7 +494,7 @@ describe('groundMinutes', () => {
               task: 'Prepare the offer letter',
               owner: 'Others',
               due: 'on Wednesday',
-              quote: 'I will prepare the offer letter',
+              quote: 'I will prepare the offer letter and send it to legal on Wednesday',
               segments: [0],
             },
             {

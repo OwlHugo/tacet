@@ -60,37 +60,46 @@
   "raw": {
     "summary": [
       {
-        "text": "The team agreed to ship the beta on Friday and Maria will update the pricing page before that. The dark mode toggle was removed from the release. Me will send release notes to the team by Thursday. Carlos will check Windows crash reports tomorrow morning.",
-        "segments": [1, 2, 4, 5, 6]
+        "text": "Discussed and agreed to ship the beta on Friday, with Maria updating the pricing page and Me sending release notes by Thursday.",
+        "segments": [1, 2, 3]
+      },
+      {
+        "text": "Decided to remove the dark mode toggle from the current release.",
+        "segments": [4]
       }
     ],
     "decisions": [
       {
-        "text": "Ship the beta on Friday",
+        "text": "Ship the beta on Friday.",
         "quote": "we should ship the beta on Friday",
-        "segments": [1, 2]
+        "segments": [1]
+      },
+      {
+        "text": "Drop the dark mode toggle from this release.",
+        "quote": "We also decided to drop the dark mode toggle from this release.",
+        "segments": [4]
       }
     ],
     "action_items": [
       {
-        "task": "Update the pricing page before the beta launch",
+        "task": "Update the pricing page before the beta launch on Friday.",
         "owner": "Maria",
         "due": "before that",
-        "quote": "Maria will update the pricing page before that",
+        "quote": "Maria will update the pricing page before that.",
         "segments": [2]
       },
       {
-        "task": "Send release notes to the team by Thursday",
+        "task": "Send release notes to the whole team by Thursday.",
         "owner": "Me",
         "due": "by Thursday",
         "quote": "I will send the release notes to the whole team by Thursday",
         "segments": [3]
       },
       {
-        "task": "Check Windows crash reports",
+        "task": "Check the Windows crash reports.",
         "owner": "Carlos",
         "due": "tomorrow morning",
-        "quote": "Sure, I will look at the Windows crash reports tomorrow morning",
+        "quote": "Sure, I will look at the Windows crash reports tomorrow morning.",
         "segments": [6]
       }
     ]
