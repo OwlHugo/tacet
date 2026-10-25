@@ -16,7 +16,7 @@ describe('toMarkdown', () => {
     const md = toMarkdown(base)
     expect(
       md.startsWith(
-        '---\ntitle: "Sync \\"Q4\\""\ndate: 2026-10-24T14:30:00.000Z\nduration: "1:02:05"\nlanguage: en\nwhisper_model: base\ntags: [meeting, tacet]\ntacet: 1\ntacet_id: "m"\n---\n\n# Sync "Q4"\n',
+        '---\ntitle: "Sync \\"Q4\\""\ndate: 2026-10-24T14:30:00.000Z\nduration: "1:02:05"\nlanguage: en\nwhisper_model: base\ntags: [meeting, tacet]\ntacet: 1\ntacet_id: m\n---\n\n# Sync "Q4"\n',
       ),
     ).toBe(true)
     expect(md).not.toContain('llm:')
@@ -43,10 +43,19 @@ describe('toMarkdown', () => {
     )
   })
 
-  it('reads back the meeting a note belongs to, and nothing from other files', () => {
-    expect(noteOwner(toMarkdown(base))).toBe('m')
-    expect(noteOwner(toMarkdown({ ...base, id: 'a"b' }))).toBe('a"b')
-    expect(noteOwner('# My own note\n\ntacet_id: "x"\n')).toBeUndefined()
-    expect(noteOwner('---\ntitle: x\n---\n\ntacet_id: "x"\n')).toBeUndefined()
+  it('reads back the meeting a note belongs to, only from its own frontmatter', () => {
+    expect(noteOwner(toMarkdown(base))).toEqual({ id: 'm' })
+    const legacy = toMarkdown(base).replace('tacet_id: m\n', '')
+    expect(noteOwner(legacy)).toEqual({ date: '2026-10-24T14:30:00.000Z' })
+    expect(noteOwner(legacy.replace('tacet: 1\n', ''))).toBeUndefined()
+    for (const other of [
+      '# My own note\n\ntacet_id: x\n',
+      '---\ntitle: x\n---\n\ntacet_id: x\n\n---\nmore\n',
+      '---\ntacet_id: "a" "b"\n---\n',
+      '---\ntacet_id: \\q\n---\n',
+      '---\ntacet_id: ../../etc\n---\n',
+      '',
+    ])
+      expect(noteOwner(other)).toBeUndefined()
   })
 })

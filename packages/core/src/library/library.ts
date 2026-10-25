@@ -4,6 +4,7 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
@@ -78,46 +79,81 @@ export class MeetingLibrary {
       })
   }
 
-  /** Where a meeting's note lives, given the names of every meeting in the library. */
-  #pathAmong(m: NoteKey, all: readonly NoteKey[]): string {
-    const base = noteName(m)
-    // Same title in the same minute (one file imported twice): every note in the clash gets its
-    // short id, so no order of saves can make two meetings share a file.
-    const clash = all.some((x) => x.id !== m.id && noteName(x) === base)
-    return join(this.folder, clash ? base.replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`) : base)
-  }
-
-  notePath(m: NoteKey): string {
-    return this.#pathAmong(m, this.#names())
-  }
-
-  /** Writes the data and the note. A rename or a new clash moves the affected notes along. */
-  save(m: Meeting): string {
-    mkdirSync(this.#dataDir, { recursive: true })
-    const before = this.#names()
-    const from = new Map(before.map((x) => [x.id, this.#pathAmong(x, before)]))
-    writeFileSync(join(this.#dataDir, `${m.id}.json`), JSON.stringify(m, null, 2))
-    const after = this.#names()
-    for (const x of after) {
-      const old = from.get(x.id)
-      const now = this.#pathAmong(x, after)
-      if (old !== undefined && old !== now && existsSync(old) && !existsSync(now))
-        renameSync(old, now)
+  /**
+   * Which meeting wrote each note in the folder: by the `tacet_id` in its frontmatter, or for notes
+   * from before that field, by the meeting's exact date when exactly one meeting has it.
+   */
+  #owners(all: readonly NoteKey[]): Map<string, string> {
+    const owners = new Map<string, string>()
+    if (!existsSync(this.folder)) return owners
+    const byDate = new Map<string, string[]>()
+    for (const x of all) byDate.set(x.date, [...(byDate.get(x.date) ?? []), x.id])
+    for (const f of readdirSync(this.folder)
+      .filter((x) => x.endsWith('.md'))
+      .sort()) {
+      const path = join(this.folder, f)
+      const owner = noteOwner(readFileSync(path, 'utf8'))
+      const ids =
+        owner === undefined ? [] : 'id' in owner ? [owner.id] : (byDate.get(owner.date) ?? [])
+      const [id] = ids
+      if (ids.length === 1 && id !== undefined && !owners.has(id)) owners.set(id, path)
     }
-    const note = this.#freePath(m, this.#pathAmong(m, after), from.get(m.id))
-    writeFileSync(note, toMarkdown(m))
-    return note
+    return owners
   }
 
   /**
-   * A note that is there but written for another meeting (its .json unreadable, or a file the user
-   * made by hand) is never overwritten: this meeting takes the name with its id instead. `own` is
-   * where this meeting's note already was, which covers notes written before `tacet_id` existed.
+   * The note a meeting should have: its name, or its name with the id when another meeting has the
+   * same title in the same minute. A name already taken by a file this meeting did not write (a note
+   * of a meeting whose .json is unreadable, or one the user wrote by hand) is never used; the
+   * meeting takes the name with its id instead.
    */
-  #freePath(m: NoteKey, path: string, own: string | undefined): string {
-    if (path === own || !existsSync(path) || noteOwner(readFileSync(path, 'utf8')) === m.id)
-      return path
-    return join(this.folder, noteName(m).replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`))
+  #target(m: NoteKey, all: readonly NoteKey[], owners: ReadonlyMap<string, string>): string {
+    const base = noteName(m)
+    const clash = all.some((x) => x.id !== m.id && noteName(x) === base)
+    const free = (path: string) => !existsSync(path) || owners.get(m.id) === path
+    const candidates = [
+      ...(clash ? [] : [base]),
+      base.replace(/\.md$/, ` ${m.id.slice(0, 8)}.md`),
+      base.replace(/\.md$/, ` ${m.id}.md`),
+    ].map((name) => join(this.folder, name))
+    const path = candidates.find(free)
+    if (path === undefined) throw new Error(`Every note name for meeting ${m.id} is taken: ${base}`)
+    return path
+  }
+
+  /** Where this meeting's note is, or would be written. */
+  notePath(m: NoteKey): string {
+    const all = this.#names()
+    const owners = this.#owners(all)
+    return owners.get(m.id) ?? this.#target(m, all, owners)
+  }
+
+  /**
+   * Writes the data and the note. A rename or a new name clash moves notes, but only notes Tacet
+   * wrote for that same meeting: a file is never overwritten or moved unless its frontmatter says
+   * it belongs to the meeting being placed.
+   */
+  save(m: Meeting): string {
+    mkdirSync(this.#dataDir, { recursive: true })
+    writeFileSync(join(this.#dataDir, `${m.id}.json`), JSON.stringify(m, null, 2))
+    const all = this.#names()
+    const owners = this.#owners(all)
+    const note = this.#target(m, all, owners)
+    const previous = owners.get(m.id)
+    writeFileSync(note, toMarkdown(m))
+    if (previous !== undefined && previous !== note) rmSync(previous)
+    owners.set(m.id, note)
+    // Meetings that now clash with (or no longer clash with) this one move to their new name.
+    for (const x of all) {
+      const at = owners.get(x.id)
+      if (x.id === m.id || at === undefined) continue
+      const to = this.#target(x, all, owners)
+      if (to !== at) {
+        renameSync(at, to)
+        owners.set(x.id, to)
+      }
+    }
+    return note
   }
 
   get(id: string): Meeting | undefined {

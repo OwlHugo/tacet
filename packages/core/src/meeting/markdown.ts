@@ -12,12 +12,21 @@ function section(title: string, items: readonly string[], empty: string): string
   return [`## ${title}`, '', ...(items.length > 0 ? items : [empty]), '']
 }
 
-const OWNER = /^---\n(?:.*\n)*?tacet_id: (".*")\n(?:.*\n)*?---\n/
-
-/** The meeting id a note was written for, from its frontmatter; undefined for any other file. */
-export function noteOwner(markdown: string): string | undefined {
-  const quoted = OWNER.exec(markdown)?.[1]
-  return quoted === undefined ? undefined : String(JSON.parse(quoted))
+/**
+ * Who a note was written for, from its own frontmatter (the block between the first two `---`
+ * lines): `{ id }` for current notes, `{ date }` for notes Tacet wrote before notes carried their id
+ * (`tacet: 1` plus the meeting's exact ISO date). Undefined for anything else, including notes
+ * written by hand. Never throws, whatever the file contains.
+ */
+export function noteOwner(
+  markdown: string,
+): { readonly id: string } | { readonly date: string } | undefined {
+  const front = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(markdown)?.[1]
+  if (front === undefined) return undefined
+  const id = /^tacet_id: ([A-Za-z0-9_-]{1,64})$/m.exec(front)?.[1]
+  if (id !== undefined) return { id }
+  const date = /^date: (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z)$/m.exec(front)?.[1]
+  return date !== undefined && /^tacet: 1$/m.test(front) ? { date } : undefined
 }
 
 /** Obsidian Markdown: YAML frontmatter, a block id on every transcript line, timestamps linking to them. */
@@ -32,7 +41,7 @@ export function toMarkdown(m: Meeting): string {
     ...(m.minutes ? [`llm: ${m.minutes.model}`] : []),
     'tags: [meeting, tacet]',
     'tacet: 1',
-    `tacet_id: ${JSON.stringify(m.id)}`,
+    `tacet_id: ${m.id}`,
     '---',
     '',
     `# ${m.title}`,

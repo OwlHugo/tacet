@@ -32,6 +32,10 @@ const MEETING: Meeting = {
 }
 
 const library = () => new MeetingLibrary(mkdtempSync(join(tmpdir(), 'tacet-lib-')))
+const md = (lib: MeetingLibrary) =>
+  readdirSync(lib.folder)
+    .filter((f) => f.endsWith('.md'))
+    .sort()
 
 describe('MeetingLibrary', () => {
   it('writes Obsidian markdown with timestamp links to block ids', () => {
@@ -142,28 +146,39 @@ describe('MeetingLibrary', () => {
     ])
   })
 
-  it('never overwrites a note it did not write, even when the other .json is unreadable', () => {
+  it('never overwrites or moves a note it did not write, on the first save or any later one', () => {
+    const lib = library()
+    const handmade = join(lib.folder, '2026-10-24 1430 Retro.md')
+    writeFileSync(handmade, '# my notes\n')
+    const retro = { ...MEETING, id: 'retro0001', title: 'Retro' }
+    const first = lib.save(retro)
+    expect(first.endsWith('1430 Retro retro000.md')).toBe(true)
+    // saving again (new minutes) and renaming in the UI keep away from the hand-written file
+    expect(lib.save({ ...retro, timings: { transcribeSeconds: 2 } })).toBe(first)
+    expect(lib.notePath(retro)).toBe(first)
+    const renamed = lib.save({ ...retro, title: 'Planning' })
+    expect(renamed.endsWith('1430 Planning.md')).toBe(true)
+    expect(readFileSync(handmade, 'utf8')).toBe('# my notes\n')
+    expect(md(lib)).toEqual(['2026-10-24 1430 Planning.md', '2026-10-24 1430 Retro.md'])
+  })
+
+  it('keeps the note of a meeting whose .json became unreadable', () => {
     const lib = library()
     const first = lib.save(MEETING)
     writeFileSync(join(lib.folder, '.tacet', 'm1.json'), '{ truncated')
     const again = { ...MEETING, id: 'm2abcdef9' }
     const second = lib.save(again)
     expect(second.endsWith('1430 Beta launch sync m2abcdef.md')).toBe(true)
-    expect(readFileSync(first, 'utf8')).toContain('tacet_id: "m1"')
-    // a note the user wrote by hand under the same name is left alone too
-    const handmade = lib.notePath({ ...MEETING, id: 'h', title: 'Retro' })
-    writeFileSync(handmade, '# my notes\n')
-    const retro = lib.save({ ...MEETING, id: 'retro0001', title: 'Retro' })
-    expect(retro.endsWith('1430 Retro retro000.md')).toBe(true)
-    expect(readFileSync(handmade, 'utf8')).toBe('# my notes\n')
+    expect(lib.save({ ...again, timings: { transcribeSeconds: 3 } })).toBe(second)
+    expect(readFileSync(first, 'utf8')).toContain('tacet_id: m1')
   })
 
-  it('re-saves its own note in place, also one written before notes carried their id', () => {
+  it('adopts a note written before notes carried their id, without duplicating it', () => {
     const lib = library()
     const path = lib.save(MEETING)
     writeFileSync(path, readFileSync(path, 'utf8').replace(/tacet_id: .*\n/, ''))
     expect(lib.save({ ...MEETING, timings: { transcribeSeconds: 2 } })).toBe(path)
-    expect(readFileSync(path, 'utf8')).toContain('tacet_id: "m1"')
-    expect(readdirSync(lib.folder).filter((f) => f.endsWith('.md'))).toHaveLength(1)
+    expect(readFileSync(path, 'utf8')).toContain('tacet_id: m1')
+    expect(md(lib)).toHaveLength(1)
   })
 })
