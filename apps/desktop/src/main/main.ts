@@ -218,6 +218,21 @@ const importAudio = audioImporter({
   },
 })
 
+/** The window shows an import's error; with it closed (a tray app), a notification does instead. */
+const importFromWindow = (path: string) =>
+  importAudio(path).catch((e: unknown) => {
+    if (
+      (!mainWindow || mainWindow.isDestroyed() || !mainWindow.isVisible()) &&
+      Notification.isSupported()
+    )
+      new Notification({
+        title: 'Import failed',
+        body: e instanceof Error ? e.message : String(e),
+        silent: true,
+      }).show()
+    throw e
+  })
+
 const controller = recordingController({
   recorder,
   notesFolder: () => settings.outputDir,
@@ -314,14 +329,14 @@ function wireIpc(): void {
     if (m) shell.showItemInFolder(library().notePath(m))
   })
   handle('meetings:search', INVOKE['meetings:search'], DEV, (q) => library().search(q))
-  handle('meetings:import', INVOKE['meetings:import'], DEV, importAudio)
+  handle('meetings:import', INVOKE['meetings:import'], DEV, importFromWindow)
   handle('meetings:import-dialog', INVOKE['meetings:import-dialog'], DEV, async () => {
     const r = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [{ name: 'Audio', extensions: [...IMPORT_EXTENSIONS] }],
     })
     const [file] = r.filePaths
-    return r.canceled || !file ? undefined : importAudio(file)
+    return r.canceled || !file ? undefined : importFromWindow(file)
   })
   handle('settings:get', INVOKE['settings:get'], DEV, () => settings)
   handle('settings:set', INVOKE['settings:set'], DEV, (patch) =>
