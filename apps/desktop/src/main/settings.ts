@@ -1,29 +1,35 @@
-import { app } from 'electron';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import type { Settings } from '../shared/ipc';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { type Settings, SettingsSchema } from '../shared/contract.ts'
 
-const file = () => join(app.getPath('userData'), 'settings.json');
-
-export function defaults(): Settings {
+export function defaultSettings(documents: string): Settings {
   return {
-    outputDir: join(app.getPath('documents'), 'Tacet'),
+    outputDir: join(documents, 'Tacet'),
     whisperModel: 'base',
     language: 'auto',
     llmModel: 'qwen2.5:7b',
     shortcut: 'CommandOrControl+Shift+M',
     keepAudio: true,
-  };
+  }
 }
 
-export function loadSettings(): Settings {
-  const base = defaults();
-  if (process.env.TACET_OUTPUT_DIR) base.outputDir = process.env.TACET_OUTPUT_DIR;
-  if (!existsSync(file())) return base;
-  return { ...base, ...(JSON.parse(readFileSync(file(), 'utf8')) as Partial<Settings>) };
+/** `base` with every field of `patch` that is set. */
+export function withPatch(
+  base: Settings,
+  patch: Partial<Record<keyof Settings, unknown>>,
+): Settings {
+  const set = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined))
+  return SettingsSchema.parse({ ...base, ...set })
 }
 
-export function saveSettings(s: Settings): void {
-  mkdirSync(app.getPath('userData'), { recursive: true });
-  writeFileSync(file(), JSON.stringify(s, null, 2));
+/** Saved settings over the defaults. A file written by an incompatible version is ignored. */
+export function loadSettings(file: string, defaults: Settings): Settings {
+  if (!existsSync(file)) return defaults
+  const saved = SettingsSchema.partial().safeParse(JSON.parse(readFileSync(file, 'utf8')))
+  return saved.success ? withPatch(defaults, saved.data) : defaults
+}
+
+export function saveSettings(file: string, settings: Settings): void {
+  mkdirSync(dirname(file), { recursive: true })
+  writeFileSync(file, JSON.stringify(settings, null, 2))
 }

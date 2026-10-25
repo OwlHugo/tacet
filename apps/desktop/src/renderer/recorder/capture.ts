@@ -1,12 +1,12 @@
 /**
- * Audio capture, two separate tracks:
+ * Two separate tracks:
  *   mic     getUserMedia microphone
- *   system  getDisplayMedia with the main process answering audio: 'loopback'
- *           (ScreenCaptureKit on macOS 13+, WASAPI on Windows). On Linux we take the
- *           PulseAudio/PipeWire "Monitor of ..." input instead, no portal dialog needed.
- * Both are resampled to 16 kHz mono in an AudioWorklet and streamed to the main process.
+ *   system  getDisplayMedia, answered in the main process with audio: 'loopback'
+ *           (ScreenCaptureKit on macOS 13+, WASAPI on Windows). On Linux the PulseAudio/PipeWire
+ *           "Monitor of ..." input is used instead, with no portal dialog.
+ * Both are resampled to 16 kHz mono by an AudioWorklet and streamed to the main process.
  */
-export type Track = 'mic' | 'system';
+import type { Track } from '../../shared/contract.ts'
 
 const WORKLET = `
 class Tap extends AudioWorkletProcessor {
@@ -14,8 +14,7 @@ class Tap extends AudioWorkletProcessor {
   process(inputs) {
     const ch = inputs[0];
     if (!ch || !ch.length) return true;
-    const len = ch[0].length;
-    for (let i = 0; i < len; i++) {
+    for (let i = 0; i < ch[0].length; i++) {
       let s = 0;
       for (let c = 0; c < ch.length; c++) s += ch[c][i];
       this.buf[this.n++] = s / ch.length;
@@ -25,82 +24,94 @@ class Tap extends AudioWorkletProcessor {
   }
 }
 registerProcessor('tacet-tap', Tap);
-`;
+`
 
-export const SAMPLE_RATE = 16000;
+export const SAMPLE_RATE = 16000
 
 export interface Capture {
-  track: Track;
-  stop(): Promise<void>;
+  readonly track: Track
+  stop(): Promise<void>
 }
 
-async function tap(stream: MediaStream, track: Track, onChunk: (t: Track, d: Float32Array) => void): Promise<Capture> {
-  const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
-  const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));
-  await ctx.audioWorklet.addModule(url);
-  URL.revokeObjectURL(url);
-  const src = ctx.createMediaStreamSource(stream);
-  const node = new AudioWorkletNode(ctx, 'tacet-tap', { channelCountMode: 'explicit', channelCount: 2 });
-  node.port.onmessage = (e: MessageEvent<Float32Array>) => onChunk(track, e.data);
-  src.connect(node);
+type OnChunk = (track: Track, data: Float32Array) => void
+
+async function tap(stream: MediaStream, track: Track, onChunk: OnChunk): Promise<Capture> {
+  const ctx = new AudioContext({ sampleRate: SAMPLE_RATE })
+  const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }))
+  await ctx.audioWorklet.addModule(url)
+  URL.revokeObjectURL(url)
+  const node = new AudioWorkletNode(ctx, 'tacet-tap', {
+    channelCountMode: 'explicit',
+    channelCount: 2,
+  })
+  node.port.onmessage = (e: MessageEvent<Float32Array>) => onChunk(track, e.data)
+  ctx.createMediaStreamSource(stream).connect(node)
   // Keep the graph pulling without playing anything back.
-  const mute = ctx.createGain();
-  mute.gain.value = 0;
-  node.connect(mute).connect(ctx.destination);
+  const mute = ctx.createGain()
+  mute.gain.value = 0
+  node.connect(mute).connect(ctx.destination)
   return {
     track,
     stop: async () => {
-      stream.getTracks().forEach((t) => t.stop());
-      await new Promise((r) => setTimeout(r, 300));
-      await ctx.close();
+      for (const t of stream.getTracks()) t.stop()
+      await new Promise((r) => setTimeout(r, 300))
+      await ctx.close()
     },
-  };
+  }
 }
 
-/** Test hook: play a WAV into a MediaStream so the e2e run has a known "microphone". */
+/** e2e hook: play a WAV into a MediaStream as a known "microphone". */
 async function fileStream(bytes: Uint8Array): Promise<MediaStream> {
-  const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
-  const buffer = await ctx.decodeAudioData(bytes.slice().buffer);
-  const src = ctx.createBufferSource();
-  src.buffer = buffer;
-  const dest = ctx.createMediaStreamDestination();
-  src.connect(dest);
-  src.start();
-  return dest.stream;
+  const ctx = new AudioContext({ sampleRate: SAMPLE_RATE })
+  const source = ctx.createBufferSource()
+  source.buffer = await ctx.decodeAudioData(bytes.slice().buffer)
+  const dest = ctx.createMediaStreamDestination()
+  source.connect(dest)
+  source.start()
+  return dest.stream
 }
 
-export async function captureMic(onChunk: (t: Track, d: Float32Array) => void, fake?: Uint8Array): Promise<Capture> {
-  if (fake) return tap(await fileStream(fake), 'mic', onChunk);
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
-  });
-  return tap(stream, 'mic', onChunk);
+export async function captureMic(onChunk: OnChunk, fake: Uint8Array | undefined): Promise<Capture> {
+  const stream = fake
+    ? await fileStream(fake)
+    : await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+        },
+      })
+  return tap(stream, 'mic', onChunk)
 }
 
 async function linuxMonitor(): Promise<MediaStream | undefined> {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  const monitor = devices.find((d) => d.kind === 'audioinput' && /monitor/i.test(d.label));
-  if (!monitor) return undefined;
+  const devices = await navigator.mediaDevices.enumerateDevices()
+  const monitor = devices.find((d) => d.kind === 'audioinput' && /monitor/i.test(d.label))
+  if (!monitor) return undefined
   return navigator.mediaDevices.getUserMedia({
-    audio: { deviceId: { exact: monitor.deviceId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-  });
+    audio: {
+      deviceId: { exact: monitor.deviceId },
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+    },
+  })
 }
 
-export async function captureSystem(platform: string, onChunk: (t: Track, d: Float32Array) => void): Promise<Capture> {
-  let stream: MediaStream | undefined;
-  if (platform === 'linux') stream = await linuxMonitor();
-  if (!stream) {
-    const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-    // We only want the audio. Drop the video right away.
-    display.getVideoTracks().forEach((t) => {
-      t.stop();
-      display.removeTrack(t);
-    });
-    const audio = display.getAudioTracks()[0];
-    if (!audio) throw new Error('System audio track is not available on this system.');
-    console.log('[capture] system track', audio.label, audio.readyState, JSON.stringify(audio.getSettings()));
-    audio.addEventListener('ended', () => console.log('[capture] system track ended'));
-    stream = display;
+async function loopback(): Promise<MediaStream> {
+  const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+  // Only the audio is wanted: the video track is stopped right away and never recorded.
+  for (const t of display.getVideoTracks()) {
+    t.stop()
+    display.removeTrack(t)
   }
-  return tap(stream, 'system', onChunk);
+  if (display.getAudioTracks().length === 0)
+    throw new Error('System audio track is not available on this system.')
+  return display
+}
+
+export async function captureSystem(isLinux: boolean, onChunk: OnChunk): Promise<Capture> {
+  const stream = (isLinux ? await linuxMonitor() : undefined) ?? (await loopback())
+  return tap(stream, 'system', onChunk)
 }

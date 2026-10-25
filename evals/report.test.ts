@@ -1,0 +1,40 @@
+import { describe, expect, it } from 'vitest'
+import { type CaseResult, failures, type Report, toMarkdown } from './report.ts'
+
+const c = (over: Partial<CaseResult> = {}): CaseResult => ({
+  id: 'a',
+  audioSeconds: 30,
+  wer: 0.1,
+  speakerAccuracy: 1,
+  timestampErrorSeconds: 0.01,
+  transcribeSecondsPerAudioMinute: 2,
+  minutesSecondsPerAudioMinute: undefined,
+  items: 2,
+  grounded: 2,
+  expectedFound: 1,
+  expectedTotal: 2,
+  guard: { injected: 4, rejected: 4 },
+  ...over,
+})
+const report = (cases: CaseResult[]): Report => ({
+  mode: 'sem-ia',
+  platform: 'x',
+  whisperModel: 'base',
+  llmModel: 'm',
+  cases,
+})
+
+describe('eval report', () => {
+  it('passes when everything is grounded and the guard holds', () => {
+    expect(failures(report([c(), c({ id: 'b', audioSeconds: 10, wer: 0.3 })]), 0.2)).toEqual([])
+  })
+  it('fails on ungrounded items, a leaking guard or a WER above the limit', () => {
+    const r = report([c({ grounded: 1, guard: { injected: 4, rejected: 3 }, wer: 0.5 })])
+    expect(failures(r, 0.2)).toHaveLength(3)
+  })
+  it('renders a weighted total row', () => {
+    const md = toMarkdown(report([c(), c({ id: 'b', audioSeconds: 10, wer: 0.3 })]))
+    expect(md).toContain('| **Total** | 40.0s | 15.0% |')
+    expect(md).toContain('Hallucination guard: 8/8')
+  })
+})

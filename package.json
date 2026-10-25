@@ -3,20 +3,35 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.15.0",
-  "engines": { "node": ">=22.18" },
+  "engines": {
+    "node": ">=24.12"
+  },
   "scripts": {
-    "build": "pnpm -r run build",
-    "test": "pnpm -r run test",
-    "typecheck": "pnpm -r run typecheck",
-    "eval": "pnpm -r --filter @tacet/core --filter tacet run build && node apps/cli/dist/index.js eval --dataset eval/dataset --report eval/results.json",
-    "eval:record": "pnpm -r --filter @tacet/core --filter tacet run build && node apps/cli/dist/index.js eval --dataset eval/dataset --mode live --record --report eval/results.json",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:cobertura": "vitest run --coverage.enabled",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "arquitetura": "node scripts/arquitetura.ts",
+    "knip": "knip",
+    "eval": "node --conditions=development evals/rodar.ts",
+    "eval:sem-ia": "node --conditions=development evals/rodar.ts --sem-ia",
+    "eval:gravar": "node --conditions=development evals/rodar.ts --gravar",
+    "tacet": "node --conditions=development apps/cli/src/main.ts",
+    "desktop": "pnpm --filter @tacet/desktop dev",
+    "dist": "pnpm --filter @tacet/core build && pnpm --filter @tacet/desktop dist",
     "e2e": "./scripts/e2e-desktop.sh",
-    "desktop": "pnpm --filter @tacet/desktop run dev",
-    "dist": "pnpm --filter @tacet/desktop run dist"
+    "check": "pnpm lint && pnpm typecheck && pnpm arquitetura && pnpm knip && pnpm test:cobertura && pnpm eval:sem-ia"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "typescript": "^7.0.2",
-    "vitest": "^5.0.5"
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "24.19.2",
+    "@vitest/coverage-v8": "5.0.5",
+    "knip": "6.42.0",
+    "tsdown": "0.23.1",
+    "turbo": "2.11.9",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
   }
 }

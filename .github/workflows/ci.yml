@@ -1,40 +1,41 @@
-name: CI
+name: ci
 
 on:
   push:
     branches: [main]
   pull_request:
 
-permissions:
-  contents: read
-
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  test:
-    name: build + test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+  qualidade:
+    name: lint · types · architecture · knip · tests · eval without AI · build
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -r run build
-      - run: pnpm -r run typecheck
-      - run: pnpm -r run test
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm arquitetura
+      - run: pnpm knip
+      - run: pnpm test:cobertura
+      # Central gate: every minutes item grounded, every injected hallucination rejected.
+      - run: pnpm eval:sem-ia
+      - run: pnpm build
 
-  eval:
-    name: eval (${{ matrix.os }})
-    needs: test
+  plataformas:
+    name: tests + real whisper.cpp (${{ matrix.os }})
+    needs: qualidade
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,48 +44,39 @@ jobs:
     env:
       TACET_MODELS_DIR: ${{ github.workspace }}/.models
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -r run build
-
-      - name: whisper.cpp (macOS, Homebrew)
+      - run: pnpm test
+      - name: whisper.cpp (Homebrew)
         if: runner.os == 'macOS'
         run: brew install whisper-cpp
-      - name: whisper.cpp (prebuilt release)
+      - name: whisper.cpp (official release build)
         if: runner.os != 'macOS'
         shell: bash
         run: |
-          node apps/desktop/scripts/fetch-whisper.mjs
+          node apps/desktop/scripts/fetch-whisper.ts
           bin="$PWD/apps/desktop/resources/bin/whisper-cli"
           [ "$RUNNER_OS" = "Windows" ] && bin="$bin.exe"
           echo "TACET_WHISPER_BIN=$bin" >> "$GITHUB_ENV"
-
-      - name: cache whisper model
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: .models
           key: whisper-base-v1
-
-      # Transcription runs for real on every OS. The LLM step replays the outputs recorded with
-      # qwen2.5:7b (eval/dataset/*/replay.llm.json) and checks them against the transcript, plus
-      # the fabricated items the grounding guard must reject.
+      # Real transcription on every OS; the LLM output is replayed (runners have no GPU for a 7B model).
       - name: eval
-        run: node apps/cli/dist/index.js eval --dataset eval/dataset --mode replay --max-wer 0.15 --report eval-${{ runner.os }}.json
-      - run: cat eval-${{ runner.os }}.md >> "$GITHUB_STEP_SUMMARY"
         shell: bash
-      - uses: actions/upload-artifact@v4
-        with:
-          name: eval-${{ runner.os }}
-          path: eval-${{ runner.os }}.*
+        run: |
+          node --conditions=development evals/rodar.ts --so-whisper --max-wer 0.15 --relatorio eval.md
+          cat eval.md >> "$GITHUB_STEP_SUMMARY"
 
-  package:
+  pacote:
     name: package (${{ matrix.os }})
-    needs: test
+    needs: qualidade
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -93,15 +85,14 @@ jobs:
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @tacet/core build
-      - run: pnpm --filter @tacet/desktop dist
+      - run: pnpm dist
       - uses: actions/upload-artifact@v4
         with:
           name: app-${{ runner.os }}

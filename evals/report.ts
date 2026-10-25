@@ -1,0 +1,82 @@
+export interface CaseResult {
+  readonly id: string
+  readonly audioSeconds: number
+  readonly wer: number
+  readonly speakerAccuracy: number
+  readonly timestampErrorSeconds: number | undefined
+  readonly transcribeSecondsPerAudioMinute: number | undefined
+  readonly minutesSecondsPerAudioMinute: number | undefined
+  readonly items: number
+  readonly grounded: number
+  readonly expectedFound: number
+  readonly expectedTotal: number
+  readonly guard: { readonly injected: number; readonly rejected: number }
+}
+
+export interface Report {
+  readonly mode: string
+  readonly platform: string
+  readonly whisperModel: string
+  readonly llmModel: string
+  readonly cases: readonly CaseResult[]
+}
+
+const pct = (x: number) => `${(x * 100).toFixed(1)}%`
+const num = (x: number | undefined, suffix = '') =>
+  x === undefined ? '–' : `${x.toFixed(2)}${suffix}`
+const sum = (xs: readonly CaseResult[], f: (c: CaseResult) => number) =>
+  xs.reduce((a, c) => a + f(c), 0)
+
+/** Audio-weighted mean, ignoring cases where the metric was not measured. */
+function weighted(
+  cases: readonly CaseResult[],
+  f: (c: CaseResult) => number | undefined,
+): number | undefined {
+  const measured = cases.filter((c) => f(c) !== undefined)
+  const seconds = sum(measured, (c) => c.audioSeconds)
+  return measured.length > 0
+    ? sum(measured, (c) => (f(c) ?? 0) * c.audioSeconds) / seconds
+    : undefined
+}
+
+function totals(r: Report) {
+  const expected = sum(r.cases, (c) => c.expectedTotal)
+  return {
+    audioSeconds: sum(r.cases, (c) => c.audioSeconds),
+    wer: weighted(r.cases, (c) => c.wer) ?? 0,
+    transcribe: weighted(r.cases, (c) => c.transcribeSecondsPerAudioMinute),
+    minutes: weighted(r.cases, (c) => c.minutesSecondsPerAudioMinute),
+    items: sum(r.cases, (c) => c.items),
+    grounded: sum(r.cases, (c) => c.grounded),
+    recall: expected > 0 ? sum(r.cases, (c) => c.expectedFound) / expected : undefined,
+    injected: sum(r.cases, (c) => c.guard.injected),
+    rejected: sum(r.cases, (c) => c.guard.rejected),
+  }
+}
+
+export function toMarkdown(r: Report): string {
+  const t = totals(r)
+  const rows = r.cases.map(
+    (c) =>
+      `| ${c.id} | ${c.audioSeconds.toFixed(1)}s | ${pct(c.wer)} | ${pct(c.speakerAccuracy)} | ${num(c.timestampErrorSeconds, 's')} | ${num(c.transcribeSecondsPerAudioMinute)} | ${num(c.minutesSecondsPerAudioMinute)} | ${c.grounded}/${c.items} | ${c.expectedFound}/${c.expectedTotal} |`,
+  )
+  return [
+    '| Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |',
+    '|---|---|---|---|---|---|---|---|---|',
+    ...rows,
+    `| **Total** | ${t.audioSeconds.toFixed(1)}s | ${pct(t.wer)} | | | ${num(t.transcribe)} | ${num(t.minutes)} | ${t.grounded}/${t.items} | ${t.recall === undefined ? '–' : pct(t.recall)} |`,
+    '',
+    `Hallucination guard: ${t.rejected}/${t.injected} fabricated items rejected.`,
+    `Mode \`${r.mode}\`, platform ${r.platform}, whisper \`${r.whisperModel}\`, LLM \`${r.llmModel}\`.`,
+  ].join('\n')
+}
+
+/** Problems that fail the eval. Empty = pass. */
+export function failures(r: Report, maxWer: number | undefined): string[] {
+  const t = totals(r)
+  return [
+    ...(t.grounded === t.items ? [] : [`${t.items - t.grounded} minutes item(s) without a source`]),
+    ...(t.rejected === t.injected ? [] : ['the hallucination guard let a fabricated item through']),
+    ...(maxWer !== undefined && t.wer > maxWer ? [`WER ${pct(t.wer)} above ${pct(maxWer)}`] : []),
+  ]
+}

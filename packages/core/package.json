@@ -4,17 +4,43 @@
   "description": "Local-first meeting transcription and grounded minutes: whisper.cpp + Ollama, no cloud.",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OwlHugo/tacet.git",
+    "directory": "packages/core"
   },
-  "files": ["dist"],
-  "engines": { "node": ">=22.18" },
-  "keywords": ["whisper", "whisper.cpp", "ollama", "transcription", "meeting-notes", "local-first", "offline"],
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./browser": {
+      "development": "./src/browser.ts",
+      "types": "./dist/browser.d.mts",
+      "default": "./dist/browser.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "keywords": [
+    "whisper",
+    "whisper.cpp",
+    "ollama",
+    "transcription",
+    "meeting-notes",
+    "local-first",
+    "offline"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
   }
 }

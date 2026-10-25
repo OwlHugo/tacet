@@ -12,13 +12,28 @@ extraResources:
     to: bin
     filter: ['**/*']
 asar: true
+afterSign: scripts/after-sign.ts
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+# Electron security checklist: no ELECTRON_RUN_AS_NODE, no --inspect, app only from the asar.
+electronFuses:
+  runAsNode: false
+  enableNodeCliInspectArguments: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableCookieEncryption: true
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+  # Flipping fuses edits the Electron binary; without a fresh ad-hoc signature Apple Silicon kills it.
+  resetAdHocDarwinSignature: true
 mac:
   category: public.app-category.productivity
   target:
     - target: dmg
       arch: [arm64, x64]
   icon: build/icon.png
+  # Ad-hoc signature with the bundle id as identifier, so local builds stay "dev.tacet.app" for
+  # macOS privacy settings. Release builds override it with a Developer ID (CSC_LINK).
+  identity: '-'
   hardenedRuntime: true
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
