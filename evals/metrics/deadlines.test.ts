@@ -49,7 +49,7 @@ describe('checkDeadlines', () => {
 
   it('needs every keyword of the task and every word of the deadline', () => {
     const r = checkDeadlines(minutes('by Thursday'), [
-      { task: ['release', 'pricing'], due: 'thursday' },
+      { task: ['release', 'venue'], due: 'thursday' },
       { task: ['release', 'notes'], due: 'thursday morning' },
     ])
     expect(r.right).toBe(0)
