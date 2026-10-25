@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Health, MeetingSummary, RecorderState, Settings } from '../../shared/contract.ts'
 import { ipcErrorMessage, shortcutLabel } from './format.ts'
 import { DropOverlay, ImportButton, useAudioDrop } from './import-audio.tsx'
-import { isActive, LiveItem, LiveView, useLiveView } from './live-view.tsx'
+import { isActive, isLive, LiveItem, LiveView, useLiveView } from './live-view.tsx'
 import { MeetingView } from './meeting-view.tsx'
 import { api, IS_MAC } from './platform.ts'
 import { RecordButton } from './record-button.tsx'
@@ -66,7 +66,7 @@ function MeetingNav(props: {
 }) {
   return (
     <nav className="list">
-      {isActive(props.state) && (
+      {isLive(props.state) && (
         <LiveItem state={props.state} active={props.live} onOpen={props.onLive} />
       )}
       {props.query.trim() ? (

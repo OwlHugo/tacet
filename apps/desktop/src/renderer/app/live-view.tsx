@@ -13,6 +13,9 @@ type Live = Active | Failed
 export const isActive = (s: RecorderState): s is Active =>
   s.kind === 'starting' || s.kind === 'recording' || s.kind === 'processing'
 
+/** A meeting in progress, or the one that just failed: what the live panel and row are about. */
+export const isLive = (s: RecorderState): s is Live => isActive(s) || s.kind === 'error'
+
 const TRACKS: readonly { readonly track: Track; readonly name: string; readonly hint: string }[] = [
   { track: 'mic', name: 'You', hint: 'microphone' },
   { track: 'system', name: 'Call', hint: 'system audio' },
@@ -158,7 +161,7 @@ export function useLiveView(state: RecorderState) {
     if (state.kind === 'starting' || state.kind === 'processing' || state.kind === 'error')
       setBrowsing(false)
   }, [state.kind])
-  const live = isActive(state) || state.kind === 'error' ? state : undefined
+  const live = isLive(state) ? state : undefined
   return {
     /** The live state while the panel should show it, undefined otherwise. */
     shown: browsing ? undefined : live,
@@ -167,8 +170,15 @@ export function useLiveView(state: RecorderState) {
   }
 }
 
+const ITEM_TITLE: Record<Live['kind'], string> = {
+  starting: 'Recording now',
+  recording: 'Recording now',
+  processing: 'Processing',
+  error: 'Not saved',
+}
+
 /** First row of the meeting list while a meeting is live: the way back to the live panel. */
-export function LiveItem(props: { state: Active; active: boolean; onOpen: () => void }) {
+export function LiveItem(props: { state: Live; active: boolean; onOpen: () => void }) {
   return (
     <button
       type="button"
@@ -176,10 +186,11 @@ export function LiveItem(props: { state: Active; active: boolean; onOpen: () => 
       onClick={props.onOpen}
     >
       <span className="item-title">
-        <i className="live-dot" />{' '}
-        {props.state.kind === 'processing' ? 'Processing' : 'Recording now'}
+        <i className="live-dot" /> {ITEM_TITLE[props.state.kind]}
       </span>
-      <span className="item-meta">Back to the live view</span>
+      <span className="item-meta">
+        {props.state.kind === 'error' ? 'See what went wrong' : 'Back to the live view'}
+      </span>
     </button>
   )
 }
