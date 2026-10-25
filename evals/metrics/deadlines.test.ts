@@ -47,6 +47,15 @@ describe('checkDeadlines', () => {
     expect(r).toEqual({ right: 1, total: 2, wrong: [] })
   })
 
+  it('counts each expected deadline once, even when two tasks carry it', () => {
+    const twice = minutes('by Thursday')
+    const copy = twice.actionItems.map((a) => ({ ...a, task: `${a.task} again` }))
+    const r = checkDeadlines({ ...twice, actionItems: [...twice.actionItems, ...copy] }, [
+      { task: ['release', 'notes'], due: 'thursday' },
+    ])
+    expect(r).toEqual({ right: 1, total: 1, wrong: [] })
+  })
+
   it('lists a deadline on a task the script gives none', () => {
     const r = checkDeadlines(minutes('by Thursday'), [{ task: ['pricing', 'page'], due: 'friday' }])
     expect(r).toEqual({
