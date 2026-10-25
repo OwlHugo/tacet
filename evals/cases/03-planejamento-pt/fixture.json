@@ -50,15 +50,15 @@
         "segments": [1, 2, 3]
       },
       {
-        "text": "O Pedro foi mencionado para revisar o contrato relacionado à hospedagem, mas não há decisão formal sobre isso.",
-        "segments": [4]
+        "text": "Foi discutido a inclusão do login com Google na Sprint, mas não houve decisões adicionais sobre outros itens.",
+        "segments": [0, 1, 2]
       }
     ],
     "decisions": [
       {
         "text": "Incluir o login com Google na próxima Sprint.",
-        "quote": "Concordo. Então fica decidido o que eu loje incomprou ali entra.",
-        "segments": [2]
+        "quote": "Eu acho que o login com Google precisa entrar nessa sprint.",
+        "segments": [1]
       }
     ],
     "action_items": [

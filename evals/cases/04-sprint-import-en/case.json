@@ -1,0 +1,73 @@
+{
+  "id": "04-sprint-import-en",
+  "title": "Sprint planning (imported, one track)",
+  "language": "en",
+  "tracks": [
+    {
+      "file": "../../../docs/demo/meeting.wav",
+      "speaker": "Speaker"
+    }
+  ],
+  "reference": [
+    {
+      "speaker": "Speaker",
+      "text": "Okay Tom, let's do the sprint planning. We have two weeks, and the checkout redesign is still open.",
+      "start": 0.0
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Right. The payment form is done, but the mobile layout still breaks on small screens.",
+      "start": 7.76
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Then I think we should ship the redesign behind a feature flag, and turn it on for ten percent of users first.",
+      "start": 13.16
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Agreed. Feature flag, ten percent rollout. That gives us time to watch the error rate.",
+      "start": 20.94
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Good. What about the flaky end to end tests? They failed three times this week.",
+      "start": 26.44
+    },
+    {
+      "speaker": "Speaker",
+      "text": "I'd say we freeze new features until the test suite is green.",
+      "start": 33.14
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Fine, we freeze new features until the tests pass. So, tasks. Tom, can you fix the mobile layout by Wednesday?",
+      "start": 37.04
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Yes, I will fix the mobile layout by Wednesday.",
+      "start": 46.53
+    },
+    {
+      "speaker": "Speaker",
+      "text": "And I'll set up the feature flag and the error rate dashboard.",
+      "start": 49.81
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Priya should own the flaky tests. Maya, can you ask her to fix them this week?",
+      "start": 54.57
+    },
+    {
+      "speaker": "Speaker",
+      "text": "Sure. I'll ask Priya to fix the end to end tests by Friday. That's it, thanks Tom.",
+      "start": 59.07
+    }
+  ],
+  "expected_actions": [
+    ["mobile", "layout"],
+    ["feature", "flag", "dashboard"],
+    ["end", "end", "tests"]
+  ]
+}
