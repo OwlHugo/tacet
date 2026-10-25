@@ -1,4 +1,4 @@
-import { coverage, normalize, similarity, words } from '../matching/words.ts'
+import { coverage, findPhrase, normalize, similarity, words } from '../matching/words.ts'
 import {
   ME,
   OTHERS as OTHERS_LABEL,
@@ -204,11 +204,12 @@ const coreLine = (quote: string, lines: Lines): Segment =>
   lines.reduce((best, s) => (coverage(quote, s.text) > coverage(quote, best.text) ? s : best))
 
 /**
- * A deadline is kept only if it was said word for word (accents and punctuation aside) inside the
- * task's quote, as found on the task's own line, or in a cited line right next to it that is not
- * another task's line ("Can you do it?" / "Yes, by Wednesday"), which then joins the citation. A
- * deadline elsewhere on the line ("I'll send the notes, by the way Thursday is a holiday") or said for
- * another task on the same line ("Ana reviews the contract and Pedro deploys by Friday") is dropped.
+ * A deadline is kept only if it was said in a row inside the task's quote, found as a run of words on
+ * the task's own line, or in a cited line right next to it that is not another task's line ("Can you
+ * do it?" / "Yes, by Wednesday"), which then joins the citation. A deadline elsewhere on the line
+ * ("I'll send the notes, by the way Thursday is a holiday") or said for another task on the same line
+ * ("Ana reviews the contract and Pedro deploys by Friday") is dropped. What is kept is the wording of
+ * the transcript, not the model's.
  */
 function groundDue(
   c: Candidate,
@@ -218,15 +219,15 @@ function groundDue(
 ): { readonly due?: string; readonly lines: Lines } {
   const text = c.raw.due.trim()
   if (!text) return { lines: c.lines }
+  const quoted = findPhrase(c.raw.quote, c.core.text)
+  const own = quoted === undefined ? undefined : findPhrase(text, quoted)
+  if (own !== undefined) return { due: own, lines: c.lines }
   const near = new Set(index.around([c.core]).map((s) => s.id))
-  const evidence = index.pick(c.raw.segments).filter((s) => near.has(s.id) && !taskLines.has(s.id))
-  const spaced = (t: string) => ` ${words(t).join(' ')} `
-  const phrase = spaced(text)
-  const inQuote = spaced(c.raw.quote).includes(phrase) && spaced(c.core.text).includes(phrase)
-  if (inQuote || evidence.some((s) => spaced(s.text).includes(phrase))) {
-    const extra = evidence.filter((s) => !c.lines.includes(s))
-    const joined: [Segment, ...Segment[]] = [...c.lines, ...extra]
-    return { due: text, lines: joined.sort((a, b) => a.id - b.id) }
+  for (const s of index.pick(c.raw.segments)) {
+    const said = near.has(s.id) && !taskLines.has(s.id) ? findPhrase(text, s.text) : undefined
+    if (said === undefined) continue
+    const joined: [Segment, ...Segment[]] = [s, ...c.lines.filter((x) => x.id !== s.id)]
+    return { due: said, lines: joined.sort((x, y) => x.id - y.id) }
   }
   rejected.push({
     kind: 'action',

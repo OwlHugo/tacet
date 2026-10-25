@@ -24,6 +24,37 @@ export function words(text: string): string[] {
   return n ? n.split(' ') : []
 }
 
+/** Where a word of `text` starts and ends, with its normalized form. */
+interface Token {
+  readonly word: string
+  readonly start: number
+  readonly end: number
+}
+
+function tokens(text: string): Token[] {
+  return [...text.matchAll(/[\p{L}\p{N}']+/gu)].flatMap((m) => {
+    const word = normalize(m[0])
+    return word ? [{ word, start: m.index, end: m.index + m[0].length }] : []
+  })
+}
+
+/**
+ * The part of `text` that says `phrase`, as written in `text` (its accents, case and inner
+ * punctuation), when the words of `phrase` appear there in a row. Undefined otherwise, and for a
+ * phrase with no words.
+ */
+export function findPhrase(phrase: string, text: string): string | undefined {
+  const want = words(phrase).join(' ')
+  if (!want) return undefined
+  const have = tokens(text)
+  for (const [i, first] of have.entries()) {
+    const run = have.slice(i, i + want.split(' ').length)
+    const last = run.at(-1)
+    if (last && run.map((t) => t.word).join(' ') === want) return text.slice(first.start, last.end)
+  }
+  return undefined
+}
+
 const contentWords = (text: string): string[] =>
   words(text).filter((w) => w.length > 1 && !STOPWORDS.has(w))
 

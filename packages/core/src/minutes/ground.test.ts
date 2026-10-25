@@ -353,6 +353,52 @@ describe('groundMinutes', () => {
       expect(due('—')).toBeUndefined()
     })
 
+    it("keeps the transcript wording of the deadline, not the model's", () => {
+      const r = groundMinutes(
+        one('Escrever os testes', 'Me', 'Eu vou escrever os testes até sexta', [0], 'ATE SEXTA!!'),
+        {
+          ...DIALOGUE,
+          segments: [
+            {
+              id: 0,
+              start: 0,
+              end: 3,
+              speaker: 'Me',
+              text: 'Eu vou escrever os testes até sexta.',
+            },
+          ],
+        },
+        't',
+      )
+      expect(r.actionItems[0]?.due).toBe('até sexta')
+    })
+
+    it('needs the quote said in a row on the line, so a rewritten quote cannot carry a deadline', () => {
+      const lines = (text: string): Transcript => ({
+        ...DIALOGUE,
+        segments: [{ id: 0, start: 0, end: 5, speaker: 'Me', text }],
+      })
+      const ana = groundMinutes(
+        one('Revisar o contrato', 'Ana', 'Ana revisa o contrato até sexta', [0], 'até sexta'),
+        lines('Ana revisa o contrato e o Pedro faz o deploy até sexta.'),
+        't',
+      )
+      expect(ana.actionItems[0]?.task).toBe('Revisar o contrato')
+      expect(ana.actionItems[0]).not.toHaveProperty('due')
+      const notes = groundMinutes(
+        one(
+          'Send the release notes',
+          'Me',
+          'I will send the release notes by Thursday',
+          [0],
+          'by Thursday',
+        ),
+        lines('By Thursday the office closes, so I will send the release notes.'),
+        't',
+      )
+      expect(notes.actionItems[0]).not.toHaveProperty('due')
+    })
+
     it('keeps a deadline only on the task whose part of the line says it', () => {
       const t: Transcript = {
         ...DIALOGUE,
@@ -430,7 +476,7 @@ describe('groundMinutes', () => {
           t,
           't',
         ).actionItems[0]?.due
-      expect(due('até segunda', 'Ana revisa o contrato do fornecedor')).toBe('até segunda')
+      expect(due('até segunda', 'Ana revisa o contrato do fornecedor')).toBe('Até segunda')
       expect(due('até quarta', 'Ana revisa o contrato do fornecedor')).toBeUndefined()
       expect(due('até quarta', 'contrato do fornecedor, combinado')).toBe('até quarta')
     })
