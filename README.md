@@ -31,7 +31,7 @@ open https://github.com/OwlHugo/tacet/releases/latest
 npx tacet transcribe meeting.wav
 ```
 
-Requirements: [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install whisper-cpp` on macOS; Windows and Linux builds ship it) and, for minutes, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`). The first run downloads the whisper `base` model (142 MB) from Hugging Face. Run `npx tacet doctor` to check everything.
+Requirements: [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install whisper-cpp` on macOS; Windows and Linux builds ship it) and, for minutes, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`). Tacet uses the best whisper model already in `~/.cache/whisper` (`large-v3-turbo`, then `small`, then `base`); with none there, the first run downloads `base` (142 MB) from Hugging Face. You can pick another in Settings or with `-m`. Run `npx tacet doctor` to check everything.
 
 ## Your data stays on your machine
 
@@ -55,7 +55,7 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 - **Two tracks, no driver.** Your microphone and the system audio are recorded as separate files. System audio uses Chromium's loopback capture: ScreenCaptureKit on macOS 13+, WASAPI on Windows, the PulseAudio/PipeWire monitor on Linux. No BlackHole, no Loopback.app.
 - **Me / Others.** Each track is transcribed separately, so speaker labels come for free. Mic echo of the speakers is detected and removed when you are not using headphones.
 - **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms (see the eval).
-- **Grounded minutes.** Summary, decisions and action items with owners. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
+- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said in the task's lines, and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
 - **Global shortcut** `⌘⇧M` / `Ctrl+Shift+M` to start and stop from anywhere.
@@ -67,15 +67,15 @@ Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.
 
 Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
-| Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found |
-|---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.35 | 27.53 | 4/4 | 3/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.42 | 33.52 | 3/3 | 2/2 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.06 | 27.91 | 2/2 | 1/2 |
-| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.12 | 17.84 | 4/4 | 3/3 |
-| **Total** | 138.2s | **5.2%** | **100%** | | **1.7** | 23.8 | **13/13** | 90.0% |
+| Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |
+|---|---|---|---|---|---|---|---|---|---|
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 1.93 | 26.53 | 4/4 | 3/3 | 2/2 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.13 | 39.39 | 3/3 | 2/2 | 1/1 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 1.90 | 35.81 | 3/3 | 1/2 | 0/1 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.07 | 17.27 | 4/4 | 3/3 | 2/2 |
+| **Total** | 138.2s | **5.2%** | **100%** | | **1.5** | 25.5 | **14/14** | 90.0% | 5/6 |
 
-Hallucination guard: **16/16** fabricated items rejected (four made-up items citing real line ids are injected into every case).
+Hallucination guard: **26/26** fabricated items rejected (four made-up items citing real line ids are injected into every case, and a deadline nobody said is pinned on every real task).
 
 On the three two-track cases (01 to 03), `large-v3-turbo` brings the WER down to **2.7%** (0.0% / 3.4% / 5.7%) at 11.2 s per audio minute.
 
@@ -85,6 +85,7 @@ What the columns mean:
 - **Speaker attribution**: share of script lines that land on the right track (two-track cases only; the one-track import has nothing to attribute).
 - **Timestamp error**: mean distance between when a line was spoken and the start of the segment holding it.
 - **Grounded items**: decisions and action items that cite real lines, carry the timestamp of the first cited line and whose quote is found there; a task's owner must be a track of that meeting, a name that was said, or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output. CI fails if any item is ungrounded or any injected item survives.
+- **Deadlines right**: deadlines said in the script that reach the right task, in the words that were said. A task carrying a deadline other than the one said fails the eval; a missing one only lowers this count. The miss in the Portuguese case: the model wrote "sexta-feira" where only "sexta" was said, and the guard dropped it.
 - **Expected tasks found**: recall of the action items written in the script. The miss in the Portuguese case is on purpose kept visible: whisper `base` heard "como fornecedor" as "como for necedor", and Tacet would rather drop a task than write one the transcript does not say.
 
 Transcription runs for real on all three CI runners. The whisper and LLM outputs are recorded locally (`pnpm eval:gravar`) and replayed in CI, since GitHub runners have no GPU for a 7B model; the grounding checks run on those outputs every time.
