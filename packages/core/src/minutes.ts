@@ -50,6 +50,7 @@ Rules:
 - decisions: only things the participants explicitly agreed or decided. Empty list if none.
 - action_items: only concrete tasks someone committed to or was asked to do. "owner" is the person's name if it was said,
   otherwise "Me" or "Others" based on who committed. Empty list if none.
+- "Me" and "Others" are track labels, not names. In summary and decisions write neutrally ("the team", "it was agreed"), never "Me did".
 - Write every field in the language of the transcript. Be brief.`;
 
 const LANGUAGES: Record<string, string> = { en: 'English', pt: 'Portuguese', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian' };
@@ -146,6 +147,8 @@ export function groundMinutes(raw: RawMinutes, transcript: Transcript, model: st
   const all = transcript.segments;
   const fullText = all.map((s) => s.text).join(' ');
   const at = (segs: number[]) => byId.get(segs[0] ?? -1)?.start ?? 0;
+  const contextOf = (segs: number[]) =>
+    [...new Set(segs.flatMap((id) => [id - 1, id, id + 1]))].map((id) => byId.get(id)?.text ?? '').join(' ');
   const rejected: RejectedItem[] = [];
 
   const summary: SummaryPoint[] = [];
@@ -161,6 +164,8 @@ export function groundMinutes(raw: RawMinutes, transcript: Transcript, model: st
     if (!d.text?.trim()) continue;
     const a = anchor(d.quote || d.text, d.segments ?? [], byId, all, quoteT);
     if (!a) rejected.push({ kind: 'decision', text: d.text, reason: 'quote not found in the transcript' });
+    else if (coverage(d.text, contextOf(a.segments)) < 0.3)
+      rejected.push({ kind: 'decision', text: d.text, reason: 'decision wording is not supported by its source line' });
     else if (decisions.some((x) => similarity(x.text, d.text) > 0.7)) continue;
     else decisions.push({ text: d.text.trim(), quote: d.quote?.trim() ?? '', segments: a.segments, at: at(a.segments) });
   }
@@ -174,8 +179,7 @@ export function groundMinutes(raw: RawMinutes, transcript: Transcript, model: st
       continue;
     }
     const source = a.segments.map((id) => byId.get(id)?.text ?? '').join(' ');
-    const context = [...new Set(a.segments.flatMap((id) => [id - 1, id, id + 1]))].map((id) => byId.get(id)?.text ?? '').join(' ');
-    if (coverage(t.task, context) < 0.3) {
+    if (coverage(t.task, contextOf(a.segments)) < 0.3) {
       rejected.push({ kind: 'action', text: t.task, reason: 'task wording is not supported by its source line' });
       continue;
     }
