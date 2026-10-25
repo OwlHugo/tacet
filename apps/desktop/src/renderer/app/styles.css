@@ -442,8 +442,8 @@ h3 {
   padding: 0 6px;
   border-radius: 4px;
   font-size: 11px;
-  color: var(--text-2);
-  border: 1px solid var(--line-strong);
+  color: var(--amber);
+  background: var(--amber-soft);
 }
 .stamp {
   border: 0;
@@ -472,7 +472,8 @@ h3 {
   transition: background 300ms;
 }
 .seg.active {
-  background: var(--violet-soft);
+  background: var(--amber-soft);
+  box-shadow: inset 2px 0 0 var(--amber);
 }
 .seg-time {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
