@@ -33,7 +33,10 @@ export const MinutesSchema = z.object({
     z.object({
       task: z.string(),
       owner: z.string(),
-      /** Only when every word of it is in the cited lines. */
+      /**
+       * As written in the transcript, only when said in a row inside the task's quote on its own line,
+       * or in the reply right after it (see groundDue).
+       */
       due: z.string().optional(),
       quote: z.string(),
       ...citation,
@@ -42,7 +45,8 @@ export const MinutesSchema = z.object({
   /** Items the model produced that are not in the transcript. Kept for transparency, never shown as facts. */
   rejected: z.array(
     z.object({
-      kind: z.enum(['summary', 'decision', 'action']),
+      /** `deadline`: the task was kept, only the deadline the model gave it was dropped. */
+      kind: z.enum(['summary', 'decision', 'action', 'deadline']),
       text: z.string(),
       reason: z.string(),
     }),

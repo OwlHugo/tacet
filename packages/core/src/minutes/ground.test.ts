@@ -291,7 +291,7 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]).not.toHaveProperty('due')
       expect(r.rejected).toEqual([
         {
-          kind: 'action',
+          kind: 'deadline',
           text: 'Update the pricing page: by Monday',
           reason: 'deadline not said in the cited lines',
         },
@@ -513,6 +513,143 @@ describe('groundMinutes', () => {
         ).actionItems[0]?.due
       expect(due('sexta', [0, 1])).toBeUndefined()
       expect(due('até quarta-feira', [1, 2])).toBeUndefined()
+    })
+
+    it('with a paraphrased quote, reads the reply after the line that supports it best', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        segments: [
+          { id: 0, start: 0, end: 2, speaker: 'Me', text: 'Ana, o contrato.' },
+          { id: 1, start: 2.5, end: 4, speaker: 'Others', text: 'Até segunda.' },
+          {
+            id: 2,
+            start: 4.5,
+            end: 6,
+            speaker: 'Me',
+            text: 'Ana revisa o contrato do fornecedor.',
+          },
+          { id: 3, start: 6.5, end: 8, speaker: 'Others', text: 'Entrego até quarta.' },
+        ],
+      }
+      const r = groundMinutes(
+        one(
+          'Revisar o contrato do fornecedor',
+          'Ana',
+          'contrato do fornecedor Ana revisa',
+          [0, 1, 2, 3],
+          'até quarta',
+        ),
+        t,
+        't',
+      )
+      expect(r.actionItems[0]?.due).toBe('até quarta')
+    })
+
+    it('on one mixed track, the next line is the reply even with the same label', () => {
+      const t: Transcript = {
+        ...DIALOGUE,
+        segments: [
+          {
+            id: 0,
+            start: 0,
+            end: 3,
+            speaker: 'Speaker',
+            text: 'Tom, can you fix the mobile layout?',
+          },
+          { id: 1, start: 3.5, end: 6, speaker: 'Speaker', text: 'Yes, by Wednesday.' },
+        ],
+      }
+      const r = groundMinutes(
+        one(
+          'Fix the mobile layout',
+          'Tom',
+          'Tom, can you fix the mobile layout?',
+          [0, 1],
+          'by Wednesday',
+        ),
+        t,
+        't',
+      )
+      expect(r.actionItems[0]).toMatchObject({ due: 'by Wednesday', segments: [0, 1] })
+      const sameMe = groundMinutes(
+        one(
+          'Fix the mobile layout',
+          'Tom',
+          'Tom, can you fix the mobile layout?',
+          [0, 1],
+          'by Wednesday',
+        ),
+        { ...t, segments: t.segments.map((s) => ({ ...s, speaker: 'Me' })) },
+        't',
+      )
+      expect(sameMe.actionItems[0]).not.toHaveProperty('due')
+    })
+
+    it('takes from the reply only a deadline said about the task, not another one in it', () => {
+      const t = (reply: string): Transcript => ({
+        ...DIALOGUE,
+        segments: [
+          {
+            id: 0,
+            start: 0,
+            end: 3,
+            speaker: 'Me',
+            text: 'Ana, você revisa o contrato do fornecedor?',
+          },
+          { id: 1, start: 3.5, end: 6, speaker: 'Others', text: reply },
+        ],
+      })
+      const due = (reply: string, d: string) =>
+        groundMinutes(
+          one(
+            'Revisar o contrato do fornecedor',
+            'Ana',
+            'você revisa o contrato do fornecedor',
+            [0, 1],
+            d,
+          ),
+          t(reply),
+          't',
+        ).actionItems[0]?.due
+      expect(due('Reviso. Ah, e o deploy fica pra sexta.', 'pra sexta')).toBeUndefined()
+      expect(due('Sure. By the way Thursday is a holiday.', 'Thursday')).toBeUndefined()
+      expect(due('Fechado, entrego até quarta.', 'até quarta')).toBe('até quarta')
+      expect(due('Reviso o contrato até segunda, pode ser.', 'até segunda')).toBe('até segunda')
+    })
+
+    it('shows the deadline on its own: cut from the end of the task, kept or dropped', () => {
+      const task = (t: string, quote: string, d: string) =>
+        groundMinutes(one(t, 'Me', quote, [3], d), TRANSCRIPT, 't').actionItems[0]
+      expect(
+        task(
+          'Send the release notes by Thursday.',
+          'I will send the release notes to the team by Thursday',
+          'by Thursday',
+        ),
+      ).toMatchObject({ task: 'Send the release notes.', due: 'by Thursday' })
+      const unsaid = groundMinutes(
+        one(
+          'Update the pricing page by Monday',
+          'Maria',
+          'Maria will update the pricing page',
+          [2],
+          'by Monday',
+        ),
+        TRANSCRIPT,
+        't',
+      ).actionItems[0]
+      expect(unsaid?.task).toBe('Update the pricing page')
+      expect(unsaid).not.toHaveProperty('due')
+      expect(task('Send the release notes', 'I will send the release notes', 'notes')?.task).toBe(
+        'Send the release notes',
+      )
+      expect(
+        task(
+          'Send the notes by Thursday to the team',
+          'I will send the release notes',
+          'by Thursday',
+        )?.task,
+      ).toBe('Send the notes by Thursday to the team')
     })
 
     it('never moves the deadline of one task onto the next one cited with it', () => {

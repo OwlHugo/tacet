@@ -1,4 +1,11 @@
-import { coverage, findPhrase, normalize, similarity, words } from '../matching/words.ts'
+import {
+  coverage,
+  findPhrase,
+  normalize,
+  STOPWORDS as STOP,
+  similarity,
+  words,
+} from '../matching/words.ts'
 import {
   ME,
   OTHERS as OTHERS_LABEL,
@@ -212,6 +219,63 @@ const coreLine = (quote: string, lines: Lines): Segment =>
  * ("Ana reviews the contract and Pedro deploys by Friday") is dropped. What is kept is the wording of
  * the transcript, not the model's.
  */
+/** Words that introduce a deadline, cut with it: "by", "on", "até", "pra"... */
+const LEAD = new Set(
+  'by on before until till at in ate para pra na no ate antes de do da'.split(' '),
+)
+
+/**
+ * The task as the model wrote it, without the deadline at its end ("Send the notes by Thursday."):
+ * a kept deadline is shown on its own, and a dropped one must not reach the minutes through the
+ * task's wording. A deadline in the middle of the task is left alone.
+ */
+function withoutDeadline(task: string, due: string): string {
+  const said = findPhrase(due, task)
+  if (said === undefined) return task
+  const at = task.lastIndexOf(said)
+  const tail = task.slice(at + said.length)
+  if (words(tail).length > 0) return task
+  let head = task.slice(0, at).trimEnd()
+  let led = LEAD.has(words(said)[0] ?? '')
+  for (
+    let w = /[\p{L}]+$/u.exec(head);
+    w && LEAD.has(normalize(w[0]));
+    w = /[\p{L}]+$/u.exec(head)
+  ) {
+    head = head.slice(0, w.index).trimEnd()
+    led = true
+  }
+  // Only a deadline introduced like one ("by Thursday", "até sexta") is cut: "notes" is not a deadline.
+  const cut = head.replace(/[\s,;:-]+$/, '')
+  return led && words(cut).length > 0 ? `${cut}${tail.trim()}` : task
+}
+
+/** Words a reply uses to take a task on without naming it ("Sure, by Wednesday", "Fechado, entrego até quarta"). */
+const TAKING_IT = new Set(
+  (
+    'sure fine deal done will can do deliver send finish get it that this ' +
+    'claro certo fechado combinado beleza pode deixa comigo consigo da entrego faco fecho mando termino'
+  ).split(' '),
+)
+
+/**
+ * The deadline in a reply, as said, when the clause that says it is about the task: nothing else in
+ * that clause but words of the task or of taking it on. "Reviso. Ah, e o deploy fica pra sexta" gives
+ * the deploy's deadline, not the review's, and "Sure. By the way Thursday is a holiday" gives none.
+ */
+function answerDeadline(due: string, reply: string, task: string): string | undefined {
+  // A light stem, so "reviso" answers "revisa" and "sending" answers "send".
+  const stem = (w: string) => w.slice(0, 5)
+  const ofTask = new Set(words(task).map(stem))
+  for (const clause of reply.split(/[.,;!?]+/)) {
+    const said = findPhrase(due, clause)
+    if (said === undefined) continue
+    const rest = words(clause.replace(said, ' ')).filter((w) => w.length > 1 && !STOP.has(w))
+    if (rest.every((w) => ofTask.has(stem(w)) || TAKING_IT.has(w))) return said
+  }
+  return undefined
+}
+
 function groundDue(
   c: Candidate,
   taskLines: ReadonlySet<number>,
@@ -230,14 +294,14 @@ function groundDue(
     .find((s) => s.speaker !== c.core.speaker || s.speaker === SPEAKER)
   const said =
     reply && c.raw.segments.includes(reply.id) && !taskLines.has(reply.id)
-      ? findPhrase(text, reply.text)
+      ? answerDeadline(text, reply.text, `${c.task} ${c.raw.quote}`)
       : undefined
   if (reply && said !== undefined) {
     const joined: [Segment, ...Segment[]] = [reply, ...c.lines.filter((x) => x.id !== reply.id)]
     return { due: said, lines: joined.sort((x, y) => x.id - y.id) }
   }
   rejected.push({
-    kind: 'action',
+    kind: 'deadline',
     text: `${c.task}: ${text}`,
     reason: 'deadline not said in the cited lines',
   })
@@ -288,7 +352,7 @@ function groundActions(
     tasks.map((c) => {
       const d = groundDue(c, taskLines, index, rejected)
       return {
-        task: c.task,
+        task: withoutDeadline(c.task, c.raw.due),
         owner: resolveOwner(c.raw.owner, c.lines, index),
         ...(d.due === undefined ? {} : { due: d.due }),
         quote: c.raw.quote.trim(),
