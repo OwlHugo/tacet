@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type RawMinutes, RawMinutesSchema, type Transcript, TranscriptSchema } from '@tacet/core'
 import { z } from 'zod'
+import { AnswerKeySchema } from './metrics/answer-key.ts'
 
 const ReferenceLineSchema = z.object({ speaker: z.string(), text: z.string(), start: z.number() })
 export type ReferenceLine = z.infer<typeof ReferenceLineSchema>
@@ -21,6 +22,8 @@ const CaseSchema = z.object({
   ),
   /** Whether the script has a decision, so empty decisions in the minutes are a miss. */
   expects_decisions: z.boolean().default(true),
+  /** What the meeting really decided and assigned, to score the minutes for meaning, not words. */
+  answer_key: AnswerKeySchema.optional(),
 })
 
 /** What a real whisper + LLM run produced, replayed by `eval:sem-ia` so CI needs neither. */

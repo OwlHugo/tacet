@@ -6,6 +6,9 @@
  *   pnpm eval:gravar   same as `pnpm eval`, and rewrites fixture.json. Commit it when the prompt changes.
  *   --so-whisper       real whisper.cpp, LLM output replayed (CI on macOS/Windows/Linux).
  *
+ * A case with an `answer_key` is also scored for meaning: decisions and tasks that match the key
+ * (precision, recall), items that match nothing (invented) and tasks with the wrong owner.
+ *
  * Fails if any decision or task lacks a source, if an injected hallucination survives, or if WER
  * goes above --max-wer.
  */
@@ -28,6 +31,7 @@ import {
 import { type EvalCase, fixtureOf, fixturePath, loadCases } from './cases.ts'
 import { config } from './config.ts'
 import { guardCheck } from './guard.ts'
+import { checkAnswerKey } from './metrics/answer-key.ts'
 import { speakerAccuracy, timestampError } from './metrics/attribution.ts'
 import { checkDeadlines } from './metrics/deadlines.ts'
 import { checkGrounding } from './metrics/grounding.ts'
@@ -151,6 +155,7 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
       ...(c.expects_decisions && minutes.decisions.length === 0 ? ['decisions'] : []),
     ],
     guard: guardCheck(run.raw, minutesOn),
+    meaning: c.answer_key === undefined ? undefined : checkAnswerKey(minutes, c.answer_key),
   }
   if (values.gravar) {
     writeFileSync(
@@ -161,6 +166,7 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
   log(
     `  WER ${(result.wer * 100).toFixed(1)}%, ${grounding.grounded}/${grounding.items} grounded, ${deadlines.right}/${deadlines.total} deadlines`,
   )
+  for (const item of result.meaning?.invented ?? []) log(`  not in the answer key: ${item}`)
   return result
 }
 
