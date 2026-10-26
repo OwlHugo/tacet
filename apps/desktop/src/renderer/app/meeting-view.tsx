@@ -61,7 +61,7 @@ function Minutes({
     <>
       <Block
         title="Summary"
-        empty="The local model wrote no summary for this meeting. The transcript is complete."
+        empty="No summary from the local model made it into these minutes. The transcript is complete."
       >
         {minutes.summary.map((p) => (
           <Row key={`${p.at}-${p.text}`} at={p.at} onJump={first(p.segments)}>

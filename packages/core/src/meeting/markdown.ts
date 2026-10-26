@@ -71,7 +71,7 @@ export function toMarkdown(m: Meeting): string {
         ...section(
           'Summary',
           m.minutes.summary.map((p) => `- ${p.text} ${link(p)}`),
-          '_The local model wrote no summary for this meeting. The transcript below is complete._',
+          '_No summary from the local model made it into these minutes. The transcript below is complete._',
         ),
         ...section(
           'Decisions',

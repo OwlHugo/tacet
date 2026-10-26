@@ -36,7 +36,7 @@ describe('toMarkdown', () => {
     })
     expect(md).toContain('llm: qwen2.5:7b')
     expect(md).toContain(
-      '## Summary\n\n_The local model wrote no summary for this meeting. The transcript below is complete._\n',
+      '## Summary\n\n_No summary from the local model made it into these minutes. The transcript below is complete._\n',
     )
     expect(md).toContain('## Decisions\n\n- Ship Friday [[#^t0002|00:09]]\n')
     expect(md).toContain(
