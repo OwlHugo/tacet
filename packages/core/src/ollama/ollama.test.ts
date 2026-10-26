@@ -18,7 +18,9 @@ describe('ollamaHost', () => {
 /** A local stand-in for the Ollama HTTP API. */
 let server: Server
 let host: string
-let lastBody: { model: string; format: unknown; messages: { role: string }[] } | undefined
+let lastBody:
+  | { model: string; format: unknown; options: unknown; messages: { role: string }[] }
+  | undefined
 let chatReply: unknown
 
 beforeAll(async () => {
@@ -49,22 +51,26 @@ describe('ollama adapter', () => {
     expect(await ollamaModels('127.0.0.1:1')).toBeUndefined()
   })
 
-  it('asks for structured output and validates the answer', async () => {
-    chatReply = {
-      summary: [],
-      decisions: [],
-      action_items: [{ task: 'x', owner: 'Me', due: '', quote: 'x', segments: [0] }],
-    }
-    const raw = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('system', 'user')
-    expect(raw.action_items[0]?.task).toBe('x')
+  it('asks for the schema of the part, greedy and seeded, and validates the answer', async () => {
+    const items = [{ task: 'x', owner: 'Me', due: '', quote: 'x', segments: [0] }]
+    chatReply = { action_items: items }
+    const raw = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('system', 'user', 'tasks')
+    expect(raw).toEqual({ summary: [], decisions: [], action_items: items })
     expect(lastBody?.messages.map((m) => m.role)).toEqual(['system', 'user'])
-    expect(lastBody?.format).toMatchObject({ type: 'object' })
+    expect(lastBody?.format).toMatchObject({ required: ['action_items'] })
+    expect(lastBody?.options).toEqual({ temperature: 0, seed: 7, num_ctx: 16384 })
+    chatReply = { summary: [{ text: 's', segments: [0] }], decisions: [] }
+    const overview = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('s', 'u', 'overview')
+    expect(overview.summary).toHaveLength(1)
+    expect(lastBody?.format).toMatchObject({ required: ['summary', 'decisions'] })
   })
 
   it('rejects an answer outside the schema and surfaces HTTP errors', async () => {
     chatReply = { summary: 'not a list' }
-    await expect(ollamaMinutes({ host, model: 'qwen2.5:7b' })('s', 'u')).rejects.toThrow()
-    await expect(ollamaMinutes({ host, model: 'missing' })('s', 'u')).rejects.toThrow(
+    await expect(
+      ollamaMinutes({ host, model: 'qwen2.5:7b' })('s', 'u', 'overview'),
+    ).rejects.toThrow()
+    await expect(ollamaMinutes({ host, model: 'missing' })('s', 'u', 'tasks')).rejects.toThrow(
       /Ollama 404: model "missing" not found/,
     )
   })

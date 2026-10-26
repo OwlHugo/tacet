@@ -46,12 +46,12 @@
   "raw": {
     "summary": [
       {
-        "text": "The team reviewed the back-end hiring loop and decided to make the second candidate an offer this week.",
-        "segments": [0, 1, 2]
+        "text": "The team reviewed the back-end hiring loop and decided to make the second candidate an offer.",
+        "segments": [1, 2]
       },
       {
-        "text": "The second candidate's last manager will be contacted for a reference call.",
-        "segments": [4]
+        "text": "The next steps include preparing the offer letter and scheduling a reference call.",
+        "segments": [3, 4]
       }
     ],
     "decisions": [
@@ -59,18 +59,28 @@
         "text": "Make the second candidate an offer this week.",
         "quote": "Then the decision is to make her an offer this week.",
         "segments": [2]
+      },
+      {
+        "text": "Prepare the offer letter and send it to Legal on Wednesday.",
+        "quote": "I will prepare the offer letter and send it to Legal on Wednesday.",
+        "segments": [3]
+      },
+      {
+        "text": "Schedule a reference call with the candidate's last manager.",
+        "quote": "And I will schedule a reference call with her last manager.",
+        "segments": [4]
       }
     ],
     "action_items": [
       {
-        "task": "Prepare the offer letter and send it to Legal on Wednesday.",
+        "task": "prepare the offer letter and send it to Legal on Wednesday",
         "owner": "Others",
         "due": "Wednesday",
         "quote": "I will prepare the offer letter and send it to Legal on Wednesday.",
         "segments": [3]
       },
       {
-        "task": "Schedule a reference call with the second candidate's last manager.",
+        "task": "schedule a reference call with the second candidate's last manager",
         "owner": "Me",
         "due": "",
         "quote": "And I will schedule a reference call with her last manager.",

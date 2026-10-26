@@ -86,6 +86,7 @@ export interface Health {
 export const INVOKE = {
   'recording:toggle': z.tuple([]),
   'recording:state': z.tuple([]),
+  'recording:dismiss': z.tuple([]),
   'meetings:list': z.tuple([]),
   'meetings:get': z.tuple([MeetingIdSchema]),
   'meetings:rename': z.tuple([MeetingIdSchema, z.string().trim().min(1).max(200)]),

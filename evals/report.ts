@@ -15,6 +15,8 @@ export interface CaseResult {
   readonly dueTotal: number
   /** Tasks that carry a deadline other than the one said. */
   readonly dueWrong: readonly string[]
+  /** Parts of the minutes that came out empty though the meeting had them ("summary", "decisions"). */
+  readonly emptyParts: readonly string[]
   readonly guard: { readonly injected: number; readonly rejected: number }
 }
 
@@ -57,6 +59,7 @@ function totals(r: Report) {
     dueRight: sum(r.cases, (c) => c.dueRight),
     dueTotal: sum(r.cases, (c) => c.dueTotal),
     dueWrong: r.cases.flatMap((c) => c.dueWrong.map((w) => `${c.id}: ${w}`)),
+    emptyParts: r.cases.flatMap((c) => c.emptyParts.map((p) => `${c.id}: no ${p}`)),
     injected: sum(r.cases, (c) => c.guard.injected),
     rejected: sum(r.cases, (c) => c.guard.rejected),
   }
@@ -93,6 +96,7 @@ export function failures(r: Report, maxWer: number | undefined): string[] {
     ...(t.grounded === t.items ? [] : [`${t.items - t.grounded} minutes item(s) without a source`]),
     ...(t.rejected === t.injected ? [] : ['the hallucination guard let a fabricated item through']),
     ...t.dueWrong.map((w) => `wrong deadline: ${w}`),
+    ...t.emptyParts.map((p) => `empty minutes part: ${p}`),
     ...(t.dueTotal > 0 && t.dueRight / t.dueTotal < MIN_DUE_RECALL
       ? [`only ${t.dueRight}/${t.dueTotal} deadlines found`]
       : []),

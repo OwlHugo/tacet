@@ -117,42 +117,43 @@
     "summary": [
       {
         "text": "The team discussed the sprint planning for the next two weeks, focusing on the checkout redesign and flaky tests.",
-        "segments": [0, 1, 2, 3, 6, 7, 8]
+        "segments": [0, 1, 2, 6, 7, 8]
       },
       {
-        "text": "They decided to ship the redesign behind a feature flag with a 10% rollout and to freeze new features until the test suite is green.",
-        "segments": [3, 4, 5, 7, 8]
-      },
-      {
-        "text": "Tasks were assigned: Tom to fix the mobile layout by Wednesday, and Maya to ask Priya to fix the flaky tests by Friday.",
-        "segments": [9, 10, 11, 12, 13]
+        "text": "It was decided to implement the redesign behind a feature flag and to freeze new features until the test suite is green.",
+        "segments": [3, 4, 5, 6, 7, 8]
       }
     ],
     "decisions": [
       {
-        "text": "Ship the redesign behind a feature flag with a 10% rollout and freeze new features until the test suite is green.",
+        "text": "Implement the checkout redesign behind a feature flag and roll it out to 10% of users first.",
+        "quote": "A create feature flag, 10% rollout, that gives us time to watch the error rate.",
+        "segments": [5]
+      },
+      {
+        "text": "Freeze new features until the end-to-end tests pass.",
         "quote": "I'd say we freeze new features until the test suite is green.",
         "segments": [7, 8]
       }
     ],
     "action_items": [
       {
-        "task": "Fix the mobile layout by Wednesday.",
+        "task": "fix the mobile layout",
         "owner": "Tom",
         "due": "Wednesday",
         "quote": "Yes. I will fix the mobile layout by Wednesday.",
         "segments": [9, 10]
       },
       {
-        "task": "Set up the feature flag and the error rate dashboard.",
+        "task": "set up the feature flag and the error rate dashboard",
         "owner": "",
         "due": "",
-        "quote": "I'll set up the feature flag and the error rate dashboard.",
+        "quote": "And I'll set up the feature flag and the error rate dashboard.",
         "segments": [11]
       },
       {
-        "task": "Ask Priya to fix the end-to-end tests by Friday.",
-        "owner": "Maya",
+        "task": "fix the end-to-end tests",
+        "owner": "Priya",
         "due": "Friday",
         "quote": "Sure, I'll ask Priya to fix the end-to-end tests by Friday.",
         "segments": [12, 13]

@@ -4,6 +4,11 @@ import { coverage, type Minutes, words } from '@tacet/core'
 export interface ExpectedDue {
   readonly task: readonly string[]
   readonly due: string
+  /**
+   * Said in the script on something the prompt does not ask for as a task ("the release is on
+   * Tuesday"): out of the count, but a task the model lists for it must carry these words.
+   */
+  readonly optional?: boolean | undefined
 }
 
 export interface DeadlineReport {
@@ -22,8 +27,13 @@ const holds = (due: string, expected: string) => {
   return words(expected).every((w) => said.has(w))
 }
 
-const isTask = (keywords: readonly string[], a: Minutes['actionItems'][number]) =>
-  keywords.every((k) => coverage(k, `${a.task} ${a.quote}`) === 1)
+const has = (keywords: readonly string[], text: string) =>
+  keywords.every((k) => coverage(k, text) === 1)
+
+/** The expected deadline of a task: by its wording first, then by its quote (which may be the reply). */
+const expectedOf = (expected: readonly ExpectedDue[], a: Minutes['actionItems'][number]) =>
+  expected.find((x) => has(x.task, a.task)) ??
+  expected.find((x) => has(x.task, `${a.task} ${a.quote}`))
 
 /**
  * Independent of groundMinutes: every deadline in the script must reach its task with the words
@@ -34,10 +44,15 @@ export function checkDeadlines(minutes: Minutes, expected: readonly ExpectedDue[
   const wrong: string[] = []
   for (const a of minutes.actionItems) {
     if (a.due === undefined) continue
-    const e = expected.find((x) => isTask(x.task, a))
+    const e = expectedOf(expected, a)
     if (e === undefined) wrong.push(`${a.task}: "${a.due}", expected no deadline`)
     else if (holds(a.due, e.due)) met.add(e)
     else wrong.push(`${a.task}: "${a.due}", expected "${e.due}"`)
   }
-  return { right: met.size, total: expected.length, wrong }
+  const counted = (x: ExpectedDue) => x.optional !== true
+  return {
+    right: [...met].filter(counted).length,
+    total: expected.filter(counted).length,
+    wrong,
+  }
 }

@@ -16,6 +16,7 @@ const c = (over: Partial<CaseResult> = {}): CaseResult => ({
   dueRight: 1,
   dueTotal: 1,
   dueWrong: [],
+  emptyParts: [],
   guard: { injected: 4, rejected: 4 },
   ...over,
 })
@@ -41,6 +42,12 @@ describe('eval report', () => {
     ])
     expect(failures(r, undefined)).toEqual([
       'wrong deadline: a: Send notes: "friday", expected "thursday"',
+    ])
+  })
+  it('fails on minutes with an empty summary or no decisions where the meeting had them', () => {
+    expect(failures(report([c({ emptyParts: ['summary', 'decisions'] })]), undefined)).toEqual([
+      'empty minutes part: a: no summary',
+      'empty minutes part: a: no decisions',
     ])
   })
   it('fails when too few of the deadlines said were found', () => {

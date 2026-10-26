@@ -71,19 +71,19 @@ export function toMarkdown(m: Meeting): string {
         ...section(
           'Summary',
           m.minutes.summary.map((p) => `- ${p.text} ${link(p)}`),
-          '_Nothing to summarize._',
+          '_No summary from the local model made it into these minutes. The transcript below is complete._',
         ),
         ...section(
           'Decisions',
           m.minutes.decisions.map((d) => `- ${d.text} ${link(d)}`),
-          '_No decisions found in the transcript._',
+          '_No decisions from the local model made it into these minutes. The transcript below is complete._',
         ),
         ...section(
           'Action items',
           m.minutes.actionItems.map(
             (a) => `- [ ] ${a.task} (**${a.owner}**${a.due ? `, ${a.due}` : ''}) ${link(a)}`,
           ),
-          '_No action items found in the transcript._',
+          '_No action items from the local model made it into these minutes. The transcript below is complete._',
         ),
       ]
     : []

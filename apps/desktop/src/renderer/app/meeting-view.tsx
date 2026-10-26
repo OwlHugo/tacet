@@ -59,21 +59,30 @@ function Minutes({
   const madeUp = minutes.rejected.filter((r) => r.kind !== 'deadline').length
   return (
     <>
-      <Block title="Summary" empty="Nothing to summarize.">
+      <Block
+        title="Summary"
+        empty="No summary from the local model made it into these minutes. The transcript is complete."
+      >
         {minutes.summary.map((p) => (
           <Row key={`${p.at}-${p.text}`} at={p.at} onJump={first(p.segments)}>
             {p.text}
           </Row>
         ))}
       </Block>
-      <Block title="Decisions" empty="No decisions in the transcript.">
+      <Block
+        title="Decisions"
+        empty="No decisions from the local model made it into these minutes. The transcript is complete."
+      >
         {minutes.decisions.map((d) => (
           <Row key={`${d.at}-${d.text}`} at={d.at} onJump={first(d.segments)}>
             {d.text}
           </Row>
         ))}
       </Block>
-      <Block title="Action items" empty="No action items in the transcript.">
+      <Block
+        title="Action items"
+        empty="No action items from the local model made it into these minutes. The transcript is complete."
+      >
         {minutes.actionItems.map((a) => (
           <Row key={`${a.at}-${a.task}`} at={a.at} onJump={first(a.segments)} check>
             {a.task} <span className="owner">{a.owner}</span>

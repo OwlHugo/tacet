@@ -146,6 +146,10 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
     dueRight: deadlines.right,
     dueTotal: deadlines.total,
     dueWrong: deadlines.wrong,
+    emptyParts: [
+      ...(minutes.summary.length === 0 ? ['summary'] : []),
+      ...(c.expects_decisions && minutes.decisions.length === 0 ? ['decisions'] : []),
+    ],
     guard: guardCheck(run.raw, minutesOn),
   }
   if (values.gravar) {

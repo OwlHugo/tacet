@@ -12,6 +12,8 @@ const on = <T extends unknown[]>(channel: string, cb: (...a: T) => void): (() =>
 /** Everything the renderer can ask the main process. Arguments are validated again on the other side. */
 const api = {
   toggleRecording: (): Promise<void> => ipcRenderer.invoke('recording:toggle'),
+  /** The failure on screen was seen: the main process forgets it. */
+  dismissFailure: (): Promise<void> => ipcRenderer.invoke('recording:dismiss'),
   onState: (cb: (s: RecorderState) => void): (() => void) => {
     void ipcRenderer.invoke('recording:state').then(cb)
     return on<[RecorderState]>(EVENTS.state, cb)

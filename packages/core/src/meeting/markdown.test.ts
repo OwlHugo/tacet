@@ -35,9 +35,13 @@ describe('toMarkdown', () => {
       },
     })
     expect(md).toContain('llm: qwen2.5:7b')
-    expect(md).toContain('## Summary\n\n_Nothing to summarize._\n')
+    expect(md).toContain(
+      '## Summary\n\n_No summary from the local model made it into these minutes. The transcript below is complete._\n',
+    )
     expect(md).toContain('## Decisions\n\n- Ship Friday [[#^t0002|00:09]]\n')
-    expect(md).toContain('## Action items\n\n_No action items found in the transcript._\n')
+    expect(md).toContain(
+      '## Action items\n\n_No action items from the local model made it into these minutes. The transcript below is complete._\n',
+    )
     expect(md).toContain(
       '**00:20 Others:** We also decided to drop the dark mode toggle for now. ^t0004\n',
     )

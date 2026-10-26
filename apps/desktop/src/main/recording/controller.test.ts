@@ -70,6 +70,16 @@ describe('recordingController', () => {
     expect(t.recorded).toEqual([])
   })
 
+  it('forgets a failure once dismissed, and nothing else', async () => {
+    const t = setup()
+    await t.c.toggle()
+    t.c.dismiss()
+    expect(t.state().kind).toBe('starting')
+    t.c.failed('no devices')
+    t.c.dismiss()
+    expect(t.state()).toEqual({ kind: 'idle' })
+  })
+
   it('ignores toggles while starting and recovers from a failed start', async () => {
     const t = setup()
     await t.c.toggle()

@@ -18,6 +18,7 @@
     "eval": "node --conditions=development evals/rodar.ts",
     "eval:sem-ia": "node --conditions=development evals/rodar.ts --sem-ia",
     "eval:gravar": "node --conditions=development evals/rodar.ts --gravar",
+    "eval:confiabilidade": "node --conditions=development evals/confiabilidade.ts",
     "tacet": "node --conditions=development apps/cli/src/main.ts",
     "desktop": "pnpm --filter @tacet/desktop dev",
     "dist": "pnpm --filter @tacet/core build && pnpm --filter @tacet/desktop dist",
