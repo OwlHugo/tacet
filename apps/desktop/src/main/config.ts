@@ -19,6 +19,8 @@ export const config = z
     TACET_CATAP: flag,
     /** e2e: feed the microphone from this WAV instead of the real device. */
     TACET_FAKE_MIC: z.string().optional(),
+    /** e2e: feed the system audio from this WAV instead of the loopback capture. */
+    TACET_FAKE_SYSTEM: z.string().optional(),
     /** e2e: record this many seconds on start, process, then quit. */
     TACET_AUTORECORD: z.coerce.number().int().positive().optional(),
     /** Docs: render the main window into this PNG and quit. */

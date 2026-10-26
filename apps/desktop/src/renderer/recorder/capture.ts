@@ -111,7 +111,13 @@ async function loopback(): Promise<MediaStream> {
   return display
 }
 
-export async function captureSystem(isLinux: boolean, onChunk: OnChunk): Promise<Capture> {
-  const stream = (isLinux ? await linuxMonitor() : undefined) ?? (await loopback())
+export async function captureSystem(
+  isLinux: boolean,
+  onChunk: OnChunk,
+  fake: Uint8Array | undefined,
+): Promise<Capture> {
+  const stream = fake
+    ? await fileStream(fake)
+    : ((isLinux ? await linuxMonitor() : undefined) ?? (await loopback()))
   return tap(stream, 'system', onChunk)
 }

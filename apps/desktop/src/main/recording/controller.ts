@@ -20,6 +20,8 @@ export interface ControllerDeps {
   readonly askMicrophone: () => Promise<void>
   /** e2e hook: WAV bytes to play as the microphone. */
   readonly fakeMic: string | undefined
+  /** e2e hook: WAV bytes to play as the system audio, so a demo needs no speaker. */
+  readonly fakeSystem: string | undefined
   readonly onRecorded: (
     session: { id: string; startedAt: Date; dir: string },
     tracks: RecordedTrack[],
@@ -36,8 +38,12 @@ export function recordingController(deps: ControllerDeps) {
     const id = randomUUID()
     current = new RecordingSession(id, new MeetingLibrary(deps.notesFolder()).audioDir(id))
     deps.setState({ kind: 'starting' })
-    const fakeMic = deps.fakeMic ? new Uint8Array(readFileSync(deps.fakeMic)) : undefined
-    deps.recorder().webContents.send(EVENTS.recorderStart, { fakeMic })
+    const bytes = (file: string | undefined) =>
+      file ? new Uint8Array(readFileSync(file)) : undefined
+    deps.recorder().webContents.send(EVENTS.recorderStart, {
+      fakeMic: bytes(deps.fakeMic),
+      fakeSystem: bytes(deps.fakeSystem),
+    })
   }
 
   async function stop(): Promise<void> {
