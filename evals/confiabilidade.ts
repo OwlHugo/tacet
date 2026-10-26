@@ -27,6 +27,7 @@ import {
   transcribe,
   whisperTranscriber,
 } from '@tacet/core'
+import { z } from 'zod'
 import { type EvalCase, loadCases } from './cases.ts'
 import { config } from './config.ts'
 import { checkDeadlines } from './metrics/deadlines.ts'
@@ -41,7 +42,8 @@ const { values } = parseArgs({
     caso: { type: 'string' },
   },
 })
-const TIMES = Number(values.vezes)
+const TIMES = z.coerce.number().int().positive().parse(values.vezes)
+const WHISPER_MODELS = z.array(z.string().min(1)).min(1).parse(values.whisper.split(','))
 const log = (s: string) => process.stderr.write(`${s}\n`)
 
 const WHISPER_OPTS = {
@@ -49,7 +51,10 @@ const WHISPER_OPTS = {
   searchPath: config.PATH,
   platform: process.platform,
 }
-const FFMPEG = findFfmpeg({ ...WHISPER_OPTS, explicit: undefined }) ?? 'ffmpeg'
+const FOUND_FFMPEG = findFfmpeg({ ...WHISPER_OPTS, explicit: undefined })
+if (FOUND_FFMPEG === undefined)
+  throw new Error('ffmpeg not found: the variants of each case need it.')
+const FFMPEG: string = FOUND_FFMPEG
 
 /** Variant `i` of a track: the second track shifted, the gain changed and noise added a little more each time. */
 function variant(src: string, out: string, i: number, track: number): void {
@@ -82,16 +87,21 @@ async function transcriptOf(c: EvalCase, model: string, i: number): Promise<Tran
     language: c.language,
     env: process.env,
   })
+  if (i === 0) {
+    const tracks = c.tracks.map((t) => ({ path: join(c.dir, t.file), speaker: t.speaker }))
+    return transcribe(tracks, transcribeTrack, model)
+  }
   const dir = mkdtempSync(join(tmpdir(), 'tacet-conf-'))
-  const tracks = c.tracks.map((t, k) => {
-    const path = join(dir, `${k}.wav`)
-    if (i === 0) return { path: join(c.dir, t.file), speaker: t.speaker }
-    variant(join(c.dir, t.file), path, i, k)
-    return { path, speaker: t.speaker }
-  })
-  const transcript = await transcribe(tracks, transcribeTrack, model)
-  rmSync(dir, { recursive: true, force: true })
-  return transcript
+  try {
+    const tracks = c.tracks.map((t, k) => {
+      const path = join(dir, `${k}.wav`)
+      variant(join(c.dir, t.file), path, i, k)
+      return { path, speaker: t.speaker }
+    })
+    return await transcribe(tracks, transcribeTrack, model)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 }
 
 if ((await ollamaModels(config.OLLAMA_HOST)) === undefined)
@@ -103,12 +113,12 @@ const only = values.caso
 for (const c of loadCases(join(import.meta.dirname, 'cases')).filter(
   (x) => only === undefined || x.id === only,
 )) {
-  for (const model of values.whisper.split(',')) {
+  for (const model of WHISPER_MODELS) {
     log(`> ${c.id}: whisper ${model}`)
     for (let i = 0; i < TIMES; i++) {
       const transcript = await transcriptOf(c, model, i)
       const t0 = performance.now()
-      // A request that never comes back (the model looping) is a run with nothing in it, counted
+      // A request that fails (Ollama dropped the connection) is a run with nothing in it, counted
       // as such: the point is how often the minutes come out, not hiding the ones that do not.
       const result = await generateMinutes(transcript, { generate, model: values.llm }).catch(
         (e: unknown) => {
