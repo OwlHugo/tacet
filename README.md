@@ -63,21 +63,31 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 
 ## Eval
 
-Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.yml)). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), plus the one-track demo meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke.
+Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.yml)). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), the one-track demo meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, and a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), the call in the demo.
 
 Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |
 |---|---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 1.97 | 31.74 | 5/5 | 3/3 | 3/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.16 | 36.20 | 3/3 | 2/2 | 1/1 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 1.83 | 32.38 | 3/3 | 1/2 | 1/1 |
-| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.08 | 18.69 | 4/4 | 3/3 | 2/2 |
-| **Total** | 138.2s | **5.2%** | **100%** | | **1.6** | 26.2 | **15/15** | 90.0% | 7/7 |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 3.35 | 62.50 | 5/5 | 3/3 | 2/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 3.39 | 71.01 | 5/5 | 2/2 | 1/1 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 3.46 | 50.97 | 3/3 | 1/2 | 1/1 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.82 | 32.76 | 5/5 | 3/3 | 2/2 |
+| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 2.37 | 26.94 | 10/10 | 4/4 | 2/4 |
+| **Total** | 290.0s | 10.3% | | | 2.50 | 36.80 | 28/28 | 92.9% | 8/11 |
 
-Hallucination guard: **43/43** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
+Hallucination guard: **66/66** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
 
-With `large-v3-turbo` (the default when it is downloaded), the WER drops to **3.1%** overall (0.0% / 3.4% / 5.7% / 3.5%) at 8.0 s per audio minute, and the Portuguese case finds both tasks ("como fornecedor" is heard right). Grounded items stay 15/15 and the guard rejects 38/38; deadlines right are 6/7, none wrong.
+With `large-v3-turbo` (the default when it is downloaded), the WER drops to **6.5%** overall (0.0% / 3.4% / 5.7% / 3.5% / 9.6%) at 10.9 s per audio minute, every expected task is found, grounded items stay 26/26, the guard rejects 55/55 and deadlines right are 10/11, none wrong.
+
+### Reliability
+
+One run says little about a 7B model: two recordings of the same call never give the same transcript, and the minutes move with it. `pnpm eval:confiabilidade` records every case 8 times with what a real capture changes (offset between the tracks, gain, background noise), transcribes each with whisper `base` and `large-v3-turbo` and counts how often each part of the minutes comes out. 80 runs, with the minutes written in two requests (summary and decisions, then tasks; see [ADR 0002](docs/adr/0002-minutes-in-two-requests.md)):
+
+| | Summary | Decisions | All expected tasks | Deadlines right | Wrong deadlines |
+|---|---|---|---|---|---|
+| One request | 96% | 96% | 65% | 59% | 1 |
+| Two requests | **100%** | **100%** | **89%** | **74%** | 0 |
 
 What the columns mean:
 
@@ -94,6 +104,7 @@ Transcription runs for real on all three CI runners. The whisper and LLM outputs
 pnpm eval:sem-ia             # replay the recorded outputs (what CI runs on every PR)
 pnpm eval                    # real whisper.cpp + Ollama on this machine
 pnpm eval:gravar             # same, and re-record evals/cases/*/fixture.json
+pnpm eval:confiabilidade --whisper base,large-v3-turbo   # 8 recordings of each case (about 40 min)
 node evals/gerar-audio.ts    # regenerate the audio (macOS, uses `say`)
 ```
 
@@ -113,7 +124,7 @@ packages/core TypeScript, no Electron, published to npm as @tacet/core
   minutes     prompt, groundMinutes(): drop what is not said          (pure)
   meeting     processMeeting(), Obsidian Markdown, search             (pure)
   whisper     whisper.cpp adapter: spawn per track, snap to speech    (I/O)
-  ollama      Ollama adapter: structured output, loopback only        (I/O)
+  ollama      Ollama adapter: schema per request, loopback only       (I/O)
   library     folder of .md + .tacet/*.json                           (I/O)
 
 evals         WER, attribution, timestamp error, grounding check, hallucination guard
