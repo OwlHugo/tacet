@@ -59,7 +59,7 @@ describe('MeetingLibrary', () => {
     expect(md).toContain(
       '**00:09 Others:** Agreed, Friday it is. Maria will update the pricing page. ^t0002',
     )
-    expect(md).toContain('_No decisions found in the transcript._')
+    expect(md).toContain('_The local model found no decisions. The transcript below is complete._')
   })
 
   it('writes a transcript-only note without minutes', () => {
