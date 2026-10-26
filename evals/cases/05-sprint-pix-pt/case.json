@@ -174,7 +174,8 @@
     },
     {
       "task": ["producao"],
-      "due": "terca"
+      "due": "terca",
+      "optional": true
     }
   ]
 }

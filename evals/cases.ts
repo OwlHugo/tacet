@@ -16,7 +16,9 @@ const CaseSchema = z.object({
   /** Each expected action item as keywords that must appear in the task or its quote. */
   expected_actions: z.array(z.array(z.string())),
   /** Each deadline said in the script: the task as keywords and the words its `due` must hold. */
-  expected_due: z.array(z.object({ task: z.array(z.string()), due: z.string() })),
+  expected_due: z.array(
+    z.object({ task: z.array(z.string()), due: z.string(), optional: z.boolean().optional() }),
+  ),
   /** Whether the script has a decision, so empty decisions in the minutes are a miss. */
   expects_decisions: z.boolean().default(true),
 })

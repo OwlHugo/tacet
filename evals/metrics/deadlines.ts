@@ -4,6 +4,11 @@ import { coverage, type Minutes, words } from '@tacet/core'
 export interface ExpectedDue {
   readonly task: readonly string[]
   readonly due: string
+  /**
+   * Said in the script on something the prompt does not ask for as a task ("the release is on
+   * Tuesday"): out of the count, but a task the model lists for it must carry these words.
+   */
+  readonly optional?: boolean | undefined
 }
 
 export interface DeadlineReport {
@@ -44,5 +49,10 @@ export function checkDeadlines(minutes: Minutes, expected: readonly ExpectedDue[
     else if (holds(a.due, e.due)) met.add(e)
     else wrong.push(`${a.task}: "${a.due}", expected "${e.due}"`)
   }
-  return { right: met.size, total: expected.length, wrong }
+  const counted = (x: ExpectedDue) => x.optional !== true
+  return {
+    right: [...met].filter(counted).length,
+    total: expected.filter(counted).length,
+    wrong,
+  }
 }
