@@ -59,6 +59,20 @@ describe('mergeTracks', () => {
     expect(merged.map((s) => s.speaker)).toEqual(['Me', 'Others'])
   })
 
+  it('drops a mic echo whisper stretched over the silence before it', () => {
+    const merged = mergeTracks([
+      [
+        { start: 0, end: 4, speaker: 'Me', text: 'We should ship on Friday' },
+        { start: 331.88, end: 332.9, speaker: 'Me', text: 'Beleza, obrigado.' },
+      ],
+      [
+        { start: 2.5, end: 4, speaker: 'Others', text: 'We should ship on Friday' },
+        { start: 331.74, end: 332.24, speaker: 'Others', text: 'Beleza' },
+      ],
+    ])
+    expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Others'])
+  })
+
   it('keeps my answer that repeats the question and only touches its edge', () => {
     const merged = mergeTracks([
       [{ start: 13.8, end: 15, speaker: 'Me', text: 'Placar final pronto, sim.' }],
@@ -92,6 +106,8 @@ describe('mergeTracks', () => {
   })
 
   const line = { start: 10, end: 14, speaker: 'Me', text: 'placar final atualizado amanhã' }
+  /** Words that keep a single system piece from matching the mic line on its own. */
+  const chatter = 'reunião cliente sprint deploy servidor'
   const others = (...pieces: [number, number, string][]) =>
     pieces.map(([start, end, text]) => ({ start, end, speaker: 'Others', text }))
 
@@ -122,8 +138,8 @@ describe('mergeTracks', () => {
       others([11, 12, 'beleza'], [20, 22, 'placar final atualizado amanhã']),
     ],
     ['half of the words are heard', false, others([10, 14, 'placar final'])],
-    ['the others talk over half of it', false, others([12, 14, line.text])],
-    ['the others talk over less than half', true, others([12.1, 14, line.text])],
+    ['the others talk over half of it', false, others([12, 14, `${line.text} ${chatter}`])],
+    ['the others talk over less than half', true, others([12.1, 14, `${line.text} ${chatter}`])],
     ['the others only start in its last second', true, others([13, 30, line.text])],
     [
       'the system pieces come out of order',
@@ -133,7 +149,7 @@ describe('mergeTracks', () => {
     [
       'overlapping system pieces cover under half',
       true,
-      others([10, 11.5, 'placar final'], [10, 11.5, 'atualizado amanhã']),
+      others([10, 11.5, `placar final ${chatter}`], [10, 11.5, `atualizado amanhã ${chatter}`]),
     ],
   ])('when %s, keeps the mic line: %s', (_, kept, system) => {
     const merged = mergeTracks([[line], system])
