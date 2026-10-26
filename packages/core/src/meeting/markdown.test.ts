@@ -40,7 +40,7 @@ describe('toMarkdown', () => {
     )
     expect(md).toContain('## Decisions\n\n- Ship Friday [[#^t0002|00:09]]\n')
     expect(md).toContain(
-      '## Action items\n\n_The local model found no action items. The transcript below is complete._\n',
+      '## Action items\n\n_No action items from the local model made it into these minutes. The transcript below is complete._\n',
     )
     expect(md).toContain(
       '**00:20 Others:** We also decided to drop the dark mode toggle for now. ^t0004\n',

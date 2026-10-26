@@ -71,7 +71,7 @@ function Minutes({
       </Block>
       <Block
         title="Decisions"
-        empty="The local model found no decisions. The transcript is complete."
+        empty="No decisions from the local model made it into these minutes. The transcript is complete."
       >
         {minutes.decisions.map((d) => (
           <Row key={`${d.at}-${d.text}`} at={d.at} onJump={first(d.segments)}>
@@ -81,7 +81,7 @@ function Minutes({
       </Block>
       <Block
         title="Action items"
-        empty="The local model found no action items. The transcript is complete."
+        empty="No action items from the local model made it into these minutes. The transcript is complete."
       >
         {minutes.actionItems.map((a) => (
           <Row key={`${a.at}-${a.task}`} at={a.at} onJump={first(a.segments)} check>
