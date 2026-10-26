@@ -13,6 +13,7 @@ const run = (o: Partial<ReliabilityRun> = {}): ReliabilityRun => ({
   dueTotal: 1,
   dueWrong: 0,
   seconds: 1,
+  failed: false,
   ...o,
 })
 
@@ -23,6 +24,7 @@ describe('reliability', () => {
       run({ summary: 0, decisions: 0, tasksFound: 1, dueRight: 0 }),
       run({ whisper: 'turbo' }),
       run({ caseId: 'b', expectsDecisions: false, decisions: 0, dueWrong: 1 }),
+      run({ caseId: 'b', expectsDecisions: false, summary: 0, decisions: 0, failed: true }),
     ])
     expect(r.rows).toEqual([
       {
@@ -35,19 +37,21 @@ describe('reliability', () => {
         dueRight: 1,
         dueTotal: 2,
         dueWrong: 0,
+        failed: 0,
       },
       expect.objectContaining({ caseId: 'a', whisper: 'turbo', runs: 1, withDecisions: 1 }),
-      expect.objectContaining({ caseId: 'b', withDecisions: undefined, dueWrong: 1 }),
+      expect.objectContaining({ caseId: 'b', withDecisions: undefined, dueWrong: 1, failed: 1 }),
     ])
     expect(r).toMatchObject({
-      runs: 4,
+      runs: 5,
       withSummary: 3,
       decisionRuns: 3,
       withDecisions: 2,
-      allTasks: 3,
-      dueRight: 3,
-      dueTotal: 4,
+      allTasks: 4,
+      dueRight: 4,
+      dueTotal: 5,
       dueWrong: 1,
+      failed: 1,
     })
   })
 
@@ -57,10 +61,10 @@ describe('reliability', () => {
       'qwen',
       2,
     )
-    expect(md).toContain('| a | base | 2 | 1/2 | 1/2 | 2/2 | 2/2 | 0 |')
-    expect(md).toContain('| **Total** | | 2 | 50% | 50% | 100% | 100% | 0 |')
+    expect(md).toContain('| a | base | 2 | 1/2 | 1/2 | 2/2 | 2/2 | 0 | 0 |')
+    expect(md).toContain('| **Total** | | 2 | 50% | 50% | 100% | 100% | 0 | 0 |')
     expect(reliabilityMarkdown(reliability([run({ expectsDecisions: false })]), 'q', 1)).toContain(
-      '| a | base | 1 | 1/1 | – | 1/1 | 1/1 | 0 |\n| **Total** | | 1 | 100% | – |',
+      '| a | base | 1 | 1/1 | – | 1/1 | 1/1 | 0 | 0 |\n| **Total** | | 1 | 100% | – |',
     )
   })
 })

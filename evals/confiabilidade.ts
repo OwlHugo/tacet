@@ -104,8 +104,9 @@ async function transcriptOf(c: EvalCase, model: string, i: number): Promise<Tran
   }
 }
 
-if ((await ollamaModels(config.OLLAMA_HOST)) === undefined)
-  throw new Error(`Ollama is not running at ${config.OLLAMA_HOST}.`)
+const pulled = await ollamaModels(config.OLLAMA_HOST)
+if (pulled === undefined) throw new Error(`Ollama is not running at ${config.OLLAMA_HOST}.`)
+if (!pulled.includes(values.llm)) throw new Error(`Ollama has no model "${values.llm}".`)
 
 const runs: ReliabilityRun[] = []
 const generate = ollamaMinutes({ host: config.OLLAMA_HOST, model: values.llm })
@@ -120,8 +121,8 @@ for (const c of cases) {
     for (let i = 0; i < TIMES; i++) {
       const transcript = await transcriptOf(c, model, i)
       const t0 = performance.now()
-      // A request that fails (Ollama dropped the connection) is a run with nothing in it, counted
-      // as such: the point is how often the minutes come out, not hiding the ones that do not.
+      // A request that fails (Ollama dropped the connection) is a run with no minutes, counted in
+      // its own column so it is never mistaken for the model leaving a part empty.
       const result = await generateMinutes(transcript, { generate, model: values.llm }).catch(
         (e: unknown) => {
           log(`    failed: ${e instanceof Error ? e.message : String(e)}`)
@@ -138,9 +139,10 @@ for (const c of cases) {
           tasksFound: 0,
           tasksTotal: c.expected_actions.length,
           dueRight: 0,
-          dueTotal: c.expected_due.length,
+          dueTotal: c.expected_due.filter((d) => d.optional !== true).length,
           dueWrong: 0,
           seconds: (performance.now() - t0) / 1000,
+          failed: true,
         })
         continue
       }
@@ -159,6 +161,7 @@ for (const c of cases) {
         dueTotal: deadlines.total,
         dueWrong: deadlines.wrong.length,
         seconds: (performance.now() - t0) / 1000,
+        failed: false,
       })
       log(`    ${((performance.now() - t0) / 1000).toFixed(0)}s`)
       for (const w of deadlines.wrong) log(`    wrong deadline: ${w}`)

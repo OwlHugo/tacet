@@ -12,6 +12,8 @@ export interface ReliabilityRun {
   readonly dueTotal: number
   readonly dueWrong: number
   readonly seconds: number
+  /** The request itself failed (Ollama down, model missing): no minutes, and not an empty answer. */
+  readonly failed: boolean
 }
 
 interface ReliabilityRow {
@@ -26,6 +28,7 @@ interface ReliabilityRow {
   readonly dueRight: number
   readonly dueTotal: number
   readonly dueWrong: number
+  readonly failed: number
 }
 
 export interface Reliability {
@@ -38,6 +41,7 @@ export interface Reliability {
   readonly dueRight: number
   readonly dueTotal: number
   readonly dueWrong: number
+  readonly failed: number
 }
 
 const sum = <T>(xs: readonly T[], f: (x: T) => number) => xs.reduce((a, x) => a + f(x), 0)
@@ -59,6 +63,7 @@ export function reliability(runs: readonly ReliabilityRun[]): Reliability {
       dueRight: sum(rs, (r) => r.dueRight),
       dueTotal: sum(rs, (r) => r.dueTotal),
       dueWrong: sum(rs, (r) => r.dueWrong),
+      failed: rs.filter((r) => r.failed).length,
     }
   })
   const withDecisionRows = rows.filter((r) => r.withDecisions !== undefined)
@@ -72,6 +77,7 @@ export function reliability(runs: readonly ReliabilityRun[]): Reliability {
     dueRight: sum(rows, (r) => r.dueRight),
     dueTotal: sum(rows, (r) => r.dueTotal),
     dueWrong: sum(rows, (r) => r.dueWrong),
+    failed: sum(rows, (r) => r.failed),
   }
 }
 
@@ -81,13 +87,13 @@ export function reliabilityMarkdown(r: Reliability, llm: string, times: number):
   const head = [
     `Reliability of ${llm}: ${times} recordings of each meeting (the audio varied like a real capture), each transcribed and written into minutes.`,
     '',
-    '| Case | Whisper | Runs | Summary | Decisions | All tasks | Deadlines right | Wrong deadlines |',
-    '|---|---|---|---|---|---|---|---|',
+    '| Case | Whisper | Runs | Summary | Decisions | All tasks | Deadlines right | Wrong deadlines | Failed requests |',
+    '|---|---|---|---|---|---|---|---|---|',
   ]
   const body = r.rows.map(
     (x) =>
-      `| ${x.caseId} | ${x.whisper} | ${x.runs} | ${x.withSummary}/${x.runs} | ${x.withDecisions === undefined ? '–' : `${x.withDecisions}/${x.runs}`} | ${x.allTasks}/${x.runs} | ${x.dueRight}/${x.dueTotal} | ${x.dueWrong} |`,
+      `| ${x.caseId} | ${x.whisper} | ${x.runs} | ${x.withSummary}/${x.runs} | ${x.withDecisions === undefined ? '–' : `${x.withDecisions}/${x.runs}`} | ${x.allTasks}/${x.runs} | ${x.dueRight}/${x.dueTotal} | ${x.dueWrong} | ${x.failed} |`,
   )
-  const total = `| **Total** | | ${r.runs} | ${pct(r.withSummary, r.runs)} | ${pct(r.withDecisions, r.decisionRuns)} | ${pct(r.allTasks, r.runs)} | ${pct(r.dueRight, r.dueTotal)} | ${r.dueWrong} |`
+  const total = `| **Total** | | ${r.runs} | ${pct(r.withSummary, r.runs)} | ${pct(r.withDecisions, r.decisionRuns)} | ${pct(r.allTasks, r.runs)} | ${pct(r.dueRight, r.dueTotal)} | ${r.dueWrong} | ${r.failed} |`
   return [...head, ...body, total].join('\n')
 }
