@@ -63,11 +63,11 @@ describe('mergeTracks', () => {
     const merged = mergeTracks([
       [
         { start: 0, end: 4, speaker: 'Me', text: 'We should ship on Friday' },
-        { start: 331.88, end: 332.9, speaker: 'Me', text: 'Beleza, obrigado.' },
+        { start: 31.88, end: 32.9, speaker: 'Me', text: 'Beleza, obrigado.' },
       ],
       [
         { start: 2.5, end: 4, speaker: 'Others', text: 'We should ship on Friday' },
-        { start: 331.74, end: 332.24, speaker: 'Others', text: 'Beleza' },
+        { start: 31.74, end: 32.24, speaker: 'Others', text: 'Beleza' },
       ],
     ])
     expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Others'])
