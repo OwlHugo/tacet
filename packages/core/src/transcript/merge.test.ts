@@ -58,6 +58,42 @@ describe('mergeTracks', () => {
     ])
     expect(merged.map((s) => s.speaker)).toEqual(['Me', 'Others'])
   })
+
+  const line = { start: 10, end: 14, speaker: 'Me', text: 'placar final atualizado amanhã' }
+  const others = (...pieces: [number, number, string][]) =>
+    pieces.map(([start, end, text]) => ({ start, end, speaker: 'Others', text }))
+
+  it.each([
+    [
+      'the rest is said just after',
+      false,
+      others([12, 14, 'placar'], [15, 16, 'final atualizado']),
+    ],
+    [
+      'the rest starts right at the slack',
+      true,
+      others([12, 14, 'placar'], [15.5, 16, 'final atualizado']),
+    ],
+    [
+      'the rest is said just before',
+      false,
+      others([10, 12, 'placar'], [7.6, 9, 'final atualizado']),
+    ],
+    [
+      'the rest ends right at the slack',
+      true,
+      others([10, 12, 'placar'], [7.5, 8.5, 'final atualizado']),
+    ],
+    [
+      'the same words come much later',
+      true,
+      others([11, 12, 'beleza'], [20, 22, 'placar final atualizado amanhã']),
+    ],
+    ['half of the words are heard', false, others([10, 14, 'placar final'])],
+  ])('when %s, keeps the mic line: %s', (_, kept, system) => {
+    const merged = mergeTracks([[line], system])
+    expect(merged.some((s) => s.speaker === 'Me')).toBe(kept)
+  })
 })
 
 describe('isHallucination', () => {
