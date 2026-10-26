@@ -75,6 +75,14 @@ describe('mergeTracks', () => {
     expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Me'])
   })
 
+  it('keeps a mic line whisper gave no duration', () => {
+    const merged = mergeTracks([
+      [{ start: 12, end: 12, speaker: 'Me', text: 'placar final' }],
+      [{ start: 10, end: 14, speaker: 'Others', text: 'placar final' }],
+    ])
+    expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Me'])
+  })
+
   it('keeps every mic line when the system track is empty', () => {
     const mic = [
       { start: 0, end: 2, speaker: 'Me', text: 'Bom dia, pessoal.' },
