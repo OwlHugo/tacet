@@ -26,6 +26,38 @@ describe('mergeTracks', () => {
       'Me:Sounds good to me.',
     ])
   })
+
+  it('drops a long mic echo of a line the system track split into short pieces', () => {
+    const merged = mergeTracks([
+      [
+        {
+          start: 16.7,
+          end: 21.5,
+          speaker: 'Me',
+          text: 'Bia, por favor, revisa a planilha de horários do mutirão, se der ainda hoje, tá?',
+        },
+      ],
+      [
+        {
+          start: 16.6,
+          end: 18.6,
+          speaker: 'Others',
+          text: 'Bia, por favor, revisa a planilha',
+        },
+        { start: 18.6, end: 19.9, speaker: 'Others', text: 'De horários do mutirão' },
+        { start: 19.9, end: 21.5, speaker: 'Others', text: 'Se der ainda hoje, tá?' },
+      ],
+    ])
+    expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Others', 'Others'])
+  })
+
+  it('keeps my own line that shares words with an answer that comes after it', () => {
+    const merged = mergeTracks([
+      [{ start: 0.96, end: 4.26, speaker: 'Me', text: 'Opa! Bom dia, pessoal! Tão me ouvindo?' }],
+      [{ start: 5.64, end: 7.6, speaker: 'Others', text: 'Bom dia, Hugo, estou ouvindo.' }],
+    ])
+    expect(merged.map((s) => s.speaker)).toEqual(['Me', 'Others'])
+  })
 })
 
 describe('isHallucination', () => {
