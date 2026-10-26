@@ -59,6 +59,30 @@ describe('mergeTracks', () => {
     expect(merged.map((s) => s.speaker)).toEqual(['Me', 'Others'])
   })
 
+  it('keeps my answer that repeats the question and only touches its edge', () => {
+    const merged = mergeTracks([
+      [{ start: 13.8, end: 15, speaker: 'Me', text: 'Placar final pronto, sim.' }],
+      [{ start: 10, end: 14, speaker: 'Others', text: 'O placar final tá pronto?' }],
+    ])
+    expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Me'])
+  })
+
+  it('keeps a short reply said over the others', () => {
+    const merged = mergeTracks([
+      [{ start: 11, end: 11.5, speaker: 'Me', text: 'Tá.' }],
+      [{ start: 10, end: 14, speaker: 'Others', text: 'Tá, então fecha o placar hoje.' }],
+    ])
+    expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Me'])
+  })
+
+  it('keeps every mic line when the system track is empty', () => {
+    const mic = [
+      { start: 0, end: 2, speaker: 'Me', text: 'Bom dia, pessoal.' },
+      { start: 3, end: 5, speaker: 'Me', text: 'Bom dia, pessoal.' },
+    ]
+    expect(mergeTracks([mic, []]).map((s) => s.text)).toEqual(mic.map((s) => s.text))
+  })
+
   const line = { start: 10, end: 14, speaker: 'Me', text: 'placar final atualizado amanhã' }
   const others = (...pieces: [number, number, string][]) =>
     pieces.map(([start, end, text]) => ({ start, end, speaker: 'Others', text }))

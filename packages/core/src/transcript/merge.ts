@@ -18,23 +18,43 @@ export function isHallucination(text: string): boolean {
 /** How far around a mic segment the system track may say the same words (whisper's timing drift). */
 const ECHO_SLACK_SECONDS = 1.5
 
+/**
+ * Share of a mic segment's duration the system track must be talking over for it to be an echo.
+ * An answer that repeats the question and only touches its edge stays below it.
+ */
+const ECHO_MIN_TIME_SHARE = 0.5
+
 const overlaps = (a: TimedText, b: TimedText, slack = 0): boolean =>
   a.start < b.end + slack && b.start < a.end + slack
 
+/** Share of `s`'s duration covered by the union of `pieces`, clipped to `s`. */
+function timeShare(s: TimedText, pieces: readonly TimedText[]): number {
+  const clipped = pieces
+    .map((p) => [Math.max(s.start, p.start), Math.min(s.end, p.end)] as const)
+    .sort((a, b) => a[0] - b[0])
+  let covered = 0
+  let reach = s.start
+  for (const [start, end] of clipped) {
+    covered += Math.max(0, end - Math.max(start, reach))
+    reach = Math.max(reach, end)
+  }
+  return covered / (s.end - s.start)
+}
+
 /**
  * Merge per-track segments into one timeline. Without headphones the mic also hears the speakers,
- * so a "Me" segment whose words are mostly said by "Others" at the same time is an echo. Whisper
- * cuts the two tracks differently (one long mic line against several short system pieces), so the
- * words are pooled from every "Others" segment around it.
+ * so a "Me" segment said mostly while "Others" talk, with words mostly theirs, is an echo. Whisper
+ * cuts the two tracks differently (one long mic line against several short system pieces), so
+ * time and words are pooled from every "Others" segment around it.
  */
 export function mergeTracks(tracks: readonly (readonly TimedText[])[]): Segment[] {
   const all = tracks.flat()
   const others = all.filter((s) => s.speaker !== ME)
   const isEcho = (s: TimedText) => {
+    if (s.speaker !== ME) return false
     const heard = others.filter((o) => overlaps(s, o, ECHO_SLACK_SECONDS))
     return (
-      s.speaker === ME &&
-      heard.some((o) => overlaps(s, o)) &&
+      timeShare(s, heard) >= ECHO_MIN_TIME_SHARE &&
       coverage(s.text, heard.map((o) => o.text).join(' ')) >= 0.5
     )
   }
