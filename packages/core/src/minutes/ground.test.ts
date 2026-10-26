@@ -397,6 +397,28 @@ describe('groundMinutes', () => {
       ])
     })
 
+    it('a duplicate task the model gave, dropped, still makes its line shared', () => {
+      const t = line(
+        'Okay.',
+        'Okay, I will prepare the offer letter and send it to Legal on Wednesday.',
+      )
+      const offer = item(
+        'Prepare the offer letter',
+        'Others',
+        'I will prepare the offer letter and send it to Legal on Wednesday.',
+        [0],
+        'Wednesday',
+      )
+      expect(run(t, offer).actionItems[0]?.due).toBe('Wednesday')
+      const r = run(t, offer, {
+        ...offer,
+        task: 'Also prepare the offer letter',
+        owner: 'Unassigned',
+      })
+      expect(r.actionItems).toHaveLength(1)
+      expect(r.actionItems[0]).not.toHaveProperty('due')
+    })
+
     it('a pronoun owner is not a second name on the line', () => {
       const t = line('Ana, eu entrego as notas até sexta.')
       const r = run(

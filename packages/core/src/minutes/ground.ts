@@ -255,18 +255,25 @@ function groundDue(
   return undefined
 }
 
+/**
+ * The tasks that pass grounding, and for every task the model gave the lines it stands on: the lines
+ * grounding found for it when it found any (the model's citation may be wrong), plus the cited ones.
+ * A task dropped as a duplicate still stands on its lines.
+ */
 function groundTasks(
   raw: RawMinutes,
   index: TranscriptIndex,
   threshold: number,
   rejected: Rejected[],
-): Candidate[] {
+): { readonly kept: Candidate[]; readonly standsOn: readonly (readonly number[])[] } {
   const kept: Candidate[] = []
+  const standsOn: number[][] = []
   for (const t of raw.action_items) {
     const task = t.task.trim()
     if (!task) continue
     const source = t.quote || task
     const a = anchor(source, t.segments, index, threshold)
+    standsOn.push([...(a?.lines.map((s) => s.id) ?? []), ...t.segments])
     if (!a)
       rejected.push({ kind: 'action', text: task, reason: 'quote not found in the transcript' })
     else if (!wordingSupported(task, a.lines, index))
@@ -283,7 +290,7 @@ function groundTasks(
     )
       kept.push({ raw: t, task, lines: a.lines })
   }
-  return kept
+  return { kept, standsOn }
 }
 
 function groundActions(
@@ -292,16 +299,11 @@ function groundActions(
   threshold: number,
   rejected: Rejected[],
 ): Action[] {
-  const tasks = groundTasks(raw, index, threshold, rejected)
-  // A line is in doubt when more than one task stands on it: the lines grounding gave each kept task
-  // (not only the ones the model cited, which may be wrong), and the cited lines of every other task.
-  const kept = new Set(tasks.map((c) => c.raw))
+  const { kept: tasks, standsOn } = groundTasks(raw, index, threshold, rejected)
+  // A line is in doubt when more than one task the model gave stands on it, kept or not.
   const citedBy = new Map<number, number>()
-  const count = (ids: Iterable<number>) => {
+  for (const ids of standsOn)
     for (const id of new Set(ids)) citedBy.set(id, (citedBy.get(id) ?? 0) + 1)
-  }
-  for (const c of tasks) count([...c.lines.map((s) => s.id), ...c.raw.segments])
-  for (const t of raw.action_items) if (!kept.has(t)) count(t.segments)
   const owners = new Set(
     raw.action_items.flatMap((t) => words(t.owner).slice(0, 1)).filter((o) => !NOT_A_NAME.has(o)),
   )
