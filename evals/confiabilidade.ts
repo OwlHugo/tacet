@@ -110,9 +110,11 @@ if ((await ollamaModels(config.OLLAMA_HOST)) === undefined)
 const runs: ReliabilityRun[] = []
 const generate = ollamaMinutes({ host: config.OLLAMA_HOST, model: values.llm })
 const only = values.caso
-for (const c of loadCases(join(import.meta.dirname, 'cases')).filter(
+const cases = loadCases(join(import.meta.dirname, 'cases')).filter(
   (x) => only === undefined || x.id === only,
-)) {
+)
+if (cases.length === 0) throw new Error(`No eval case is called "${only}".`)
+for (const c of cases) {
   for (const model of WHISPER_MODELS) {
     log(`> ${c.id}: whisper ${model}`)
     for (let i = 0; i < TIMES; i++) {
