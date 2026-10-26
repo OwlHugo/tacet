@@ -114,6 +114,19 @@ describe('mergeTracks', () => {
       others([11, 12, 'beleza'], [20, 22, 'placar final atualizado amanhã']),
     ],
     ['half of the words are heard', false, others([10, 14, 'placar final'])],
+    ['the others talk over half of it', false, others([12, 14, line.text])],
+    ['the others talk over less than half', true, others([12.1, 14, line.text])],
+    ['the others only start in its last second', true, others([13, 30, line.text])],
+    [
+      'the system pieces come out of order',
+      false,
+      others([12.5, 14, 'atualizado amanhã'], [10, 13, 'placar final']),
+    ],
+    [
+      'overlapping system pieces cover under half',
+      true,
+      others([10, 11.5, 'placar final'], [10, 11.5, 'atualizado amanhã']),
+    ],
   ])('when %s, keeps the mic line: %s', (_, kept, system) => {
     const merged = mergeTracks([[line], system])
     expect(merged.some((s) => s.speaker === 'Me')).toBe(kept)
