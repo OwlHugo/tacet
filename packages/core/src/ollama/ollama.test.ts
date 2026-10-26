@@ -19,7 +19,13 @@ describe('ollamaHost', () => {
 let server: Server
 let host: string
 let lastBody:
-  | { model: string; format: unknown; options: unknown; messages: { role: string }[] }
+  | {
+      model: string
+      stream: boolean
+      format: unknown
+      options: unknown
+      messages: { role: string }[]
+    }
   | undefined
 let chatReply: unknown
 
@@ -37,7 +43,15 @@ beforeAll(async () => {
         res.statusCode = 404
         return res.end('model "missing" not found')
       }
-      res.end(JSON.stringify({ message: { content: JSON.stringify(chatReply) } }))
+      // Streamed like Ollama: one JSON line per piece of the content, split mid-line on the wire.
+      const content = JSON.stringify(chatReply)
+      const half = Math.floor(content.length / 2)
+      const lines = [content.slice(0, half), content.slice(half)]
+        .map((piece) => `${JSON.stringify({ message: { content: piece }, done: false })}\n`)
+        .join('')
+      const wire = `${lines}${JSON.stringify({ message: { content: '' }, done: true })}`
+      res.write(wire.slice(0, 7))
+      setTimeout(() => res.end(wire.slice(7)), 5)
     })
   })
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
@@ -57,6 +71,7 @@ describe('ollama adapter', () => {
     const raw = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('system', 'user', 'tasks')
     expect(raw).toEqual({ summary: [], decisions: [], action_items: items })
     expect(lastBody?.messages.map((m) => m.role)).toEqual(['system', 'user'])
+    expect(lastBody?.stream).toBe(true)
     expect(lastBody?.format).toMatchObject({ required: ['action_items'] })
     expect(lastBody?.options).toEqual({ temperature: 0, seed: 7, num_ctx: 16384 })
     chatReply = { summary: [{ text: 's', segments: [0] }], decisions: [] }

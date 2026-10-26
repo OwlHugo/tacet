@@ -29,7 +29,29 @@ export async function ollamaModels(host: string): Promise<string[] | undefined> 
   return Tags.parse(await res.json()).models.map((m) => m.name)
 }
 
-const Chat = z.object({ message: z.object({ content: z.string() }) })
+/** One line of a streamed chat answer: a piece of the content, until `done`. */
+const ChatChunk = z.object({ message: z.object({ content: z.string() }), done: z.boolean() })
+
+/**
+ * The content of a streamed answer. Streaming keeps bytes flowing while a large model thinks: a
+ * whole answer at once leaves the connection silent for minutes, and fetch gives up on it after
+ * five (headers timeout).
+ */
+async function streamedContent(body: ReadableStream<Uint8Array>): Promise<string> {
+  let content = ''
+  let pending = ''
+  const take = (line: string) => {
+    if (line.trim() !== '') content += ChatChunk.parse(JSON.parse(line)).message.content
+  }
+  for await (const text of body.pipeThrough(new TextDecoderStream())) {
+    const buffer = pending + text
+    const end = buffer.lastIndexOf('\n') + 1
+    for (const line of buffer.slice(0, end).split('\n')) take(line)
+    pending = buffer.slice(end)
+  }
+  take(pending)
+  return content
+}
 
 const JSON_SCHEMA: Record<MinutesPart, unknown> = {
   overview: z.toJSONSchema(PART_SCHEMA.overview),
@@ -57,7 +79,7 @@ export function ollamaMinutes(opts: {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: opts.model,
-        stream: false,
+        stream: true,
         format: JSON_SCHEMA[part],
         options: { temperature: 0, seed: SEED, num_ctx: 16384 },
         messages: [
@@ -66,8 +88,8 @@ export function ollamaMinutes(opts: {
         ],
       }),
     })
-    if (!res.ok) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
-    const content = Chat.parse(await res.json()).message.content
+    if (!res.ok || res.body === null) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
+    const content = await streamedContent(res.body)
     return {
       summary: [],
       decisions: [],
