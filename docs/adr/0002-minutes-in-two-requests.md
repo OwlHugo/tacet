@@ -21,6 +21,13 @@ changes (offset between the tracks, gain, background noise), transcribed with wh
 
 The demo case with turbo, the setting of a real call, went from 5/8 to 8/8 runs with a summary.
 
+The four cases from before the demo case, on their own, kept their deadlines: 87/112 right before,
+90/112 after, none wrong. The single recorded run in `fixture.json` went from 7/7 to 6/7 on them:
+Maria's "before that" now comes back as "before Friday", which is not what was said, so grounding
+drops it. That is one draw from the spread the 8 recordings measure, not a trend.
+
+To repeat the measure: `pnpm eval:confiabilidade --vezes 8 --whisper base,large-v3-turbo`.
+
 ## Decision
 
 `generateMinutes` asks two requests per chunk, each with its own system prompt and its own JSON
