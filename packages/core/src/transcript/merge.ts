@@ -30,7 +30,7 @@ const overlaps = (a: TimedText, b: TimedText, slack = 0): boolean =>
 /** Share of `s`'s duration covered by the union of `pieces`, clipped to `s`. */
 function timeShare(s: TimedText, pieces: readonly TimedText[]): number {
   const clipped = pieces
-    .map((p) => [Math.max(s.start, p.start), Math.min(s.end, p.end)] as const)
+    .map((p) => [p.start, Math.min(s.end, p.end)] as const)
     .sort((a, b) => a[0] - b[0])
   let covered = 0
   let reach = s.start
