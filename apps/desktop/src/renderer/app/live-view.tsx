@@ -171,7 +171,7 @@ export function useLiveView(state: RecorderState) {
     shown: browsing ? undefined : live,
     leave: () => {
       setBrowsing(true)
-      // A failure is shown once: leaving it for a meeting or Settings closes it for good.
+      // A failure is shown once: leaving it for a meeting closes it for good (Settings is a detour and comes back to it).
       if (state.kind === 'error') void api.dismissFailure()
     },
     back: () => setBrowsing(false),
