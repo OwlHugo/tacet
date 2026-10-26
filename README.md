@@ -54,7 +54,7 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 
 - **Two tracks, no driver.** Your microphone and the system audio are recorded as separate files. System audio uses Chromium's loopback capture: ScreenCaptureKit on macOS 13+, WASAPI on Windows, the PulseAudio/PipeWire monitor on Linux. No BlackHole, no Loopback.app.
 - **Me / Others.** Each track is transcribed separately, so speaker labels come for free. Mic echo of the speakers is detected and removed when you are not using headphones.
-- **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms (see the eval).
+- **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms on the scripted cases (see the eval). On the 2.5 minute call (case 05) it is still about 6 s: whisper glues a line to the one before it, and a short reply ("Isso.") lands on the wrong segment ([issue #4](https://github.com/OwlHugo/tacet/issues/4)).
 - **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word on a line that only this task stands on and that names at most one of the owners the model gave (a missing deadline is preferred to a wrong one; a second person the model left out is not seen, see issue #2), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
@@ -63,7 +63,7 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 
 ## Eval
 
-Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.yml)). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), the one-track demo meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, and a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), the call in the demo.
+Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.yml)). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), a one-track sprint meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, and a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), the call in the demo.
 
 Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
