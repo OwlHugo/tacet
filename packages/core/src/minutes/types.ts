@@ -56,5 +56,21 @@ export const MinutesSchema = z.object({
 export type Minutes = z.infer<typeof MinutesSchema>
 export type Rejected = Minutes['rejected'][number]
 
-/** Port: a local LLM that answers the minutes prompt. Ollama in production, a fake in tests. */
-export type GenerateRawMinutes = (system: string, user: string) => Promise<RawMinutes>
+/**
+ * Which part of the minutes one request asks for. `overview` is the summary and the decisions,
+ * `tasks` the action items; the parts not asked for come back as empty lists.
+ */
+export type MinutesPart = 'overview' | 'tasks'
+
+/** The schema the model must follow for each part. */
+export const PART_SCHEMA = {
+  overview: RawMinutesSchema.pick({ summary: true, decisions: true }),
+  tasks: RawMinutesSchema.pick({ action_items: true }),
+} as const
+
+/** Port: a local LLM that answers one minutes prompt. Ollama in production, a fake in tests. */
+export type GenerateRawMinutes = (
+  system: string,
+  user: string,
+  part: MinutesPart,
+) => Promise<RawMinutes>

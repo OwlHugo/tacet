@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { type GenerateRawMinutes, RawMinutesSchema } from '../minutes/types.ts'
+import { type GenerateRawMinutes, type MinutesPart, PART_SCHEMA } from '../minutes/types.ts'
 
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
 
@@ -31,23 +31,35 @@ export async function ollamaModels(host: string): Promise<string[] | undefined> 
 
 const Chat = z.object({ message: z.object({ content: z.string() }) })
 
-const MINUTES_JSON_SCHEMA = z.toJSONSchema(RawMinutesSchema)
+const JSON_SCHEMA: Record<MinutesPart, unknown> = {
+  overview: z.toJSONSchema(PART_SCHEMA.overview),
+  tasks: z.toJSONSchema(PART_SCHEMA.tasks),
+}
 
-/** Ollama adapter for the GenerateRawMinutes port: structured output constrained to the minutes schema. */
+/**
+ * Same answer for the same transcript: greedy decoding and a fixed seed. Real recordings still vary;
+ * what this rules out is two runs on one transcript disagreeing.
+ */
+const SEED = 7
+
+/**
+ * Ollama adapter for the GenerateRawMinutes port: structured output constrained by the JSON schema
+ * of the part asked for, so the model cannot leave a list out or answer outside it.
+ */
 export function ollamaMinutes(opts: {
   readonly host: string
   readonly model: string
 }): GenerateRawMinutes {
   const origin = ollamaHost(opts.host)
-  return async (system, user) => {
+  return async (system, user, part) => {
     const res = await fetch(`${origin}/api/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: opts.model,
         stream: false,
-        format: MINUTES_JSON_SCHEMA,
-        options: { temperature: 0, num_ctx: 16384 },
+        format: JSON_SCHEMA[part],
+        options: { temperature: 0, seed: SEED, num_ctx: 16384 },
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
@@ -56,6 +68,11 @@ export function ollamaMinutes(opts: {
     })
     if (!res.ok) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
     const content = Chat.parse(await res.json()).message.content
-    return RawMinutesSchema.parse(JSON.parse(content))
+    return {
+      summary: [],
+      decisions: [],
+      action_items: [],
+      ...PART_SCHEMA[part].parse(JSON.parse(content)),
+    }
   }
 }
