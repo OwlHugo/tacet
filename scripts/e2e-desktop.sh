@@ -37,3 +37,7 @@ wait $app || true
 echo
 echo "notes folder: $out"
 ls -1 "$out"
+# Both tracks must reach the transcript: a line from each side of the call.
+for who in Me Others; do
+  grep -q "^\*\*[0-9:]* $who:\*\*" "$out"/*.md || { echo "no $who line in the notes" >&2; exit 1; }
+done
