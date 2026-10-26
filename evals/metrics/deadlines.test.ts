@@ -87,4 +87,21 @@ describe('checkDeadlines', () => {
       'Send the release notes: "by Friday", expected "thursday"',
     ])
   })
+
+  it('matches a task by its wording before its quote, which may be the reply about another task', () => {
+    const m = minutes('by Thursday')
+    const item = m.actionItems[0]
+    if (item === undefined) throw new Error('no task')
+    const tela = {
+      ...item,
+      task: 'Build the checkout screen',
+      quote: 'Fechado. Só que eu preciso dos textos de erro',
+      due: 'by Thursday',
+    }
+    const r = checkDeadlines({ ...m, actionItems: [tela] }, [
+      { task: ['textos', 'erro'], due: 'tomorrow' },
+      { task: ['checkout', 'screen'], due: 'thursday' },
+    ])
+    expect(r).toEqual({ right: 1, total: 2, wrong: [] })
+  })
 })

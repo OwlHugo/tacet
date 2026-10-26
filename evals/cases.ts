@@ -17,6 +17,8 @@ const CaseSchema = z.object({
   expected_actions: z.array(z.array(z.string())),
   /** Each deadline said in the script: the task as keywords and the words its `due` must hold. */
   expected_due: z.array(z.object({ task: z.array(z.string()), due: z.string() })),
+  /** Whether the script has a decision, so empty decisions in the minutes are a miss. */
+  expects_decisions: z.boolean().default(true),
 })
 
 /** What a real whisper + LLM run produced, replayed by `eval:sem-ia` so CI needs neither. */

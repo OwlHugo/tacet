@@ -1,0 +1,385 @@
+{
+  "whisperModel": "base",
+  "llmModel": "qwen2.5:7b",
+  "transcript": {
+    "segments": [
+      {
+        "start": 0.96,
+        "end": 4.26,
+        "speaker": "Me",
+        "text": "\"Opa! Bom dia, pessoal! Tão me ouvindo?\"",
+        "id": 0
+      },
+      {
+        "start": 5.64,
+        "end": 7.6000000000000005,
+        "speaker": "Others",
+        "text": "Bom dia, Hugo, estou ouvindo-se.",
+        "id": 1
+      },
+      {
+        "start": 9,
+        "end": 15.9,
+        "speaker": "Me",
+        "text": "\"Beleza! Então, é, deixe-o compartilhar aqui o quadro da Sprint. Pera! Pronto!\"",
+        "id": 2
+      },
+      {
+        "start": 16.76,
+        "end": 21.88,
+        "speaker": "Me",
+        "text": "A ideia hoje é fechar o que entra na Sprint 15, e o ponto principal é o check out Compix,",
+        "id": 3
+      },
+      {
+        "start": 21.88,
+        "end": 23.7,
+        "speaker": "Me",
+        "text": "que ficou pendurado da Sprint passada.",
+        "id": 4
+      },
+      {
+        "start": 25.14,
+        "end": 29.86,
+        "speaker": "Others",
+        "text": "É, sobre o PIX, então, a notificação do banco já está funcionando no sendibó.",
+        "id": 5
+      },
+      {
+        "start": 29.86,
+        "end": 32.94,
+        "speaker": "Others",
+        "text": "Falta só tratar o pagamento espirado.",
+        "id": 6
+      },
+      {
+        "start": 32.94,
+        "end": 34.66,
+        "speaker": "Others",
+        "text": "Tá, mas e o login com Google?",
+        "id": 7
+      },
+      {
+        "start": 34.66,
+        "end": 36.52,
+        "speaker": "Others",
+        "text": "O cliente pediu isso também, não pediu?",
+        "id": 8
+      },
+      {
+        "start": 37.88,
+        "end": 42.68,
+        "speaker": "Me",
+        "text": "\"Pedio, mais olha, eu acho que não cabe nas duas semanas junto com o Pix. Sabe?\"",
+        "id": 9
+      },
+      {
+        "start": 43.54,
+        "end": 46.660000000000004,
+        "speaker": "Me",
+        "text": "Minha sugestão é deixar o login com Google para a próxima Sprint.",
+        "id": 10
+      },
+      {
+        "start": 43.92,
+        "end": 44.38,
+        "speaker": "Others",
+        "text": "O RAM...",
+        "id": 11
+      },
+      {
+        "start": 48.1,
+        "end": 48.72,
+        "speaker": "Others",
+        "text": "Também acho.",
+        "id": 12
+      },
+      {
+        "start": 49.1,
+        "end": 52.5,
+        "speaker": "Others",
+        "text": "Se a gente abrir as duas frontes, tipo, não entrega nenhuma.",
+        "id": 13
+      },
+      {
+        "start": 53.56,
+        "end": 58.64,
+        "speaker": "Me",
+        "text": "Fechado, então, está decidido, o login com Google fica para a próxima Sprint, e essa Sprint",
+        "id": 14
+      },
+      {
+        "start": 58.64,
+        "end": 61.88,
+        "speaker": "Me",
+        "text": "é só o check out Compix. Todo mundo de acordo?",
+        "id": 15
+      },
+      {
+        "start": 60.74,
+        "end": 61.120000000000005,
+        "speaker": "Others",
+        "text": "Isso.",
+        "id": 16
+      },
+      {
+        "start": 63.480000000000004,
+        "end": 65.46,
+        "speaker": "Others",
+        "text": "Ah, são parentes e rapidinho.",
+        "id": 17
+      },
+      {
+        "start": 65.46,
+        "end": 66.78,
+        "speaker": "Others",
+        "text": "Caiu o granizo ontem aqui.",
+        "id": 18
+      },
+      {
+        "start": 67.14,
+        "end": 69.12,
+        "speaker": "Others",
+        "text": "Meu carro ficou todo marcado, rar-á.",
+        "id": 19
+      },
+      {
+        "start": 69.9,
+        "end": 76.92,
+        "speaker": "Me",
+        "text": "Nossa, que azar, Larissa! Bom, voltando! Camila, a subida para a produção era a sexta, né?",
+        "id": 20
+      },
+      {
+        "start": 78.26,
+        "end": 79.52,
+        "speaker": "Others",
+        "text": "Isso sexta de manhã.",
+        "id": 21
+      },
+      {
+        "start": 80.22,
+        "end": 83.46000000000001,
+        "speaker": "Others",
+        "text": "Não, não, pera, sexta é feriado, gente.",
+        "id": 22
+      },
+      {
+        "start": 83.82000000000001,
+        "end": 85.62,
+        "speaker": "Others",
+        "text": "A gente tinha mudado pra terça.",
+        "id": 23
+      },
+      {
+        "start": 84.14,
+        "end": 97.08,
+        "speaker": "Me",
+        "text": "Urum! Então, está decidido também, a subida para a produção vai na terça de manhã,",
+        "id": 24
+      },
+      {
+        "start": 85.62,
+        "end": 86.04,
+        "speaker": "Others",
+        "text": "Lembra?",
+        "id": 25
+      },
+      {
+        "start": 86.44,
+        "end": 87.54,
+        "speaker": "Others",
+        "text": "Por causa do plantão.",
+        "id": 26
+      },
+      {
+        "start": 88.46000000000001,
+        "end": 90.74,
+        "speaker": "Others",
+        "text": "A é verdade esquecido feriado.",
+        "id": 27
+      },
+      {
+        "start": 90.74,
+        "end": 91.98,
+        "speaker": "Others",
+        "text": "Terça, então, combinado.",
+        "id": 28
+      },
+      {
+        "start": 97.08,
+        "end": 105.32,
+        "speaker": "Me",
+        "text": "e não na sexta. Agora, as tarefas. Larissa, você fica com o tratamento do Pix inspirado na notificação",
+        "id": 29
+      },
+      {
+        "start": 105.32,
+        "end": 115.06,
+        "speaker": "Me",
+        "text": "de pagamento até quarta-feira. Pode ser? Camila, a tela de check out com o QR code do Pix",
+        "id": 30
+      },
+      {
+        "start": 109.94,
+        "end": 111.3,
+        "speaker": "Others",
+        "text": "Assim, consigo.",
+        "id": 31
+      },
+      {
+        "start": 115.06,
+        "end": 117.16,
+        "speaker": "Me",
+        "text": "fica com você, até quinta-feira.",
+        "id": 32
+      },
+      {
+        "start": 118.54,
+        "end": 119.54,
+        "speaker": "Others",
+        "text": "Fechado.",
+        "id": 33
+      },
+      {
+        "start": 119.54,
+        "end": 121.84,
+        "speaker": "Others",
+        "text": "Só que o preciso dos textos de erro, quem passa?",
+        "id": 34
+      },
+      {
+        "start": 123.16,
+        "end": 128.2,
+        "speaker": "Me",
+        "text": "Eu passo. Essa tarefa fica comigo. Eu escrevo os textos de erro até amanhã cedo.",
+        "id": 35
+      },
+      {
+        "start": 129.86,
+        "end": 135.02,
+        "speaker": "Others",
+        "text": "É, alguém precisa subir o ambiente de homologação pra gente testar antes de terça.",
+        "id": 36
+      },
+      {
+        "start": 135.86,
+        "end": 139.96,
+        "speaker": "Me",
+        "text": "Boa! Camila, você sobe uma logação até segunda-feira?",
+        "id": 37
+      },
+      {
+        "start": 141.3,
+        "end": 142.54,
+        "speaker": "Others",
+        "text": "Consego, deixa comigo.",
+        "id": 38
+      },
+      {
+        "start": 143.68,
+        "end": 144.02,
+        "speaker": "Others",
+        "text": "Isso.",
+        "id": 39
+      },
+      {
+        "start": 146.02,
+        "end": 149.44,
+        "speaker": "Me",
+        "text": "Beleza! Valeu, pessoal! Bom trabalho!",
+        "id": 40
+      },
+      {
+        "start": 150.66,
+        "end": 151.82,
+        "speaker": "Others",
+        "text": "Valeu, até mais.",
+        "id": 41
+      }
+    ],
+    "duration": 151.82,
+    "language": "pt",
+    "model": "base"
+  },
+  "raw": {
+    "summary": [
+      {
+        "text": "A equipe discutiu e decidiu focar a Sprint 15 no check out Compix, deixando o login com Google para a próxima Sprint.",
+        "segments": [3, 10, 14]
+      },
+      {
+        "text": "Foi decidido que a subida para a produção será realizada na terça-feira de manhã, devido ao plantão.",
+        "segments": [20, 24, 28]
+      }
+    ],
+    "decisions": [
+      {
+        "text": "Ficar com o check out Compix na Sprint 15.",
+        "quote": "A ideia hoje é fechar o que entra na Sprint 15, e o ponto principal é o check out Compix, que ficou pendurado da Sprint passada.",
+        "segments": [3, 4]
+      },
+      {
+        "text": "Deixar o login com Google para a próxima Sprint.",
+        "quote": "Minha sugestão é deixar o login com Google para a próxima Sprint.",
+        "segments": [10, 14]
+      },
+      {
+        "text": "Subida para a produção será realizada na terça-feira de manhã.",
+        "quote": "Então, está decidido também, a subida para a produção vai na terça de manhã, e não na sexta.",
+        "segments": [24, 28]
+      }
+    ],
+    "action_items": [
+      {
+        "task": "tratar o pagamento espirado",
+        "owner": "Others",
+        "due": "na Sprint atual",
+        "quote": "Falta só tratar o pagamento espirado.",
+        "segments": [6]
+      },
+      {
+        "task": "deixar o login com Google para a próxima Sprint",
+        "owner": "Others",
+        "due": "na próxima Sprint",
+        "quote": "O login com Google fica para a próxima Sprint.",
+        "segments": [10, 14]
+      },
+      {
+        "task": "subida para a produção na terça de manhã",
+        "owner": "Others",
+        "due": "terça de manhã",
+        "quote": "a subida para a produção vai na terça de manhã",
+        "segments": [24]
+      },
+      {
+        "task": "tratar do Pix inspirado na notificação de pagamento até quarta-feira",
+        "owner": "Larissa",
+        "due": "quarta-feira",
+        "quote": "você fica com o tratamento do Pix inspirado na notificação de pagamento até quarta-feira",
+        "segments": [29]
+      },
+      {
+        "task": "desenvolver a tela de check out com o QR code do Pix até quinta-feira",
+        "owner": "Camila",
+        "due": "quinta-feira",
+        "quote": "a tela de check out com o QR code do Pix fica com você, até quinta-feira",
+        "segments": [32]
+      },
+      {
+        "task": "escrever os textos de erro até amanhã cedo",
+        "owner": "Me",
+        "due": "amanhã cedo",
+        "quote": "Eu escrevo os textos de erro até amanhã cedo.",
+        "segments": [35]
+      },
+      {
+        "task": "subir o ambiente de homologação até segunda-feira",
+        "owner": "Camila",
+        "due": "segunda-feira",
+        "quote": "Camila, você sobe uma logação até segunda-feira?",
+        "segments": [37]
+      }
+    ]
+  }
+}

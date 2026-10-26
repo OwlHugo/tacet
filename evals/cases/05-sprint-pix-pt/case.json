@@ -1,0 +1,180 @@
+{
+  "id": "05-sprint-pix-pt",
+  "title": "Sprint planning com Pix (call de verdade, vozes neurais)",
+  "language": "pt",
+  "tracks": [
+    {
+      "file": "me.wav",
+      "speaker": "Me"
+    },
+    {
+      "file": "others.wav",
+      "speaker": "Others"
+    }
+  ],
+  "reference": [
+    {
+      "speaker": "Me",
+      "text": "Opa, bom dia, pessoal. Tão me ouvindo?",
+      "start": 0.8
+    },
+    {
+      "speaker": "Others",
+      "text": "Bom dia, Hugo! Tô ouvindo sim.",
+      "start": 5.5
+    },
+    {
+      "speaker": "Me",
+      "text": "Beleza. Então, é... deixa eu compartilhar aqui o quadro da sprint. Pera. Pronto. A ideia hoje é fechar o que entra na sprint quinze, e o ponto principal é o checkout com Pix, que ficou pendurado da sprint passada.",
+      "start": 8.85
+    },
+    {
+      "speaker": "Others",
+      "text": "É, sobre o Pix... então, a notificação do banco já tá funcionando no sandbox. Falta só tratar o pagamento expirado.",
+      "start": 25.03
+    },
+    {
+      "speaker": "Others",
+      "text": "Tá, mas e o login com Google? O cliente pediu isso também, não pediu?",
+      "start": 32.89
+    },
+    {
+      "speaker": "Me",
+      "text": "Pediu, mas olha... eu acho que não cabe nas duas semanas junto com o Pix, sabe? Minha sugestão é deixar o login com Google pra próxima sprint.",
+      "start": 37.71
+    },
+    {
+      "speaker": "Others",
+      "text": "Uhum.",
+      "start": 43.78
+    },
+    {
+      "speaker": "Others",
+      "text": "Também acho. Se a gente abrir as duas frentes, tipo, não entrega nenhuma.",
+      "start": 47.9
+    },
+    {
+      "speaker": "Me",
+      "text": "Fechado então, tá decidido: o login com Google fica pra próxima sprint, e essa sprint é só o checkout com Pix. Todo mundo de acordo?",
+      "start": 53.37
+    },
+    {
+      "speaker": "Others",
+      "text": "Isso.",
+      "start": 60.63
+    },
+    {
+      "speaker": "Others",
+      "text": "Ah, só um parêntese rapidinho... caiu granizo ontem aqui, meu carro ficou todo marcado, haha.",
+      "start": 63.38
+    },
+    {
+      "speaker": "Me",
+      "text": "Nossa, que azar, Larissa. Bom... voltando. Camila, a subida pra produção era sexta, né?",
+      "start": 69.75
+    },
+    {
+      "speaker": "Others",
+      "text": "Isso, sexta de manhã.",
+      "start": 78.12
+    },
+    {
+      "speaker": "Others",
+      "text": "Não, não, pera, sexta é feriado, gente. A gente tinha mudado pra terça, lembra? Por causa do plantão.",
+      "start": 80.11
+    },
+    {
+      "speaker": "Me",
+      "text": "Uhum.",
+      "start": 83.98
+    },
+    {
+      "speaker": "Others",
+      "text": "Ah é, verdade, esqueci do feriado. Terça então, combinado.",
+      "start": 88.31
+    },
+    {
+      "speaker": "Me",
+      "text": "Então tá decidido também: a subida pra produção vai na terça de manhã, e não na sexta.",
+      "start": 93.17
+    },
+    {
+      "speaker": "Me",
+      "text": "Agora as tarefas. Larissa, você fica com o tratamento do Pix expirado na notificação de pagamento, até quarta-feira. Pode ser?",
+      "start": 99.58
+    },
+    {
+      "speaker": "Others",
+      "text": "Dá sim, consigo.",
+      "start": 109.8
+    },
+    {
+      "speaker": "Me",
+      "text": "Camila, a tela de checkout com o QR code do Pix fica com você, até quinta-feira.",
+      "start": 112.07
+    },
+    {
+      "speaker": "Others",
+      "text": "Fechado. Só que eu preciso dos textos de erro... quem passa?",
+      "start": 118.3
+    },
+    {
+      "speaker": "Me",
+      "text": "Eu passo. Essa tarefa fica comigo: eu escrevo os textos de erro até amanhã cedo.",
+      "start": 123.0
+    },
+    {
+      "speaker": "Others",
+      "text": "E, é... alguém precisa subir o ambiente de homologação, pra gente testar antes de terça.",
+      "start": 129.52
+    },
+    {
+      "speaker": "Me",
+      "text": "Boa. Camila, você sobe a homologação até segunda-feira?",
+      "start": 135.7
+    },
+    {
+      "speaker": "Others",
+      "text": "Consigo, deixa comigo.",
+      "start": 141.14
+    },
+    {
+      "speaker": "Others",
+      "text": "Isso.",
+      "start": 143.55
+    },
+    {
+      "speaker": "Me",
+      "text": "Beleza, valeu, pessoal. Bom trabalho.",
+      "start": 145.88
+    },
+    {
+      "speaker": "Others",
+      "text": "Valeu, até mais.",
+      "start": 150.45
+    }
+  ],
+  "expected_actions": [["pagamento"], ["tela", "qr"], ["textos", "erro"], ["homologacao"]],
+  "expected_due": [
+    {
+      "task": ["textos", "erro"],
+      "due": "amanha cedo"
+    },
+    {
+      "task": ["pagamento"],
+      "due": "quarta"
+    },
+    {
+      "task": ["tela", "qr"],
+      "due": "quinta"
+    },
+    {
+      "task": ["homologacao"],
+      "due": "segunda"
+    },
+    {
+      "task": ["producao"],
+      "due": "terca"
+    }
+  ]
+}
