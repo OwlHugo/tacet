@@ -7,12 +7,12 @@ let captures: Capture[] = []
 
 const onChunk = (track: Track, data: Float32Array) => recorder.chunk(track, data)
 
-recorder.onStart(async ({ fakeMic }) => {
+recorder.onStart(async ({ fakeMic, fakeSystem }) => {
   recorder.open('mic', SAMPLE_RATE)
   recorder.open('system', SAMPLE_RATE)
   const [mic, system] = await Promise.allSettled([
     captureMic(onChunk, fakeMic),
-    captureSystem(isLinux, onChunk),
+    captureSystem(isLinux, onChunk, fakeSystem),
   ])
   // Each track is optional: a meeting with only the mic (no screen permission) is still useful.
   captures = [mic, system].flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []))

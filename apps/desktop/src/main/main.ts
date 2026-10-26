@@ -255,6 +255,7 @@ const controller = recordingController({
   getState: () => state,
   setState,
   fakeMic: config.TACET_FAKE_MIC,
+  fakeSystem: config.TACET_FAKE_SYSTEM,
   askMicrophone: async () => {
     if (
       process.platform === 'darwin' &&

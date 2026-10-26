@@ -7,7 +7,7 @@ import { EVENTS } from '../../shared/events.ts'
 import { recordingController } from './controller.ts'
 import type { RecordedTrack } from './session.ts'
 
-function setup(fakeMic?: string) {
+function setup(fakeMic?: string, fakeSystem?: string) {
   let state: RecorderState = { kind: 'idle' }
   const sent: { channel: string; args: unknown[] }[] = []
   const recorded: RecordedTrack[][] = []
@@ -27,6 +27,7 @@ function setup(fakeMic?: string) {
       asked++
     },
     fakeMic,
+    fakeSystem,
     onRecorded: (_session, tracks) => recorded.push(tracks),
   })
   return { c, sent, recorded, states, saw, asked: () => asked, state: () => state }
@@ -37,7 +38,10 @@ describe('recordingController', () => {
     const t = setup()
     await t.c.toggle()
     expect(t.asked()).toBe(1)
-    expect(t.sent[0]).toEqual({ channel: EVENTS.recorderStart, args: [{ fakeMic: undefined }] })
+    expect(t.sent[0]).toEqual({
+      channel: EVENTS.recorderStart,
+      args: [{ fakeMic: undefined, fakeSystem: undefined }],
+    })
     expect(t.state().kind).toBe('starting')
 
     t.c.open('mic', 16000)
@@ -91,12 +95,16 @@ describe('recordingController', () => {
     expect(t.sent).toHaveLength(2)
   })
 
-  it('sends the fake microphone bytes in e2e runs', async () => {
-    const file = join(mkdtempSync(join(tmpdir(), 'tacet-ctl-')), 'mic.wav')
-    writeFileSync(file, Buffer.from([1, 2, 3]))
-    const t = setup(file)
+  it('sends the fake microphone and system audio bytes in e2e runs', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'tacet-ctl-'))
+    writeFileSync(join(dir, 'mic.wav'), Buffer.from([1, 2, 3]))
+    writeFileSync(join(dir, 'system.wav'), Buffer.from([4, 5]))
+    const t = setup(join(dir, 'mic.wav'), join(dir, 'system.wav'))
     await t.c.toggle()
-    expect(t.sent[0]?.args[0]).toEqual({ fakeMic: new Uint8Array([1, 2, 3]) })
+    expect(t.sent[0]?.args[0]).toEqual({
+      fakeMic: new Uint8Array([1, 2, 3]),
+      fakeSystem: new Uint8Array([4, 5]),
+    })
   })
 
   it('does nothing on stop without a recording', async () => {

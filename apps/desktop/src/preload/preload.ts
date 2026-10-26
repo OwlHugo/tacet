@@ -46,8 +46,9 @@ const api = {
   health: (): Promise<Health> => ipcRenderer.invoke('health'),
   /** Used only by the hidden recorder window. */
   recorder: {
-    onStart: (cb: (opts: { fakeMic: Uint8Array | undefined }) => void) =>
-      on(EVENTS.recorderStart, cb),
+    onStart: (
+      cb: (opts: { fakeMic: Uint8Array | undefined; fakeSystem: Uint8Array | undefined }) => void,
+    ) => on(EVENTS.recorderStart, cb),
     onStop: (cb: () => void) => on(EVENTS.recorderStop, cb),
     open: (track: Track, rate: number) => ipcRenderer.send('recorder:open', track, rate),
     chunk: (track: Track, data: Float32Array) => ipcRenderer.send('recorder:chunk', track, data),
