@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type RawMinutes, RawMinutesSchema, type Transcript, TranscriptSchema } from '@tacet/core'
 import { z } from 'zod'
@@ -37,7 +37,8 @@ export type Fixture = z.infer<typeof FixtureSchema>
 
 export interface EvalCase extends z.infer<typeof CaseSchema> {
   readonly dir: string
-  readonly fixture: Fixture
+  /** Undefined until the first `--gravar` run of a case kept outside the repo. */
+  readonly fixture: Fixture | undefined
 }
 
 export const fixturePath = (dir: string) => join(dir, 'fixture.json')
@@ -50,7 +51,9 @@ export function loadCases(root: string): EvalCase[] {
     .map((dir) => ({
       ...CaseSchema.parse(JSON.parse(readFileSync(join(dir, 'case.json'), 'utf8'))),
       dir,
-      fixture: FixtureSchema.parse(JSON.parse(readFileSync(fixturePath(dir), 'utf8'))),
+      fixture: existsSync(fixturePath(dir))
+        ? FixtureSchema.parse(JSON.parse(readFileSync(fixturePath(dir), 'utf8')))
+        : undefined,
     }))
 }
 

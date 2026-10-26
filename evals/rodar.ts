@@ -5,7 +5,10 @@
  *   pnpm eval          real whisper.cpp + real Ollama on this machine.
  *   pnpm eval:gravar   same as `pnpm eval`, and rewrites fixture.json. Commit it when the prompt changes.
  *   --so-whisper       real whisper.cpp, LLM output replayed (CI on macOS/Windows/Linux).
+ *   --so-llm           transcript replayed, real Ollama: a prompt or model change, measured fast.
+ *   --caso id          only that case.
  *
+ * TACET_EVAL_CASES=<dir> reads the cases from another folder (cases that must stay off the repo).
  * A case with an `answer_key` is also scored for meaning: decisions and tasks that match the key
  * (precision, recall), items that match nothing (invented) and tasks with the wrong owner.
  *
@@ -28,7 +31,7 @@ import {
   transcribe,
   whisperTranscriber,
 } from '@tacet/core'
-import { type EvalCase, fixtureOf, fixturePath, loadCases } from './cases.ts'
+import { type EvalCase, type Fixture, fixtureOf, fixturePath, loadCases } from './cases.ts'
 import { config } from './config.ts'
 import { guardCheck } from './guard.ts'
 import { checkAnswerKey } from './metrics/answer-key.ts'
@@ -42,6 +45,8 @@ const { values } = parseArgs({
   options: {
     'sem-ia': { type: 'boolean', default: false },
     'so-whisper': { type: 'boolean', default: false },
+    'so-llm': { type: 'boolean', default: false },
+    caso: { type: 'string' },
     gravar: { type: 'boolean', default: false },
     whisper: { type: 'string', default: 'base' },
     llm: { type: 'string', default: 'qwen2.5:7b' },
@@ -49,8 +54,14 @@ const { values } = parseArgs({
     relatorio: { type: 'string' },
   },
 })
-const MODE = values['sem-ia'] ? 'sem-ia' : values['so-whisper'] ? 'so-whisper' : 'com-ia'
-const ROOT = import.meta.dirname
+const MODE = values['sem-ia']
+  ? 'sem-ia'
+  : values['so-whisper']
+    ? 'so-whisper'
+    : values['so-llm']
+      ? 'so-llm'
+      : 'com-ia'
+const USES_LLM = MODE === 'com-ia' || MODE === 'so-llm'
 const log = (s: string) => process.stderr.write(`${s}\n`)
 
 interface Run {
@@ -61,6 +72,7 @@ interface Run {
 }
 
 async function realTranscript(c: EvalCase): Promise<{ transcript: Transcript; seconds: number }> {
+  log(`> ${c.id}: whisper ${values.whisper}`)
   const opts = {
     explicit: config.TACET_WHISPER_BIN,
     searchPath: config.PATH,
@@ -82,14 +94,27 @@ async function realTranscript(c: EvalCase): Promise<{ transcript: Transcript; se
   return { transcript, seconds: (performance.now() - t0) / 1000 }
 }
 
+function recorded(c: EvalCase): Fixture {
+  if (c.fixture === undefined)
+    throw new Error(`${c.id} has no fixture.json yet: record it with \`pnpm eval:gravar\`.`)
+  return c.fixture
+}
+
 async function runCase(c: EvalCase): Promise<Run> {
   if (MODE === 'sem-ia')
-    return { ...c.fixture, transcribeSeconds: undefined, minutesSeconds: undefined }
-  log(`> ${c.id}: whisper ${values.whisper}`)
-  const { transcript, seconds } = await realTranscript(c)
+    return { ...recorded(c), transcribeSeconds: undefined, minutesSeconds: undefined }
+  const { transcript, seconds } =
+    MODE === 'so-llm'
+      ? { transcript: recorded(c).transcript, seconds: undefined }
+      : await realTranscript(c)
   if (MODE === 'so-whisper') {
     // The replayed LLM output cites the fixture's segments, so it is grounded against that transcript.
-    return { transcript, raw: c.fixture.raw, transcribeSeconds: seconds, minutesSeconds: undefined }
+    return {
+      transcript,
+      raw: recorded(c).raw,
+      transcribeSeconds: seconds,
+      minutesSeconds: undefined,
+    }
   }
   log(`> ${c.id}: minutes ${values.llm}`)
   const t0 = performance.now()
@@ -125,12 +150,8 @@ function pooledWer(c: EvalCase, t: Transcript): number {
 
 async function evaluate(c: EvalCase): Promise<CaseResult> {
   const run = await runCase(c)
-  const minutesOn = MODE === 'so-whisper' ? c.fixture.transcript : run.transcript
-  const minutes = groundMinutes(
-    run.raw,
-    minutesOn,
-    MODE === 'com-ia' ? values.llm : c.fixture.llmModel,
-  )
+  const minutesOn = MODE === 'so-whisper' ? recorded(c).transcript : run.transcript
+  const minutes = groundMinutes(run.raw, minutesOn, USES_LLM ? values.llm : recorded(c).llmModel)
   const grounding = checkGrounding(minutes, minutesOn, c.expected_actions)
   const deadlines = checkDeadlines(minutes, c.expected_due)
   const perMinute = (s: number | undefined) =>
@@ -158,9 +179,10 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
     meaning: c.answer_key === undefined ? undefined : checkAnswerKey(minutes, c.answer_key),
   }
   if (values.gravar) {
+    const whisper = MODE === 'so-llm' ? recorded(c).whisperModel : values.whisper
     writeFileSync(
       fixturePath(c.dir),
-      `${JSON.stringify(fixtureOf(values.whisper, values.llm, run.transcript, run.raw), null, 2)}\n`,
+      `${JSON.stringify(fixtureOf(whisper, values.llm, run.transcript, run.raw), null, 2)}\n`,
     )
   }
   log(
@@ -170,12 +192,14 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
   return result
 }
 
-if (MODE === 'com-ia' && (await ollamaModels(config.OLLAMA_HOST)) === undefined) {
+if (USES_LLM && (await ollamaModels(config.OLLAMA_HOST)) === undefined) {
   throw new Error(
     `Ollama is not running at ${config.OLLAMA_HOST}. Start it, or use --sem-ia / --so-whisper.`,
   )
 }
-const cases = loadCases(join(ROOT, 'cases'))
+const only = values.caso
+const cases = loadCases(config.TACET_EVAL_CASES).filter((c) => only === undefined || c.id === only)
+if (cases.length === 0) throw new Error(`No eval case is called "${only}".`)
 const results: CaseResult[] = []
 for (const c of cases) results.push(await evaluate(c))
 const first = cases[0]
@@ -183,8 +207,10 @@ const report: Report = {
   mode: MODE,
   platform: `${process.platform}-${process.arch}`,
   whisperModel:
-    MODE === 'sem-ia' ? (first?.fixture.whisperModel ?? values.whisper) : values.whisper,
-  llmModel: MODE === 'com-ia' ? values.llm : (first?.fixture.llmModel ?? values.llm),
+    MODE === 'sem-ia' || MODE === 'so-llm'
+      ? (first?.fixture?.whisperModel ?? values.whisper)
+      : values.whisper,
+  llmModel: USES_LLM ? values.llm : (first?.fixture?.llmModel ?? values.llm),
   cases: results,
 }
 const md = toMarkdown(report)

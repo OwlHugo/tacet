@@ -1,3 +1,5 @@
+import { cpSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { loadCases } from './cases.ts'
@@ -21,9 +23,20 @@ describe('loadCases', () => {
       ['Me', 'Others'],
     ])
     for (const c of cases) {
-      expect(c.fixture.transcript.segments.length).toBeGreaterThan(0)
+      expect(c.fixture?.transcript.segments.length).toBeGreaterThan(0)
       expect(c.reference.length).toBeGreaterThan(0)
       for (const d of c.expected_due) expect(d.task.length * d.due.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('loads a case kept elsewhere before its first recording, without a fixture', () => {
+    const root = mkdtempSync(join(tmpdir(), 'tacet-cases-'))
+    try {
+      const from = join(import.meta.dirname, 'cases', '02-hiring-en', 'case.json')
+      cpSync(from, join(root, 'novo', 'case.json'))
+      expect(loadCases(root).map((c) => [c.id, c.fixture])).toEqual([['02-hiring-en', undefined]])
+    } finally {
+      rmSync(root, { recursive: true, force: true })
     }
   })
 })
