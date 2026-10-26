@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" width="860" alt="Tacet: importing a 67 s sprint meeting, the minutes appear with timestamps, a click jumps to the source line, then a search" />
+  <img src="docs/demo.gif" width="860" alt="Tacet recording a 2.5 minute sprint planning call, then the minutes with decisions and tasks with owners and deadlines, and a click on a task that jumps to its line in the transcript" />
   <br/>
-  <sub>A 67 s meeting (<a href="docs/demo/meeting.wav">docs/demo/meeting.wav</a>) imported on a MacBook Pro M4. The wait for whisper.cpp and the local LLM (about 20 s) is sped up 6×.</sub>
+  <sub>A 2.5 minute call with synthetic voices (eval case <a href="evals/cases/05-sprint-pix-pt/case.json">05-sprint-pix-pt</a>) recorded on a MacBook Pro M4. Most of the call and the wait for whisper.cpp and the local LLM (about 70 s) are sped up 8×.</sub>
 </p>
 
 ## Install
