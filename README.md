@@ -89,6 +89,8 @@ One run says little about a 7B model: two recordings of the same call never give
 | One request | 96% | 96% | 65% | 59% | 1 |
 | Two requests | **100%** | **100%** | **89%** | **74%** | 0 |
 
+Measured before the demo case's "terça" deadline became optional; see the ADR.
+
 What the columns mean:
 
 - **WER**: word error rate per track against the script, pooled over all words.

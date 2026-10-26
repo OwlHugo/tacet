@@ -26,7 +26,10 @@ The four cases from before the demo case, on their own, kept their deadlines: 87
 Maria's "before that" now comes back as "before Friday", which is not what was said, so grounding
 drops it. That is one draw from the spread the 8 recordings measure, not a trend.
 
-To repeat the measure: `pnpm eval:confiabilidade --vezes 8 --whisper base,large-v3-turbo`.
+To repeat the measure: `pnpm eval:confiabilidade --vezes 8 --whisper base,large-v3-turbo`. These
+numbers were taken before the demo case's "terça" deadline became optional (it is said on a decision,
+not on a task), when it still counted in the total: a run today has 176 deadlines instead of 192, so
+the deadline share comes out a little different.
 
 ## Decision
 
