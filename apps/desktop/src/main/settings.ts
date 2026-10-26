@@ -41,8 +41,7 @@ export function loadSettings(file: string, defaults: Settings): Settings {
   const saved = SavedSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')))
   if (!saved.success) return defaults
   const { version, whisperModel, ...rest } = saved.data
-  const chosen = version === VERSION || whisperModel !== 'base'
-  return withPatch(defaults, chosen ? { ...rest, whisperModel } : rest)
+  return withPatch(defaults, picked(version, whisperModel) ? { ...rest, whisperModel } : rest)
 }
 
 /**
@@ -70,5 +69,10 @@ export function saveSettings(
 export function choseWhisperModel(file: string): boolean {
   if (!existsSync(file)) return false
   const saved = SavedSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')))
-  return saved.success && saved.data.version === VERSION && saved.data.whisperModel !== undefined
+  return saved.success && picked(saved.data.version, saved.data.whisperModel)
+}
+
+/** The rule loadSettings applies: a model in an old file is a pick unless it is the old default. */
+function picked(version: number | undefined, whisperModel: string | undefined): boolean {
+  return whisperModel !== undefined && (version === VERSION || whisperModel !== 'base')
 }

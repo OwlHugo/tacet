@@ -49,6 +49,17 @@ describe('settings', () => {
     expect(loadSettings(f, defaults).whisperModel).toBe('base')
   })
 
+  it('keeps a model picked in a file from before version 2 when it equals the default', () => {
+    const f = file()
+    const small = defaultSettings('/docs', 'small')
+    writeFileSync(f, JSON.stringify({ ...small, language: 'auto' }))
+    expect(choseWhisperModel(f)).toBe(true)
+    saveSettings(f, { ...small, language: 'pt' }, small, { whisperModel: choseWhisperModel(f) })
+    expect(loadSettings(f, defaults).whisperModel).toBe('small')
+    writeFileSync(f, JSON.stringify(defaultSettings('/docs', 'base')))
+    expect(choseWhisperModel(f)).toBe(false)
+  })
+
   it('keeps a model the user picked even when it is the default of the moment', () => {
     const f = file()
     const base = defaultSettings('/docs', 'base')
