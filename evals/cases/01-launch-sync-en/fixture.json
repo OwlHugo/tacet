@@ -60,19 +60,19 @@
   "raw": {
     "summary": [
       {
-        "text": "Discussed and agreed to ship the beta on Friday, with Maria updating the pricing page and Me sending release notes by Thursday.",
-        "segments": [1, 2, 3]
+        "text": "The team agreed to ship the beta on Friday and Maria will update the pricing page before the release.",
+        "segments": [1, 2]
       },
       {
-        "text": "Decided to remove the dark mode toggle from the current release.",
+        "text": "The dark mode toggle was decided to be dropped from this release.",
         "segments": [4]
       }
     ],
     "decisions": [
       {
         "text": "Ship the beta on Friday.",
-        "quote": "we should ship the beta on Friday",
-        "segments": [1]
+        "quote": "I think the build is stable enough, we should ship the beta on Friday",
+        "segments": [1, 2]
       },
       {
         "text": "Drop the dark mode toggle from this release.",
@@ -82,25 +82,25 @@
     ],
     "action_items": [
       {
-        "task": "Update the pricing page before the beta launch on Friday.",
+        "task": "update the pricing page",
         "owner": "Maria",
-        "due": "before that",
+        "due": "before Friday",
         "quote": "Maria will update the pricing page before that.",
         "segments": [2]
       },
       {
-        "task": "Send release notes to the whole team by Thursday.",
+        "task": "send the release notes to the whole team",
         "owner": "Me",
         "due": "by Thursday",
         "quote": "I will send the release notes to the whole team by Thursday",
         "segments": [3]
       },
       {
-        "task": "Check the Windows crash reports.",
+        "task": "check the crash reports on Windows",
         "owner": "Carlos",
         "due": "tomorrow morning",
         "quote": "Sure, I will look at the Windows crash reports tomorrow morning.",
-        "segments": [6]
+        "segments": [5, 6]
       }
     ]
   }
