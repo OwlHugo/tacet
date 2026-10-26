@@ -97,6 +97,14 @@ describe('mergeTracks', () => {
     expect(merged.map((s) => s.speaker)).toEqual(['Others', 'Me'])
   })
 
+  it('keeps a mic line that one system line with its words overlaps by only 0.3', () => {
+    const merged = mergeTracks([
+      [{ start: 0, end: 10, speaker: 'Me', text: 'placar final atualizado amanhã' }],
+      [{ start: 7, end: 20, speaker: 'Others', text: 'placar final atualizado amanhã' }],
+    ])
+    expect(merged.map((s) => s.speaker)).toEqual(['Me', 'Others'])
+  })
+
   it('keeps every mic line when the system track is empty', () => {
     const mic = [
       { start: 0, end: 2, speaker: 'Me', text: 'Bom dia, pessoal.' },
@@ -113,38 +121,33 @@ describe('mergeTracks', () => {
 
   it.each([
     [
-      'the rest is said just after',
-      false,
-      others([12, 14, 'placar'], [15, 16, 'final atualizado']),
-    ],
-    [
-      'the rest starts right at the slack',
+      'the rest is said just after it',
       true,
-      others([12, 14, 'placar'], [15.5, 16, 'final atualizado']),
+      others([12, 14, 'placar'], [14, 16, 'final atualizado']),
     ],
     [
-      'the rest is said just before',
-      false,
-      others([10, 12, 'placar'], [7.6, 9, 'final atualizado']),
-    ],
-    [
-      'the rest ends right at the slack',
+      'the rest is said just before it',
       true,
-      others([10, 12, 'placar'], [7.5, 8.5, 'final atualizado']),
+      others([10, 12, 'placar'], [8, 10, 'final atualizado']),
+    ],
+    [
+      'unrelated talk covers it and its words come right after',
+      true,
+      others([10, 14, 'reunião cliente'], [14.5, 16, 'placar final atualizado amanhã']),
     ],
     [
       'the same words come much later',
       true,
       others([11, 12, 'beleza'], [20, 22, 'placar final atualizado amanhã']),
     ],
-    ['half of the words are heard', false, others([10, 14, 'placar final'])],
+    ['half of the words are heard', false, others([10, 14, `placar final ${chatter}`])],
     ['the others talk over half of it', false, others([12, 14, `${line.text} ${chatter}`])],
     ['the others talk over less than half', true, others([12.1, 14, `${line.text} ${chatter}`])],
     ['the others only start in its last second', true, others([13, 30, line.text])],
     [
       'the system pieces come out of order',
       false,
-      others([12.5, 14, 'atualizado amanhã'], [10, 13, 'placar final']),
+      others([12.5, 14, `atualizado amanhã ${chatter}`], [10, 13, `placar final ${chatter}`]),
     ],
     [
       'overlapping system pieces cover under half',

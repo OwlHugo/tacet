@@ -15,9 +15,6 @@ export function isHallucination(text: string): boolean {
   )
 }
 
-/** How far around a mic segment the system track may say the same words (whisper's timing drift). */
-const ECHO_SLACK_SECONDS = 1.5
-
 /** Share of a mic segment's content words the system track must say for it to be an echo. */
 const ECHO_MIN_WORD_SHARE = 0.5
 
@@ -30,8 +27,7 @@ const ECHO_MIN_TIME_SHARE = 0.5
 /** Share of the shorter of two segments a single pair must overlap to be an echo. */
 const ECHO_MIN_PAIR_OVERLAP = 0.3
 
-const overlaps = (a: TimedText, b: TimedText, slack = 0): boolean =>
-  a.start < b.end + slack && b.start < a.end + slack
+const overlaps = (a: TimedText, b: TimedText): boolean => a.start < b.end && b.start < a.end
 
 /** Overlap of two segments as a share of the shorter one. */
 const pairOverlap = (a: TimedText, b: TimedText): number => {
@@ -57,7 +53,7 @@ function timeShare(s: TimedText, pieces: readonly TimedText[]): number {
 /**
  * Merge per-track segments into one timeline. Without headphones the mic also hears the speakers,
  * so a "Me" segment is an echo when one "Others" segment overlaps it with mostly the same words,
- * or when the "Others" around it talk over most of it with most of its words. Whisper cuts the two
+ * or when the "Others" it overlaps talk over most of it and say most of its words. Whisper cuts the two
  * tracks differently (one long mic line against several short system pieces), hence the pooled
  * check; it stretches a quiet mic line over the silence before it, hence the pairwise one.
  */
@@ -71,7 +67,7 @@ export function mergeTracks(tracks: readonly (readonly TimedText[])[]): Segment[
         pairOverlap(s, o) > ECHO_MIN_PAIR_OVERLAP &&
         similarity(s.text, o.text) >= ECHO_MIN_WORD_SHARE,
     )
-    const heard = others.filter((o) => overlaps(s, o, ECHO_SLACK_SECONDS))
+    const heard = others.filter((o) => overlaps(s, o))
     return (
       pairEcho ||
       (timeShare(s, heard) >= ECHO_MIN_TIME_SHARE &&
