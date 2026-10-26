@@ -35,8 +35,9 @@ schema in Ollama's `format`: `overview` (summary and decisions) and `tasks` (act
 and deadline). Both answers are merged and grounded exactly as before. The adapter also passes a fixed
 `seed` with `temperature: 0`, so one transcript always gets the same minutes.
 
-No retry: an empty part is shown as such ("The local model wrote no summary for this meeting. The
-transcript is complete."), never filled in.
+No retry: an empty part is shown as such ("No summary from the local model made it into these
+minutes. The transcript is complete."), never filled in. That covers both an empty answer and one
+grounding dropped whole.
 
 ## Consequences
 
