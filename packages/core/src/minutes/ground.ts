@@ -1,4 +1,12 @@
-import { coverage, findPhrase, normalize, similarity, words } from '../matching/words.ts'
+import {
+  contentWords,
+  coverage,
+  findPhrase,
+  normalize,
+  similarity,
+  stem,
+  words,
+} from '../matching/words.ts'
 import {
   ME,
   OTHERS as OTHERS_LABEL,
@@ -229,6 +237,20 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
   return [...owners].filter((o) => said.has(o)).length
 }
 
+/** Words a line may bring of its own and still be a reply about the task ("Sure, by Friday"). */
+const REPLY_WORDS = 2
+
+/**
+ * Whether the line holding a deadline talks about this task: it says some of the task's words, or
+ * it is a short reply that brings no subject of its own. "On Friday we pick the band for the party?" after "Book
+ * the hall first" names another piece of work, so its deadline is not the hall's.
+ */
+function aboutTask(line: Segment, said: string, task: string): boolean {
+  const own = new Set(contentWords(task).map(stem))
+  const rest = contentWords(line.text.replace(said, ' ')).map(stem)
+  return rest.some((w) => own.has(w)) || rest.length <= REPLY_WORDS
+}
+
 /**
  * A deadline is kept only when there is no doubt whose it is: it is said, as a run of words, on a
  * cited line of this task that no other task cites and that names at most one person. A line shared
@@ -245,7 +267,13 @@ function groundDue(
   if (!text) return undefined
   for (const line of c.lines) {
     const said = findPhrase(text, line.text)
-    if (said !== undefined && citedBy.get(line.id) === 1 && namesOn(line, owners) <= 1) return said
+    if (
+      said !== undefined &&
+      citedBy.get(line.id) === 1 &&
+      namesOn(line, owners) <= 1 &&
+      aboutTask(line, said, c.task)
+    )
+      return said
   }
   rejected.push({
     kind: 'deadline',

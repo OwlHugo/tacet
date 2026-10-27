@@ -429,6 +429,20 @@ describe('groundMinutes', () => {
       expect(r.actionItems[0]?.due).toBe('até sexta')
     })
 
+    it('drops a deadline said on a line about other work, keeps one on a short reply', () => {
+      const t = line(
+        'Book the hall first.',
+        'On Friday we pick the band for the party?',
+        'Sure, by Monday.',
+      )
+      const hall = (segments: number[], due: string) =>
+        run(t, item('Book the hall', '', 'Book the hall first', segments, due)).actionItems[0]
+      expect(hall([0, 1], 'On Friday')).not.toHaveProperty('due')
+      expect(hall([0, 2], 'by Monday')?.due).toBe('by Monday')
+      const band = run(t, item('Pick the band', '', 'we pick the band', [1], 'On Friday'))
+      expect(band.actionItems[0]?.due).toBe('On Friday')
+    })
+
     it('cuts the deadline from the end of the task with the word that leads into it', () => {
       const t = line(
         'Vou mandar as notas antes de sexta.',
