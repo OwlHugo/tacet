@@ -203,7 +203,12 @@ if (USES_LLM && (await ollamaModels(config.OLLAMA_HOST)) === undefined) {
 }
 const only = values.caso
 const cases = loadCases(config.TACET_EVAL_CASES).filter((c) => only === undefined || c.id === only)
-if (cases.length === 0) throw new Error(`No eval case is called "${only}".`)
+if (cases.length === 0)
+  throw new Error(
+    only === undefined
+      ? `No eval case in ${config.TACET_EVAL_CASES}.`
+      : `No eval case is called "${only}".`,
+  )
 const results: CaseResult[] = []
 for (const c of cases) results.push(await evaluate(c))
 const first = cases[0]

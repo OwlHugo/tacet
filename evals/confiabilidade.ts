@@ -85,7 +85,7 @@ async function transcriptOf(c: EvalCase, model: string, i: number): Promise<Tran
     ffmpeg: FFMPEG,
     model: await ensureModel(model, config.TACET_MODELS_DIR),
     language: c.language,
-    vocabulary: [],
+    vocabulary: c.vocabulary,
     env: process.env,
   })
   if (i === 0) {
@@ -112,10 +112,13 @@ if (!pulled.includes(values.llm)) throw new Error(`Ollama has no model "${values
 const runs: ReliabilityRun[] = []
 const generate = ollamaMinutes({ host: config.OLLAMA_HOST, model: values.llm })
 const only = values.caso
-const cases = loadCases(join(import.meta.dirname, 'cases')).filter(
-  (x) => only === undefined || x.id === only,
-)
-if (cases.length === 0) throw new Error(`No eval case is called "${only}".`)
+const cases = loadCases(config.TACET_EVAL_CASES).filter((x) => only === undefined || x.id === only)
+if (cases.length === 0)
+  throw new Error(
+    only === undefined
+      ? `No eval case in ${config.TACET_EVAL_CASES}.`
+      : `No eval case is called "${only}".`,
+  )
 for (const c of cases) {
   for (const model of WHISPER_MODELS) {
     log(`> ${c.id}: whisper ${model}`)
@@ -124,12 +127,14 @@ for (const c of cases) {
       const t0 = performance.now()
       // A request that fails (Ollama dropped the connection) is a run with no minutes, counted in
       // its own column so it is never mistaken for the model leaving a part empty.
-      const result = await generateMinutes(transcript, { generate, model: values.llm }).catch(
-        (e: unknown) => {
-          log(`    failed: ${e instanceof Error ? e.message : String(e)}`)
-          return undefined
-        },
-      )
+      const result = await generateMinutes(transcript, {
+        generate,
+        model: values.llm,
+        self: c.self,
+      }).catch((e: unknown) => {
+        log(`    failed: ${e instanceof Error ? e.message : String(e)}`)
+        return undefined
+      })
       if (result === undefined) {
         runs.push({
           caseId: c.id,
