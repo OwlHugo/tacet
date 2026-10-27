@@ -236,7 +236,7 @@ const LEAD = /\s+(?:by|on|before|until|até|ate|pra|antes de)$/iu
  * kept deadline is shown on its own, and a dropped one must not reach the minutes through the task's
  * wording. Only a deadline introduced like one ("by", "até") is cut, and never the whole task.
  */
-function withoutDeadline(task: string, due: string): string {
+export function withoutDeadline(task: string, due: string): string {
   const end = /[.!?]$/.exec(task)?.[0] ?? ''
   const body = task.slice(0, task.length - end.length)
   const said = findPhrase(due, body)

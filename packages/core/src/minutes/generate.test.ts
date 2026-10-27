@@ -91,6 +91,11 @@ describe('generateMinutes', () => {
     expect(minutes.decisions.map((d) => d.text)).toEqual(['Ship the beta on Friday'])
     expect(minutes.actionItems.map((a) => a.task)).toEqual(['Send the release notes'])
     expect(raw.decisions).toHaveLength(1)
+    expect(minutes.rejected).toContainEqual({
+      kind: 'decision',
+      text: 'Drop the dark mode toggle',
+      reason: 'not settled in its lines',
+    })
   })
 
   it('shows each check two lines on each side of the source, and no more', async () => {
@@ -143,6 +148,23 @@ describe('generateMinutes', () => {
     expect(kept.calls.at(-1)?.user).toContain('Deadline: by Thursday')
     expect((await run({ is_time: false, for_this_task: true })).due).toBeUndefined()
     expect((await run({ is_time: true, for_this_task: false })).due).toBeUndefined()
+  })
+
+  it('takes a refused deadline out of the task wording too, and says why', async () => {
+    const { generate } = fake({
+      tasks: () => ({
+        action_items: [{ ...releaseNotes('by Friday'), task: 'Send the release notes by Friday' }],
+      }),
+      deadline: () => ({ is_time: true, for_this_task: false }),
+    })
+    const { minutes } = await generateMinutes(TRANSCRIPT, { model: 'fake', generate })
+    expect(minutes.actionItems[0]?.task).toBe('Send the release notes')
+    expect(minutes.actionItems[0]).not.toHaveProperty('due')
+    expect(minutes.rejected).toContainEqual({
+      kind: 'deadline',
+      text: 'Send the release notes by Friday: by Friday',
+      reason: 'deadline said for other work',
+    })
   })
 
   it('does not check a deadline that was not given, nor one on a task with no source', async () => {

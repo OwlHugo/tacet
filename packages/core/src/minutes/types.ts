@@ -79,7 +79,7 @@ export const PART_SCHEMA = {
   tasks: RawMinutesSchema.pick({ action_items: true }),
   /** `kind` comes first, so the model names what the lines are before it answers. */
   confirm: z.object({
-    kind: z.enum(['agreed', 'asked', 'question', 'joke', 'complaint', 'story', 'other']),
+    kind: z.enum(['agreed', 'question', 'joke', 'complaint', 'story', 'other']),
     agreed: z.boolean(),
   }),
   deadline: z.object({ is_time: z.boolean(), for_this_task: z.boolean() }),

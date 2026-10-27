@@ -1,5 +1,11 @@
 import type { Segment, Transcript } from '../transcript/types.ts'
-import { type GroundingOptions, groundMinutes, type Lines, sourceLines } from './ground.ts'
+import {
+  type GroundingOptions,
+  groundMinutes,
+  type Lines,
+  sourceLines,
+  withoutDeadline,
+} from './ground.ts'
 import { chunkSegments, systemPrompt, transcriptForPrompt } from './prompt.ts'
 import {
   type GenerateRawMinutes,
@@ -8,6 +14,7 @@ import {
   PART_SCHEMA,
   type PartAnswer,
   type RawMinutes,
+  type Rejected,
   type Self,
 } from './types.ts'
 
@@ -79,8 +86,16 @@ async function confirmed(
 
 type Task = RawMinutes['action_items'][number]
 
-/** A deadline stays only when the model, asked on its own, says it is a time said for this task. */
-async function checkedDue(task: Task, transcript: Transcript, deps: GenerateMinutesDeps) {
+/**
+ * A deadline stays only when the model, asked on its own, says it is a time said for this task. A
+ * refused one leaves the task's wording too ("Send the notes by Friday" becomes "Send the notes").
+ */
+async function checkedDue(
+  task: Task,
+  transcript: Transcript,
+  deps: GenerateMinutesDeps,
+  refused: Rejected[],
+): Promise<Task> {
   if (task.due.trim() === '') return task
   const lines = sourceLines(task.quote || task.task, task.segments, transcript)
   if (lines === undefined) return task
@@ -90,7 +105,13 @@ async function checkedDue(task: Task, transcript: Transcript, deps: GenerateMinu
     `Task: ${task.task}\nDeadline: ${task.due}\nLines:\n${excerpt(lines, transcript)}`,
     'deadline',
   )
-  return answer.is_time && answer.for_this_task ? task : { ...task, due: '' }
+  if (answer.is_time && answer.for_this_task) return task
+  refused.push({
+    kind: 'deadline',
+    text: `${task.task}: ${task.due}`,
+    reason: answer.is_time ? 'deadline said for other work' : 'deadline is not a time',
+  })
+  return { ...task, task: withoutDeadline(task.task, task.due), due: '' }
 }
 
 /**
@@ -117,11 +138,17 @@ export async function generateMinutes(
     raw.action_items.push(...(await ask(deps, system('tasks'), user, 'tasks')).action_items)
   }
   const checked: RawMinutes = { summary: raw.summary, decisions: [], action_items: [] }
+  const refused: Rejected[] = []
   for (const d of raw.decisions)
     if (await confirmed(d.text, d.quote, d.segments, transcript, deps)) checked.decisions.push(d)
+    else refused.push({ kind: 'decision', text: d.text, reason: 'not settled in its lines' })
   // Tasks are not confirmed: asked about one line, the model calls a plain request ("falta só
   // tratar X") "other" and drops it. Their deadline is checked.
-  for (const t of raw.action_items) checked.action_items.push(await checkedDue(t, transcript, deps))
-  const grounding = { ...deps.grounding, self: deps.self }
-  return { minutes: groundMinutes(checked, transcript, deps.model, grounding), raw: checked }
+  for (const t of raw.action_items)
+    checked.action_items.push(await checkedDue(t, transcript, deps, refused))
+  const minutes = groundMinutes(checked, transcript, deps.model, {
+    ...deps.grounding,
+    self: deps.self,
+  })
+  return { minutes: { ...minutes, rejected: [...refused, ...minutes.rejected] }, raw: checked }
 }
