@@ -54,8 +54,11 @@ export const MinutesSchema = z.object({
   /** Items the model produced that are not in the transcript. Kept for transparency, never shown as facts. */
   rejected: z.array(
     z.object({
-      /** `deadline`: the task was kept, only the deadline the model gave it was dropped. */
-      kind: z.enum(['summary', 'decision', 'action', 'deadline']),
+      /**
+       * `deadline`: the task was kept, only the deadline the model gave it was dropped.
+       * `unconfirmed`: a decision that was said, but not as one (a question, a joke, a complaint).
+       */
+      kind: z.enum(['summary', 'decision', 'action', 'deadline', 'unconfirmed']),
       text: z.string(),
       reason: z.string(),
     }),

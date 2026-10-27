@@ -141,7 +141,7 @@ export async function generateMinutes(
   const refused: Rejected[] = []
   for (const d of raw.decisions)
     if (await confirmed(d.text, d.quote, d.segments, transcript, deps)) checked.decisions.push(d)
-    else refused.push({ kind: 'decision', text: d.text, reason: 'not settled in its lines' })
+    else refused.push({ kind: 'unconfirmed', text: d.text, reason: 'not settled in its lines' })
   // Tasks are not confirmed: asked about one line, the model calls a plain request ("falta só
   // tratar X") "other" and drops it. Their deadline is checked.
   for (const t of raw.action_items)

@@ -11,6 +11,7 @@ import {
   findWhisperOrUndefined,
   installedModels,
   MeetingLibrary,
+  madeUp,
   ollamaMinutes,
   ollamaModels,
   processMeeting,
@@ -155,9 +156,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
   err(
     `done: ${meeting.transcript.segments.length} segments, ${meeting.transcript.duration.toFixed(1)}s of audio, ` +
       `transcribe ${(meeting.timings.transcribeSeconds / audioMinutes).toFixed(1)}s per audio minute` +
-      (meeting.minutes
-        ? `, ${meeting.minutes.rejected.filter((r) => r.kind !== 'deadline').length} ungrounded item(s) dropped`
-        : '') +
+      (meeting.minutes ? `, ${madeUp(meeting.minutes)} ungrounded item(s) dropped` : '') +
       '\n',
   )
   if (args.out) err(`saved ${new MeetingLibrary(resolve(args.out)).save(meeting)}\n`)

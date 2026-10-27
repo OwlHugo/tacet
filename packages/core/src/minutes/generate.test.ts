@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TRANSCRIPT } from '../testing.ts'
 import { generateMinutes } from './generate.ts'
+import { madeUp } from './made-up.ts'
 import { chunkSegments, systemPrompt } from './prompt.ts'
 import type { GenerateRawMinutes, MinutesPart } from './types.ts'
 
@@ -91,8 +92,9 @@ describe('generateMinutes', () => {
     expect(minutes.decisions.map((d) => d.text)).toEqual(['Ship the beta on Friday'])
     expect(minutes.actionItems.map((a) => a.task)).toEqual(['Send the release notes'])
     expect(raw.decisions).toHaveLength(1)
+    expect(madeUp(minutes)).toBe(0)
     expect(minutes.rejected).toContainEqual({
-      kind: 'decision',
+      kind: 'unconfirmed',
       text: 'Drop the dark mode toggle',
       reason: 'not settled in its lines',
     })
