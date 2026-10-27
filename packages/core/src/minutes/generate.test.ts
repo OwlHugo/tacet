@@ -93,6 +93,31 @@ describe('generateMinutes', () => {
     expect(raw.decisions).toHaveLength(1)
   })
 
+  it('shows each check two lines on each side of the source, and no more', async () => {
+    const long = {
+      ...TRANSCRIPT,
+      segments: Array.from({ length: 12 }, (_, id) => ({
+        id,
+        start: id * 3,
+        end: id * 3 + 2,
+        speaker: 'Me',
+        text: id === 6 ? 'We agreed to ship the beta on Friday.' : `Line number ${id} of the call.`,
+      })),
+    }
+    const { calls, generate } = fake({
+      decisions: () => ({
+        decisions: [
+          { text: 'Ship the beta on Friday', quote: 'ship the beta on Friday', segments: [6] },
+        ],
+      }),
+    })
+    await generateMinutes(long, { model: 'fake', generate })
+    const shown = [
+      ...(calls.find((c) => c.part === 'confirm')?.user ?? '').matchAll(/^\[(\d+)\]/gm),
+    ]
+    expect(shown.map((m) => Number(m[1]))).toEqual([4, 5, 6, 7, 8])
+  })
+
   it('needs both the kind and the answer to agree', async () => {
     const { generate } = fake({
       decisions: () => ({

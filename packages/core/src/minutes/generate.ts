@@ -1,5 +1,5 @@
 import type { Segment, Transcript } from '../transcript/types.ts'
-import { type GroundingOptions, groundMinutes, sourceLines } from './ground.ts'
+import { type GroundingOptions, groundMinutes, type Lines, sourceLines } from './ground.ts'
 import { chunkSegments, systemPrompt, transcriptForPrompt } from './prompt.ts'
 import {
   type GenerateRawMinutes,
@@ -44,9 +44,9 @@ async function ask<P extends MinutesPart>(
 }
 
 /** The source lines of an item and a few around them, as the model sees a transcript. */
-function excerpt(lines: readonly Segment[], transcript: Transcript): string {
-  const first = lines[0]?.id ?? 0
-  const last = lines.at(-1)?.id ?? first
+function excerpt(lines: Lines, transcript: Transcript): string {
+  const first = lines[0].id
+  const last = Math.max(...lines.map((s) => s.id))
   return transcriptForPrompt(
     transcript.segments.filter(
       (s) => s.id >= first - CONTEXT_LINES && s.id <= last + CONTEXT_LINES,

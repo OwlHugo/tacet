@@ -32,7 +32,8 @@ export interface GroundingOptions {
 const WORDING_THRESHOLD = 0.3
 const DUPLICATE_SIMILARITY = 0.7
 
-type Lines = readonly [Segment, ...Segment[]]
+/** The lines an item stands on: never empty. */
+export type Lines = readonly [Segment, ...Segment[]]
 
 interface Anchor {
   readonly lines: Lines
