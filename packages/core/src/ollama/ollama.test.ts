@@ -69,21 +69,21 @@ describe('ollama adapter', () => {
     const items = [{ task: 'x', owner: 'Me', due: '', quote: 'x', segments: [0] }]
     chatReply = { action_items: items }
     const raw = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('system', 'user', 'tasks')
-    expect(raw).toEqual({ summary: [], decisions: [], action_items: items })
+    expect(raw).toEqual({ action_items: items })
     expect(lastBody?.messages.map((m) => m.role)).toEqual(['system', 'user'])
     expect(lastBody?.stream).toBe(true)
     expect(lastBody?.format).toMatchObject({ required: ['action_items'] })
-    expect(lastBody?.options).toEqual({ temperature: 0, seed: 7, num_ctx: 16384 })
-    chatReply = { summary: [{ text: 's', segments: [0] }], decisions: [] }
-    const overview = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('s', 'u', 'overview')
-    expect(overview.summary).toHaveLength(1)
-    expect(lastBody?.format).toMatchObject({ required: ['summary', 'decisions'] })
+    expect(lastBody?.options).toEqual({ temperature: 0, seed: 7, num_ctx: 8192 })
+    chatReply = { kind: 'joke', agreed: false }
+    const check = await ollamaMinutes({ host, model: 'qwen2.5:7b' })('s', 'u', 'confirm')
+    expect(check).toEqual({ kind: 'joke', agreed: false })
+    expect(lastBody?.format).toMatchObject({ required: ['kind', 'agreed'] })
   })
 
   it('rejects an answer outside the schema and surfaces HTTP errors', async () => {
     chatReply = { summary: 'not a list' }
     await expect(
-      ollamaMinutes({ host, model: 'qwen2.5:7b' })('s', 'u', 'overview'),
+      ollamaMinutes({ host, model: 'qwen2.5:7b' })('s', 'u', 'summary'),
     ).rejects.toThrow()
     await expect(ollamaMinutes({ host, model: 'missing' })('s', 'u', 'tasks')).rejects.toThrow(
       /Ollama 404: model "missing" not found/,

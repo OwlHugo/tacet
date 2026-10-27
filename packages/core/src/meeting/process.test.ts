@@ -27,7 +27,10 @@ describe('processMeeting', () => {
       onStage: (s) => stages.push(s),
       minutes: {
         model: 'fake',
+        // one answer for every request: each part reads its own fields
         generate: async () => ({
+          kind: 'agreed',
+          agreed: true,
           summary: [],
           decisions: [],
           action_items: [

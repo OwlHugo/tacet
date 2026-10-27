@@ -179,6 +179,33 @@ describe('groundMinutes', () => {
     expect(bob.actionItems[0]?.owner).toBe('Unassigned')
   })
 
+  it('gives the person who recorded the meeting their tasks, by name or nickname', () => {
+    const mixed = {
+      ...TRANSCRIPT,
+      segments: TRANSCRIPT.segments.map((s) => ({ ...s, speaker: 'Speaker' })),
+    }
+    const self = { name: 'Rafael', aliases: ['Rafa'] }
+    const owner = (o: string) =>
+      groundMinutes(
+        one('Send the release notes', o, 'I will send the release notes', [3]),
+        mixed,
+        't',
+        {
+          self,
+        },
+      ).actionItems[0]?.owner
+    expect(owner('rafa')).toBe('Rafael')
+    expect(owner('Rafael')).toBe('Rafael')
+    expect(owner('Pedro')).toBe('Unassigned')
+    expect(
+      groundMinutes(
+        one('Send the release notes', 'Rafa', 'I will send the release notes', [3]),
+        mixed,
+        't',
+      ).actionItems[0]?.owner,
+    ).toBe('Unassigned')
+  })
+
   it('never takes the single-track label as a name, even when "speaker" was said', () => {
     const mixed = {
       ...TRANSCRIPT,

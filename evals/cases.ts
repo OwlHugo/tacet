@@ -1,6 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { type RawMinutes, RawMinutesSchema, type Transcript, TranscriptSchema } from '@tacet/core'
+import {
+  type RawMinutes,
+  RawMinutesSchema,
+  SelfSchema,
+  type Transcript,
+  TranscriptSchema,
+} from '@tacet/core'
 import { z } from 'zod'
 import { AnswerKeySchema } from './metrics/answer-key.ts'
 
@@ -24,6 +30,8 @@ const CaseSchema = z.object({
   expects_decisions: z.boolean().default(true),
   /** What the meeting really decided and assigned, to score the minutes for meaning, not words. */
   answer_key: AnswerKeySchema.optional(),
+  /** Who recorded it, as a user would set it in Tacet. */
+  self: SelfSchema.optional(),
   /** Words the user listed for whisper (names, product terms), as a user would set them. */
   vocabulary: z.array(z.string()).default([]),
 })

@@ -17,9 +17,12 @@ export { SYSTEM_PROMPT } from './minutes/prompt.ts'
 export {
   type GenerateRawMinutes,
   type Minutes,
+  type MinutesPart,
   MinutesSchema,
   type RawMinutes,
   RawMinutesSchema,
+  type Self,
+  SelfSchema,
 } from './minutes/types.ts'
 export { ollamaHost, ollamaMinutes, ollamaModels } from './ollama/ollama.ts'
 export { mergeTracks } from './transcript/merge.ts'

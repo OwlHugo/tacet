@@ -4,39 +4,39 @@
   "transcript": {
     "segments": [
       {
+        "id": 0,
         "start": 0.5,
         "end": 4.1,
         "speaker": "Others",
-        "text": "Bom dia. Vamos fechar o escopo da próxima Sprint.",
-        "id": 0
+        "text": "Bom dia. Vamos fechar o escopo da próxima Sprint."
       },
       {
+        "id": 1,
         "start": 5.1000000000000005,
         "end": 8.88,
         "speaker": "Me",
-        "text": "Eu acho que o login com Google precisa entrar nessa sprint.",
-        "id": 1
+        "text": "Eu acho que o login com Google precisa entrar nessa sprint."
       },
       {
+        "id": 2,
         "start": 9.5,
         "end": 13.52,
         "speaker": "Others",
-        "text": "Concordo. Então fica decidido o que eu loje incomprou ali entra.",
-        "id": 2
+        "text": "Concordo. Então fica decidido o que eu loje incomprou ali entra."
       },
       {
+        "id": 3,
         "start": 14.52,
         "end": 18.38,
         "speaker": "Me",
-        "text": "Eu vou escrever os testes do fluxo de pagamento até sexta.",
-        "id": 3
+        "text": "Eu vou escrever os testes do fluxo de pagamento até sexta."
       },
       {
+        "id": 4,
         "start": 19,
         "end": 22.66,
         "speaker": "Others",
-        "text": "E o Pedro vai revisar o contrato como for necedor de hospedagem.",
-        "id": 4
+        "text": "E o Pedro vai revisar o contrato como for necedor de hospedagem."
       }
     ],
     "duration": 22.66,
@@ -46,18 +46,22 @@
   "raw": {
     "summary": [
       {
-        "text": "A equipe decidiu incluir o login com Google na próxima Sprint.",
+        "text": "Fechar o escopo da próxima Sprint",
+        "segments": [0]
+      },
+      {
+        "text": "Incluir o login com Google na Sprint",
         "segments": [1, 2]
       },
       {
-        "text": "Foi planejado que o Me escreverá os testes do fluxo de pagamento até sexta-feira.",
-        "segments": [3]
+        "text": "Divisão de tarefas: Me escreverá os testes do fluxo de pagamento e Pedro revisará o contrato de hospedagem",
+        "segments": [3, 4]
       }
     ],
     "decisions": [
       {
-        "text": "Incluir o login com Google na próxima Sprint.",
-        "quote": "Eu acho que o login com Google precisa entrar nessa sprint.",
+        "text": "Login com Google entra nessa sprint",
+        "quote": "Eu acho que o login com Google precisa entrar nessa sprint",
         "segments": [1, 2]
       }
     ],

@@ -55,9 +55,18 @@ async function streamedContent(body: ReadableStream<Uint8Array>): Promise<string
 }
 
 const JSON_SCHEMA: Record<MinutesPart, unknown> = {
-  overview: z.toJSONSchema(PART_SCHEMA.overview),
+  summary: z.toJSONSchema(PART_SCHEMA.summary),
+  decisions: z.toJSONSchema(PART_SCHEMA.decisions),
   tasks: z.toJSONSchema(PART_SCHEMA.tasks),
+  confirm: z.toJSONSchema(PART_SCHEMA.confirm),
+  deadline: z.toJSONSchema(PART_SCHEMA.deadline),
 }
+
+/**
+ * Context window asked of Ollama. A transcript chunk plus the longest prompt fits in it, and a 7B
+ * model at this size runs on a 16 GB laptop next to the app.
+ */
+const NUM_CTX = 8192
 
 /**
  * Same answer for the same transcript: greedy decoding and a fixed seed. Real recordings still vary;
@@ -67,7 +76,7 @@ const SEED = 7
 
 /**
  * Ollama adapter for the GenerateRawMinutes port: structured output constrained by the JSON schema
- * of the part asked for, so the model cannot leave a list out or answer outside it.
+ * of the part asked for, so the model cannot leave a field out or answer outside it.
  */
 export function ollamaMinutes(opts: {
   readonly host: string
@@ -82,7 +91,7 @@ export function ollamaMinutes(opts: {
         model: opts.model,
         stream: true,
         format: JSON_SCHEMA[part],
-        options: { temperature: 0, seed: SEED, num_ctx: 16384 },
+        options: { temperature: 0, seed: SEED, num_ctx: NUM_CTX },
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
@@ -90,12 +99,6 @@ export function ollamaMinutes(opts: {
       }),
     })
     if (!res.ok || res.body === null) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
-    const content = await streamedContent(res.body)
-    return {
-      summary: [],
-      decisions: [],
-      action_items: [],
-      ...PART_SCHEMA[part].parse(JSON.parse(content)),
-    }
+    return PART_SCHEMA[part].parse(JSON.parse(await streamedContent(res.body)))
   }
 }

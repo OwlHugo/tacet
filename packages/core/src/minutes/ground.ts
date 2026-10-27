@@ -14,13 +14,18 @@ import {
   SPEAKER,
   type Transcript,
 } from '../transcript/types.ts'
-import type { Minutes, RawMinutes, Rejected } from './types.ts'
+import type { Minutes, RawMinutes, Rejected, Self } from './types.ts'
 
 export interface GroundingOptions {
   /** Minimum share of a quote's content words found in the cited lines. */
   readonly quoteThreshold?: number
   /** Minimum share of a summary point's content words found in the cited lines. */
   readonly summaryThreshold?: number
+  /**
+   * The person who recorded the meeting and what people call them ("Ana", "Aninha"). An owner that
+   * is one of these is that person, said in the meeting or not: they were there.
+   */
+  readonly self?: Self | undefined
 }
 
 /** Below this, an item's own wording (not just its quote) is unrelated to its source. */
@@ -115,6 +120,16 @@ function anchor(
   return reanchor(text, index, threshold)
 }
 
+/** The lines an item stands on, as grounding finds them, or undefined when it has none. */
+export function sourceLines(
+  text: string,
+  cited: readonly number[],
+  transcript: Transcript,
+  threshold = 0.6,
+): Lines | undefined {
+  return anchor(text, cited, new TranscriptIndex(transcript), threshold)?.lines
+}
+
 const SELF = new Set(['me', 'eu', 'i'])
 const OTHERS_WORDS = new Set(['others', 'outros', 'them'])
 const NOBODY = new Set(['', 'unassigned', 'unknown', 'none', 'n a', 'ninguem'])
@@ -124,8 +139,15 @@ const COMMITMENT = /\b(i ll|i will|i can|vou|eu)\b/
  * A named owner is kept only if the name was actually said in the meeting, and "Me"/"Others" only
  * if that track exists: an imported file has a single mixed track, so nobody there is "Others".
  */
-function resolveOwner(owner: string, source: Lines, index: TranscriptIndex): string {
+function resolveOwner(
+  owner: string,
+  source: Lines,
+  index: TranscriptIndex,
+  self: Self | undefined,
+): string {
   const n = normalize(owner)
+  if (self !== undefined && [self.name, ...self.aliases].some((s) => normalize(s) === n))
+    return self.name
   if (SELF.has(n) && index.speakers.has(ME)) return ME
   if (OTHERS_WORDS.has(n) && index.speakers.has(OTHERS_LABEL)) return OTHERS_LABEL
   if (
@@ -326,6 +348,7 @@ function groundActions(
   index: TranscriptIndex,
   threshold: number,
   rejected: Rejected[],
+  self: Self | undefined,
 ): Action[] {
   const { kept: tasks, standsOn } = groundTasks(raw, index, threshold, rejected)
   // A line is in doubt when more than one task the model gave stands on it, kept or not.
@@ -340,7 +363,7 @@ function groundActions(
       const due = groundDue(c, citedBy, owners, rejected)
       return {
         task: withoutDeadline(c.task, due ?? c.raw.due),
-        owner: resolveOwner(c.raw.owner, c.lines, index),
+        owner: resolveOwner(c.raw.owner, c.lines, index, self),
         ...(due === undefined ? {} : { due }),
         quote: c.raw.quote.trim(),
         ...cite(c.lines),
@@ -365,7 +388,7 @@ export function groundMinutes(
   return {
     summary: groundSummary(raw, index, opts.summaryThreshold ?? 0.3, rejected),
     decisions: groundDecisions(raw, index, quote, rejected),
-    actionItems: groundActions(raw, index, quote, rejected),
+    actionItems: groundActions(raw, index, quote, rejected, opts.self),
     rejected,
     model,
   }

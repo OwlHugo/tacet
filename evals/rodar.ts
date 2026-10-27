@@ -122,6 +122,7 @@ async function runCase(c: EvalCase): Promise<Run> {
   const { raw } = await generateMinutes(transcript, {
     generate: ollamaMinutes({ host: config.OLLAMA_HOST, model: values.llm }),
     model: values.llm,
+    self: c.self,
   })
   return {
     transcript,
@@ -152,7 +153,9 @@ function pooledWer(c: EvalCase, t: Transcript): number {
 async function evaluate(c: EvalCase): Promise<CaseResult> {
   const run = await runCase(c)
   const minutesOn = MODE === 'so-whisper' ? recorded(c).transcript : run.transcript
-  const minutes = groundMinutes(run.raw, minutesOn, USES_LLM ? values.llm : recorded(c).llmModel)
+  const minutes = groundMinutes(run.raw, minutesOn, USES_LLM ? values.llm : recorded(c).llmModel, {
+    self: c.self,
+  })
   const grounding = checkGrounding(minutes, minutesOn, c.expected_actions)
   const deadlines = checkDeadlines(minutes, c.expected_due)
   const perMinute = (s: number | undefined) =>
