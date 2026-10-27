@@ -41,6 +41,8 @@ Transcribe options
   -l, --language CODE   en, pt, ... or auto (default auto)
   --llm MODEL           Ollama model for the minutes (default ${DEFAULT_LLM})
   --vocab FILE          words whisper should expect (names, product terms), one per line
+  --me NAME             your name, so tasks asked of you get you as owner
+  --alias NAME          another name people call you (repeatable)
   --no-minutes          transcript only
   -t, --title TEXT      meeting title
   -o, --out DIR         save Markdown into DIR (default: print to stdout)
@@ -58,6 +60,8 @@ const TranscribeArgs = z.object({
   llm: z.string().min(1),
   'no-minutes': z.boolean(),
   vocab: z.string().optional(),
+  me: z.string().trim().min(1).optional(),
+  alias: z.array(z.string().trim().min(1)),
   title: z.string().min(1).optional(),
   out: z.string().optional(),
   json: z.boolean(),
@@ -72,6 +76,15 @@ function vocabularyFile(path: string): string[] {
     .filter((l) => l !== '' && !l.startsWith('#'))
 }
 
+/** What the user told Tacet about their meetings: words to expect and who they are. */
+function personal(args: z.infer<typeof TranscribeArgs>) {
+  if (args.alias.length > 0 && args.me === undefined) throw new Error('--alias needs --me NAME.')
+  return {
+    vocabulary: args.vocab === undefined ? [] : vocabularyFile(resolve(args.vocab)),
+    self: args.me === undefined ? undefined : { name: args.me, aliases: args.alias },
+  }
+}
+
 async function transcribeCommand(argv: string[]): Promise<void> {
   const { values: raw, positionals } = parseArgs({
     args: argv,
@@ -84,6 +97,8 @@ async function transcribeCommand(argv: string[]): Promise<void> {
       llm: { type: 'string', default: DEFAULT_LLM },
       'no-minutes': { type: 'boolean', default: false },
       vocab: { type: 'string' },
+      me: { type: 'string' },
+      alias: { type: 'string', multiple: true, default: [] },
       title: { type: 'string', short: 't' },
       out: { type: 'string', short: 'o' },
       json: { type: 'boolean', default: false },
@@ -98,7 +113,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
   if (!first) throw new Error('no audio given. Try `tacet transcribe meeting.wav`.')
   const missing = tracks.find((t) => !existsSync(t.path))
   if (missing) throw new Error(`file not found: ${missing.path}`)
-  const vocabulary = args.vocab === undefined ? [] : vocabularyFile(resolve(args.vocab))
+  const { vocabulary, self } = personal(args)
 
   const llmUp = !args['no-minutes'] && (await ollamaModels(config.OLLAMA_HOST)) !== undefined
   if (!args['no-minutes'] && !llmUp)
@@ -124,6 +139,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
         ? {
             generate: ollamaMinutes({ host: config.OLLAMA_HOST, model: args.llm }),
             model: args.llm,
+            self,
           }
         : undefined,
       now: () => performance.now(),

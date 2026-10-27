@@ -182,6 +182,7 @@ tacet transcribe <audio...>        one file, or --mic me.wav --system them.wav, 
   -l, --language en|pt|...|auto
   --llm qwen2.5:7b   --no-minutes   -t "Title"   -o ~/notes   --json
   --vocab words.txt  names and terms whisper should expect, one per line (passed as its prompt)
+  --me Ana --alias Aninha   who you are: on a one-track file, work asked of you gets you as owner
 tacet search "pricing page" [--dir ~/notes]
 tacet list [--dir ~/notes]
 tacet doctor
