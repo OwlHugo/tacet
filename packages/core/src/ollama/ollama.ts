@@ -43,8 +43,9 @@ async function streamedContent(body: ReadableStream<Uint8Array>): Promise<string
   const take = (line: string) => {
     if (line.trim() !== '') content += ChatChunk.parse(JSON.parse(line)).message.content
   }
-  for await (const text of body.pipeThrough(new TextDecoderStream())) {
-    const buffer = pending + text
+  const decoder = new TextDecoder()
+  for await (const bytes of body) {
+    const buffer = pending + decoder.decode(bytes, { stream: true })
     const end = buffer.lastIndexOf('\n') + 1
     for (const line of buffer.slice(0, end).split('\n')) take(line)
     pending = buffer.slice(end)
