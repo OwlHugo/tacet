@@ -46,10 +46,10 @@ async function tap(stream: MediaStream, track: Track, onChunk: OnChunk): Promise
   })
   node.port.onmessage = (e: MessageEvent<Float32Array>) => onChunk(track, e.data)
   ctx.createMediaStreamSource(stream).connect(node)
-  // Keep the graph pulling without playing anything back.
-  const mute = ctx.createGain()
-  mute.gain.value = 0
-  node.connect(mute).connect(ctx.destination)
+  // Keep the graph pulling without the speakers: a muted path to ctx.destination ties the context
+  // to the output device, and on macOS its clock slowed after about 30 s of silence there, so the
+  // WAV lost a third of a one-minute call. A stream destination runs on the context's own clock.
+  node.connect(ctx.createMediaStreamDestination())
   return {
     track,
     stop: async () => {
