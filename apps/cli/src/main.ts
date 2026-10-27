@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { basename, extname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import {
@@ -24,6 +24,8 @@ import { parseTracks } from './tracks.ts'
 
 const VERSION = '0.1.0'
 const DEFAULT_LLM = 'qwen2.5:7b'
+/** A vocabulary whisper.cpp takes whole as its prompt: about 220 tokens of mostly names. */
+const VOCABULARY_CHARS = 600
 
 const HELP = `tacet ${VERSION}  local meeting transcription, nothing leaves your machine
 
@@ -70,11 +72,18 @@ const TranscribeArgs = z.object({
 
 /** One word or name per line; blank lines and lines starting with # are skipped. */
 function vocabularyFile(path: string): string[] {
-  if (!existsSync(path)) throw new Error(`vocabulary file not found: ${path}`)
-  return readFileSync(path, 'utf8')
+  if (!existsSync(path) || !statSync(path).isFile())
+    throw new Error(`vocabulary file not found: ${path}`)
+  const listed = readFileSync(path, 'utf8')
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l !== '' && !l.startsWith('#'))
+  // whisper.cpp keeps only about 220 tokens of its prompt and drops the rest without a word.
+  if (listed.join(', ').length > VOCABULARY_CHARS)
+    throw new Error(
+      `the vocabulary in ${path} is too long for whisper (${listed.length} lines); keep it under ${VOCABULARY_CHARS} characters, the names and terms it gets wrong.`,
+    )
+  return listed
 }
 
 /** What the user told Tacet about their meetings: words to expect and who they are. */
