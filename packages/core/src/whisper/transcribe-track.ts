@@ -4,6 +4,7 @@ import { dirname, extname, join } from 'node:path'
 import { z } from 'zod'
 import { snapToSpeech, speechRegions } from '../audio/speech.ts'
 import { readWav } from '../audio/wav.ts'
+import { words } from '../matching/words.ts'
 import { cleanText, isHallucination } from '../transcript/merge.ts'
 import type { Track, TrackTranscript, TranscribeTrack } from '../transcript/types.ts'
 import { run } from './run.ts'
@@ -60,6 +61,17 @@ export function vocabularyPrompt(vocabulary: readonly string[]): string[] {
   return listed.length === 0 ? [] : ['--prompt', `${listed.join(', ')}.`]
 }
 
+/**
+ * whisper.cpp may write its initial prompt back as a segment over silence. A segment made only of
+ * vocabulary words ("Rafaela.", "Kubernetes, Rafaela") is that echo, not speech: kept, it would make
+ * a name count as said in the meeting.
+ */
+export function echoesVocabulary(text: string, vocabulary: readonly string[]): boolean {
+  const listed = new Set(vocabulary.flatMap((w) => words(w)))
+  const said = words(text)
+  return said.length > 0 && said.every((w) => listed.has(w))
+}
+
 /** whisper.cpp adapter for the TranscribeTrack port. */
 export function whisperTranscriber(opts: WhisperOptions): TranscribeTrack {
   // Prebuilt Linux builds ship their .so files next to the binary.
@@ -88,7 +100,9 @@ export function whisperTranscriber(opts: WhisperOptions): TranscribeTrack {
           speaker: track.speaker,
           text: cleanText(t.text),
         }))
-        .filter((s) => s.text && !isHallucination(s.text))
+        .filter(
+          (s) => s.text && !isHallucination(s.text) && !echoesVocabulary(s.text, opts.vocabulary),
+        )
       return {
         segments: input.endsWith('.wav')
           ? snapToSpeech(segments, speechRegions(readWav(input)))

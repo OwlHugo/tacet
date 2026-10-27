@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { WavWriter } from '../audio/wav.ts'
 import { findFfmpeg, findWhisper, findWhisperOrUndefined } from './binaries.ts'
 import { defaultModel, ensureModel, installedModels, modelPath } from './models.ts'
-import { vocabularyPrompt, whisperTranscriber } from './transcribe-track.ts'
+import { echoesVocabulary, vocabularyPrompt, whisperTranscriber } from './transcribe-track.ts'
 
 const dir = () => mkdtempSync(join(tmpdir(), 'tacet-whisper-'))
 
@@ -154,5 +154,16 @@ describe('vocabularyPrompt', () => {
       '--prompt',
       'Kubernetes, Rafaela.',
     ])
+  })
+})
+
+describe('echoesVocabulary', () => {
+  it('flags a segment made only of vocabulary words, never one that also says something else', () => {
+    const vocab = ['Kubernetes', 'Rafaela Souza']
+    expect(echoesVocabulary('Rafaela.', vocab)).toBe(true)
+    expect(echoesVocabulary('Kubernetes, Rafaela Souza.', vocab)).toBe(true)
+    expect(echoesVocabulary('Rafaela, você sobe o Kubernetes?', vocab)).toBe(false)
+    expect(echoesVocabulary('Rafaela.', [])).toBe(false)
+    expect(echoesVocabulary('...', vocab)).toBe(false)
   })
 })
