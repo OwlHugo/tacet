@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { basename, extname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import {
@@ -40,6 +40,7 @@ Transcribe options
                         (default: the best one downloaded, else base)
   -l, --language CODE   en, pt, ... or auto (default auto)
   --llm MODEL           Ollama model for the minutes (default ${DEFAULT_LLM})
+  --vocab FILE          words whisper should expect (names, product terms), one per line
   --no-minutes          transcript only
   -t, --title TEXT      meeting title
   -o, --out DIR         save Markdown into DIR (default: print to stdout)
@@ -56,10 +57,20 @@ const TranscribeArgs = z.object({
   language: z.string().regex(/^(auto|[a-z]{2,3})$/, 'language must be a code like en, pt or auto'),
   llm: z.string().min(1),
   'no-minutes': z.boolean(),
+  vocab: z.string().optional(),
   title: z.string().min(1).optional(),
   out: z.string().optional(),
   json: z.boolean(),
 })
+
+/** One word or name per line; blank lines and lines starting with # are skipped. */
+function vocabularyFile(path: string): string[] {
+  if (!existsSync(path)) throw new Error(`vocabulary file not found: ${path}`)
+  return readFileSync(path, 'utf8')
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l !== '' && !l.startsWith('#'))
+}
 
 async function transcribeCommand(argv: string[]): Promise<void> {
   const { values: raw, positionals } = parseArgs({
@@ -72,6 +83,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
       language: { type: 'string', short: 'l', default: 'auto' },
       llm: { type: 'string', default: DEFAULT_LLM },
       'no-minutes': { type: 'boolean', default: false },
+      vocab: { type: 'string' },
       title: { type: 'string', short: 't' },
       out: { type: 'string', short: 'o' },
       json: { type: 'boolean', default: false },
@@ -86,6 +98,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
   if (!first) throw new Error('no audio given. Try `tacet transcribe meeting.wav`.')
   const missing = tracks.find((t) => !existsSync(t.path))
   if (missing) throw new Error(`file not found: ${missing.path}`)
+  const vocabulary = args.vocab === undefined ? [] : vocabularyFile(resolve(args.vocab))
 
   const llmUp = !args['no-minutes'] && (await ollamaModels(config.OLLAMA_HOST)) !== undefined
   if (!args['no-minutes'] && !llmUp)
@@ -103,6 +116,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
         ffmpeg: findFfmpeg({ ...binaries, explicit: config.TACET_FFMPEG_BIN }),
         model: await ensureModel(args.model, config.TACET_MODELS_DIR),
         language: args.language,
+        vocabulary,
         env: process.env,
       }),
       whisperModel: args.model,

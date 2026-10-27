@@ -163,6 +163,7 @@ const meeting = await processMeeting(
       bin: '/opt/homebrew/bin/whisper-cli',
       model: await ensureModel('large-v3-turbo', `${process.env.HOME}/.cache/whisper`),
       language: 'en',
+      vocabulary: [],
       env: process.env,
     }),
     whisperModel: 'large-v3-turbo',
@@ -180,6 +181,7 @@ tacet transcribe <audio...>        one file, or --mic me.wav --system them.wav, 
   -m, --model tiny|base|small|large-v3-turbo|path.bin   (default: best one downloaded)
   -l, --language en|pt|...|auto
   --llm qwen2.5:7b   --no-minutes   -t "Title"   -o ~/notes   --json
+  --vocab words.txt  names and terms whisper should expect, one per line (passed as its prompt)
 tacet search "pricing page" [--dir ~/notes]
 tacet list [--dir ~/notes]
 tacet doctor

@@ -85,6 +85,7 @@ async function transcriptOf(c: EvalCase, model: string, i: number): Promise<Tran
     ffmpeg: FFMPEG,
     model: await ensureModel(model, config.TACET_MODELS_DIR),
     language: c.language,
+    vocabulary: [],
     env: process.env,
   })
   if (i === 0) {

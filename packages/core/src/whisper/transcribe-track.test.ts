@@ -1,11 +1,11 @@
-import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { WavWriter } from '../audio/wav.ts'
 import { findFfmpeg, findWhisper, findWhisperOrUndefined } from './binaries.ts'
 import { defaultModel, ensureModel, installedModels, modelPath } from './models.ts'
-import { whisperTranscriber } from './transcribe-track.ts'
+import { vocabularyPrompt, whisperTranscriber } from './transcribe-track.ts'
 
 const dir = () => mkdtempSync(join(tmpdir(), 'tacet-whisper-'))
 
@@ -36,7 +36,7 @@ function wav(): string {
   return path
 }
 
-const opts = { model: 'm.bin', language: 'en', env: process.env } as const
+const opts = { model: 'm.bin', language: 'en', vocabulary: [], env: process.env } as const
 const posix = process.platform !== 'win32'
 
 describe.runIf(posix)('whisperTranscriber', () => {
@@ -67,6 +67,27 @@ describe.runIf(posix)('whisperTranscriber', () => {
     await expect(
       whisperTranscriber({ ...opts, bin })({ path: 'call.m4a', speaker: 'Me' }),
     ).rejects.toThrow(/without ffmpeg/)
+  })
+
+  it('hands the vocabulary to whisper as its initial prompt', async () => {
+    const d = dir()
+    const bin = join(d, 'whisper-cli')
+    writeFileSync(
+      bin,
+      `#!/usr/bin/env node
+const a = process.argv.slice(2)
+const fs = require('node:fs')
+fs.writeFileSync(${JSON.stringify(join(d, 'args.json'))}, JSON.stringify(a))
+fs.writeFileSync(a[a.indexOf('-of') + 1] + '.json', JSON.stringify({ transcription: [] }))
+`,
+    )
+    chmodSync(bin, 0o755)
+    await whisperTranscriber({ ...opts, bin, vocabulary: ['Rafaela'] })({
+      path: wav(),
+      speaker: 'Me',
+    })
+    const args: string[] = JSON.parse(readFileSync(join(d, 'args.json'), 'utf8'))
+    expect(args.slice(args.indexOf('--prompt'))).toEqual(['--prompt', 'Rafaela.'])
   })
 
   it('rejects output that is not whisper JSON', async () => {
@@ -122,5 +143,16 @@ describe('models', () => {
     writeFileSync(join(d, 'ggml-large-v3-turbo.bin'), '')
     expect(installedModels(d)).toEqual(['large-v3-turbo', 'small', 'base', 'tiny'])
     expect(defaultModel(d)).toBe('large-v3-turbo')
+  })
+})
+
+describe('vocabularyPrompt', () => {
+  it('passes the words as one initial prompt, or nothing', () => {
+    expect(vocabularyPrompt([])).toEqual([])
+    expect(vocabularyPrompt([' ', ''])).toEqual([])
+    expect(vocabularyPrompt(['Kubernetes', ' Rafaela '])).toEqual([
+      '--prompt',
+      'Kubernetes, Rafaela.',
+    ])
   })
 })

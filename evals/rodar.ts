@@ -83,6 +83,7 @@ async function realTranscript(c: EvalCase): Promise<{ transcript: Transcript; se
     ffmpeg: findFfmpeg({ ...opts, explicit: undefined }),
     model: await ensureModel(values.whisper, config.TACET_MODELS_DIR),
     language: c.language,
+    vocabulary: c.vocabulary,
     env: process.env,
   })
   const t0 = performance.now()
