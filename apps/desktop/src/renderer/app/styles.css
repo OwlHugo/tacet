@@ -459,6 +459,7 @@ h3 {
 .due {
   margin-left: 6px;
   padding: 0 6px;
+  white-space: nowrap;
   border-radius: 4px;
   font-size: 11px;
   color: var(--text-2);
