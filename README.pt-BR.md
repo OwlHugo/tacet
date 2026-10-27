@@ -45,7 +45,7 @@ Precisa do [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install
 - **Duas faixas, sem driver.** Microfone e áudio do sistema gravados em arquivos separados, então "Eu" e "Outros" vêm de graça. O eco do microfone é removido quando você não usa fone.
 - **Ata ancorada.** Resumo, decisões e tarefas com dono e prazo. Cada item cita as linhas da transcrição; o que não está na transcrição sai da ata, e os horários vêm da transcrição, nunca do modelo.
 - **Uma chamada por parte.** Resumo, decisões e tarefas são pedidos separados ao modelo; cada decisão é confirmada nas próprias falas (pergunta, piada ou reclamação não vira decisão) e cada prazo é conferido contra a tarefa dele.
-- **Arquivo de uma faixa só.** Importe um `.wav`, `.m4a` ou `.mp3`. Com `--me Seu Nome` (e `--alias Apelido`), o que for pedido a você sai com você de dono. Com `--vocab palavras.txt`, o whisper escreve certo os nomes e termos que você lista.
+- **Arquivo de uma faixa só.** Importe um `.wav`, `.m4a` ou `.mp3`. Na CLI, com `--me Seu Nome` (e `--alias Apelido`), o que for pedido a você sai com você de dono, e com `--vocab palavras.txt` o whisper escreve certo os nomes e termos que você lista. No app essas opções ainda não existem.
 - **Markdown pronto para o Obsidian**, busca em todas as reuniões, atalho global `⌘⇧M` / `Ctrl+Shift+M`.
 
 ## CLI
