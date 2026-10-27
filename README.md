@@ -16,9 +16,13 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" width="860" alt="Tacet recording a 2.5 minute sprint planning call, then the minutes with decisions and tasks with owners and deadlines, and a click on a task that jumps to its line in the transcript" />
+  <a href="README.pt-BR.md">Português</a> · English
+</p>
+
+<p align="center">
+  <img src="docs/demo-en.gif" width="860" alt="Tacet recording a one-minute planning call, then the minutes with two decisions and three tasks with owners and deadlines, and a click on a task that jumps to its line in the transcript" />
   <br/>
-  <sub>A 2.5 minute call with synthetic voices (eval case <a href="evals/cases/05-sprint-pix-pt/case.json">05-sprint-pix-pt</a>) recorded on a MacBook Pro M4. Most of the call and the wait for whisper.cpp and the local LLM (about 70 s) are sped up 8×.</sub>
+  <sub>A made-up one-minute call with synthetic voices, recorded on a MacBook Pro M4. The call plays at 1.5× and the wait for whisper.cpp and the local LLM (about 40 s) is cut to 6 s. With sound: <a href="docs/demo-en.mp4">docs/demo-en.mp4</a>. In Portuguese: <a href="docs/demo-pt.mp4">docs/demo-pt.mp4</a>.</sub>
 </p>
 
 ## Install
@@ -55,11 +59,13 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 - **Two tracks, no driver.** Your microphone and the system audio are recorded as separate files. System audio uses Chromium's loopback capture: ScreenCaptureKit on macOS 13+, WASAPI on Windows, the PulseAudio/PipeWire monitor on Linux. No BlackHole, no Loopback.app.
 - **Me / Others.** Each track is transcribed separately, so speaker labels come for free. Mic echo of the speakers is detected and removed when you are not using headphones.
 - **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms on the scripted cases (see the eval). On the 2.5 minute call (case 05) it is still about 6 s: whisper glues a line to the one before it, and a short reply ("Isso.") lands on the wrong segment ([issue #4](https://github.com/OwlHugo/tacet/issues/4)).
+- **One request per part, each checked.** The summary, the decisions and the tasks are asked apart, so a small model looks at one thing at a time. Each decision is then confirmed on its own lines (a question, a joke or a complaint is not a decision), and each deadline is checked to be a time said for its task.
 - **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word on a line that only this task stands on and that names at most one of the owners the model gave (a missing deadline is preferred to a wrong one; a second person the model left out is not seen, see issue #2), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
 - **Global shortcut** `⌘⇧M` / `Ctrl+Shift+M` to start and stop from anywhere.
-- **Import audio.** Drop a `.wav`, `.m4a` or `.mp3` on the window (or use *Import audio*) to run the same pipeline on a recording you already have. No microphone or screen permission needed. An imported file is one mixed track, so lines are labelled "Speaker" and tasks only get an owner whose name was said.
+- **Import audio.** Drop a `.wav`, `.m4a` or `.mp3` on the window (or use *Import audio*) to run the same pipeline on a recording you already have. No microphone or screen permission needed. An imported file is one mixed track, so lines are labelled "Speaker" and tasks only get an owner whose name was said, or you, when you say who you are (`--me`, `--alias`).
+- **Your vocabulary.** `--vocab words.txt` hands whisper.cpp the names and terms you expect, one per line, so it spells them your way. The list stays on your machine.
 
 ## Eval
 
