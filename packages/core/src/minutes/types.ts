@@ -1,5 +1,14 @@
 import { z } from 'zod'
 
+/**
+ * The person who recorded the meeting, as the user set it: their name and what people call them
+ * ("Ana", ["Aninha"]). It tells the model, and grounding, who "you" usually is.
+ */
+export const SelfSchema = z.object({
+  name: z.string().trim().min(1),
+  aliases: z.array(z.string().trim().min(1)),
+})
+export type Self = z.infer<typeof SelfSchema>
 /** What the LLM must return. Segment ids are the only link between an item and the transcript. */
 export const RawMinutesSchema = z.object({
   summary: z.array(z.object({ text: z.string(), segments: z.array(z.number().int()) })),
@@ -45,8 +54,11 @@ export const MinutesSchema = z.object({
   /** Items the model produced that are not in the transcript. Kept for transparency, never shown as facts. */
   rejected: z.array(
     z.object({
-      /** `deadline`: the task was kept, only the deadline the model gave it was dropped. */
-      kind: z.enum(['summary', 'decision', 'action', 'deadline']),
+      /**
+       * `deadline`: the task was kept, only the deadline the model gave it was dropped.
+       * `unconfirmed`: a decision that was said, but not as one (a question, a joke, a complaint).
+       */
+      kind: z.enum(['summary', 'decision', 'action', 'deadline', 'unconfirmed']),
       text: z.string(),
       reason: z.string(),
     }),
@@ -57,20 +69,33 @@ export type Minutes = z.infer<typeof MinutesSchema>
 export type Rejected = Minutes['rejected'][number]
 
 /**
- * Which part of the minutes one request asks for. `overview` is the summary and the decisions,
- * `tasks` the action items; the parts not asked for come back as empty lists.
+ * What one request asks for. Each list of the minutes has its own request, so a small model looks
+ * at one thing at a time; `confirm` is the yes/no check of one decision or task on its own lines,
+ * `deadline` the check that a task's deadline is a time said for that task.
  */
-export type MinutesPart = 'overview' | 'tasks'
+export type MinutesPart = 'summary' | 'decisions' | 'tasks' | 'confirm' | 'deadline'
 
 /** The schema the model must follow for each part. */
 export const PART_SCHEMA = {
-  overview: RawMinutesSchema.pick({ summary: true, decisions: true }),
+  summary: RawMinutesSchema.pick({ summary: true }),
+  decisions: RawMinutesSchema.pick({ decisions: true }),
   tasks: RawMinutesSchema.pick({ action_items: true }),
+  /** `kind` comes first, so the model names what the lines are before it answers. */
+  confirm: z.object({
+    kind: z.enum(['agreed', 'question', 'joke', 'complaint', 'story', 'other']),
+    agreed: z.boolean(),
+  }),
+  deadline: z.object({ is_time: z.boolean(), for_this_task: z.boolean() }),
 } as const
 
-/** Port: a local LLM that answers one minutes prompt. Ollama in production, a fake in tests. */
+export type PartAnswer<P extends MinutesPart> = z.infer<(typeof PART_SCHEMA)[P]>
+
+/**
+ * Port: a local LLM that answers one prompt with JSON in the shape of PART_SCHEMA[part]. Ollama in
+ * production, a fake in tests. The answer is untrusted: it is parsed against that schema on arrival.
+ */
 export type GenerateRawMinutes = (
   system: string,
   user: string,
   part: MinutesPart,
-) => Promise<RawMinutes>
+) => Promise<unknown>

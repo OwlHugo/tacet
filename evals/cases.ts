@@ -1,7 +1,14 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { type RawMinutes, RawMinutesSchema, type Transcript, TranscriptSchema } from '@tacet/core'
+import {
+  type RawMinutes,
+  RawMinutesSchema,
+  SelfSchema,
+  type Transcript,
+  TranscriptSchema,
+} from '@tacet/core'
 import { z } from 'zod'
+import { AnswerKeySchema } from './metrics/answer-key.ts'
 
 const ReferenceLineSchema = z.object({ speaker: z.string(), text: z.string(), start: z.number() })
 export type ReferenceLine = z.infer<typeof ReferenceLineSchema>
@@ -21,6 +28,12 @@ const CaseSchema = z.object({
   ),
   /** Whether the script has a decision, so empty decisions in the minutes are a miss. */
   expects_decisions: z.boolean().default(true),
+  /** What the meeting really decided and assigned, to score the minutes for meaning, not words. */
+  answer_key: AnswerKeySchema.optional(),
+  /** Who recorded it, as a user would set it in Tacet. */
+  self: SelfSchema.optional(),
+  /** Words the user listed for whisper (names, product terms), as a user would set them. */
+  vocabulary: z.array(z.string()).default([]),
 })
 
 /** What a real whisper + LLM run produced, replayed by `eval:sem-ia` so CI needs neither. */
@@ -34,7 +47,8 @@ export type Fixture = z.infer<typeof FixtureSchema>
 
 export interface EvalCase extends z.infer<typeof CaseSchema> {
   readonly dir: string
-  readonly fixture: Fixture
+  /** Undefined until the first `--gravar` run of a case kept outside the repo. */
+  readonly fixture: Fixture | undefined
 }
 
 export const fixturePath = (dir: string) => join(dir, 'fixture.json')
@@ -47,7 +61,9 @@ export function loadCases(root: string): EvalCase[] {
     .map((dir) => ({
       ...CaseSchema.parse(JSON.parse(readFileSync(join(dir, 'case.json'), 'utf8'))),
       dir,
-      fixture: FixtureSchema.parse(JSON.parse(readFileSync(fixturePath(dir), 'utf8'))),
+      fixture: existsSync(fixturePath(dir))
+        ? FixtureSchema.parse(JSON.parse(readFileSync(fixturePath(dir), 'utf8')))
+        : undefined,
     }))
 }
 

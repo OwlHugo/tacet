@@ -1,3 +1,5 @@
+import type { AnswerKeyReport } from './metrics/answer-key.ts'
+
 export interface CaseResult {
   readonly id: string
   readonly audioSeconds: number
@@ -18,6 +20,8 @@ export interface CaseResult {
   /** Parts of the minutes that came out empty though the meeting had them ("summary", "decisions"). */
   readonly emptyParts: readonly string[]
   readonly guard: { readonly injected: number; readonly rejected: number }
+  /** Scored against the case's answer key; undefined for a case without one. */
+  readonly meaning: AnswerKeyReport | undefined
 }
 
 export interface Report {
@@ -65,6 +69,27 @@ function totals(r: Report) {
   }
 }
 
+/** right/given as precision, found/total as recall: "2/3 · 2/2". */
+const ratio = (a: number, b: number) => `${a}/${b}`
+
+/** The minutes against each answer key: what was really decided and assigned, by meaning. */
+function meaningTable(r: Report): string[] {
+  const scored = r.cases.flatMap((c) =>
+    c.meaning === undefined ? [] : [{ id: c.id, m: c.meaning }],
+  )
+  if (scored.length === 0) return []
+  const rows = scored.map(
+    ({ id, m }) =>
+      `| ${id} | ${m.subject ? 'yes' : 'no'} | ${ratio(m.decisions.right, m.decisions.given)} | ${ratio(m.decisions.found, m.decisions.total)} | ${ratio(m.tasks.right, m.tasks.given)} | ${ratio(m.tasks.found, m.tasks.total)} | ${m.wrongOwner} | ${m.invented.length} |`,
+  )
+  return [
+    '',
+    '| Case | Main subject in summary | Decisions right (precision) | Decisions found (recall) | Tasks right (precision) | Tasks found (recall) | Wrong owner | Invented items |',
+    '|---|---|---|---|---|---|---|---|',
+    ...rows,
+  ]
+}
+
 export function toMarkdown(r: Report): string {
   const t = totals(r)
   const rows = r.cases.map(
@@ -76,6 +101,8 @@ export function toMarkdown(r: Report): string {
     '|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
     `| **Total** | ${t.audioSeconds.toFixed(1)}s | ${pct(t.wer)} | | | ${num(t.transcribe)} | ${num(t.minutes)} | ${t.grounded}/${t.items} | ${t.recall === undefined ? '–' : pct(t.recall)} | ${t.dueRight}/${t.dueTotal} |`,
+    '',
+    ...meaningTable(r),
     '',
     `Hallucination guard: ${t.rejected}/${t.injected} fabricated items rejected.`,
     `Mode \`${r.mode}\`, platform ${r.platform}, whisper \`${r.whisperModel}\`, LLM \`${r.llmModel}\`.`,

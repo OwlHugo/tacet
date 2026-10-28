@@ -1,4 +1,12 @@
-import { coverage, findPhrase, normalize, similarity, words } from '../matching/words.ts'
+import {
+  contentWords,
+  coverage,
+  findPhrase,
+  normalize,
+  similarity,
+  stem,
+  words,
+} from '../matching/words.ts'
 import {
   ME,
   OTHERS as OTHERS_LABEL,
@@ -6,20 +14,26 @@ import {
   SPEAKER,
   type Transcript,
 } from '../transcript/types.ts'
-import type { Minutes, RawMinutes, Rejected } from './types.ts'
+import type { Minutes, RawMinutes, Rejected, Self } from './types.ts'
 
 export interface GroundingOptions {
   /** Minimum share of a quote's content words found in the cited lines. */
   readonly quoteThreshold?: number
   /** Minimum share of a summary point's content words found in the cited lines. */
   readonly summaryThreshold?: number
+  /**
+   * The person who recorded the meeting and what people call them ("Ana", "Aninha"). An owner that
+   * is one of these is that person, said in the meeting or not: they were there.
+   */
+  readonly self?: Self | undefined
 }
 
 /** Below this, an item's own wording (not just its quote) is unrelated to its source. */
 const WORDING_THRESHOLD = 0.3
 const DUPLICATE_SIMILARITY = 0.7
 
-type Lines = readonly [Segment, ...Segment[]]
+/** The lines an item stands on: never empty. */
+export type Lines = readonly [Segment, ...Segment[]]
 
 interface Anchor {
   readonly lines: Lines
@@ -107,6 +121,16 @@ function anchor(
   return reanchor(text, index, threshold)
 }
 
+/** The lines an item stands on, as grounding finds them, or undefined when it has none. */
+export function sourceLines(
+  text: string,
+  cited: readonly number[],
+  transcript: Transcript,
+  threshold = 0.6,
+): Lines | undefined {
+  return anchor(text, cited, new TranscriptIndex(transcript), threshold)?.lines
+}
+
 const SELF = new Set(['me', 'eu', 'i'])
 const OTHERS_WORDS = new Set(['others', 'outros', 'them'])
 const NOBODY = new Set(['', 'unassigned', 'unknown', 'none', 'n a', 'ninguem'])
@@ -116,8 +140,15 @@ const COMMITMENT = /\b(i ll|i will|i can|vou|eu)\b/
  * A named owner is kept only if the name was actually said in the meeting, and "Me"/"Others" only
  * if that track exists: an imported file has a single mixed track, so nobody there is "Others".
  */
-function resolveOwner(owner: string, source: Lines, index: TranscriptIndex): string {
+function resolveOwner(
+  owner: string,
+  source: Lines,
+  index: TranscriptIndex,
+  self: Self | undefined,
+): string {
   const n = normalize(owner)
+  if (self !== undefined && [self.name, ...self.aliases].some((s) => normalize(s) === n))
+    return self.name
   if (SELF.has(n) && index.speakers.has(ME)) return ME
   if (OTHERS_WORDS.has(n) && index.speakers.has(OTHERS_LABEL)) return OTHERS_LABEL
   if (
@@ -205,7 +236,7 @@ const LEAD = /\s+(?:by|on|before|until|até|ate|pra|antes de)$/iu
  * kept deadline is shown on its own, and a dropped one must not reach the minutes through the task's
  * wording. Only a deadline introduced like one ("by", "até") is cut, and never the whole task.
  */
-function withoutDeadline(task: string, due: string): string {
+export function withoutDeadline(task: string, due: string): string {
   const end = /[.!?]$/.exec(task)?.[0] ?? ''
   const body = task.slice(0, task.length - end.length)
   const said = findPhrase(due, body)
@@ -229,6 +260,20 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
   return [...owners].filter((o) => said.has(o)).length
 }
 
+/** Words a line may bring of its own and still be a reply about the task ("Sure, by Friday"). */
+const REPLY_WORDS = 2
+
+/**
+ * Whether the line holding a deadline talks about this task: it says some of the task's words, or
+ * it is a short reply that brings no subject of its own. "On Friday we pick the band for the party?" after "Book
+ * the hall first" names another piece of work, so its deadline is not the hall's.
+ */
+function aboutTask(line: Segment, said: string, task: string): boolean {
+  const own = new Set(contentWords(task).map(stem))
+  const rest = contentWords(line.text.replace(said, ' ')).map(stem)
+  return rest.some((w) => own.has(w)) || rest.length <= REPLY_WORDS
+}
+
 /**
  * A deadline is kept only when there is no doubt whose it is: it is said, as a run of words, on a
  * cited line of this task that no other task cites and that names at most one person. A line shared
@@ -245,7 +290,13 @@ function groundDue(
   if (!text) return undefined
   for (const line of c.lines) {
     const said = findPhrase(text, line.text)
-    if (said !== undefined && citedBy.get(line.id) === 1 && namesOn(line, owners) <= 1) return said
+    if (
+      said !== undefined &&
+      citedBy.get(line.id) === 1 &&
+      namesOn(line, owners) <= 1 &&
+      aboutTask(line, said, c.task)
+    )
+      return said
   }
   rejected.push({
     kind: 'deadline',
@@ -298,6 +349,7 @@ function groundActions(
   index: TranscriptIndex,
   threshold: number,
   rejected: Rejected[],
+  self: Self | undefined,
 ): Action[] {
   const { kept: tasks, standsOn } = groundTasks(raw, index, threshold, rejected)
   // A line is in doubt when more than one task the model gave stands on it, kept or not.
@@ -312,7 +364,7 @@ function groundActions(
       const due = groundDue(c, citedBy, owners, rejected)
       return {
         task: withoutDeadline(c.task, due ?? c.raw.due),
-        owner: resolveOwner(c.raw.owner, c.lines, index),
+        owner: resolveOwner(c.raw.owner, c.lines, index, self),
         ...(due === undefined ? {} : { due }),
         quote: c.raw.quote.trim(),
         ...cite(c.lines),
@@ -337,7 +389,7 @@ export function groundMinutes(
   return {
     summary: groundSummary(raw, index, opts.summaryThreshold ?? 0.3, rejected),
     decisions: groundDecisions(raw, index, quote, rejected),
-    actionItems: groundActions(raw, index, quote, rejected),
+    actionItems: groundActions(raw, index, quote, rejected, opts.self),
     rejected,
     model,
   }

@@ -4,39 +4,39 @@
   "transcript": {
     "segments": [
       {
+        "id": 0,
         "start": 0.5,
         "end": 4.14,
         "speaker": "Me",
-        "text": "Let's review the back-end hiring loop. We have three candidates left.",
-        "id": 0
+        "text": "Let's review the back-end hiring loop. We have three candidates left."
       },
       {
+        "id": 1,
         "start": 4.86,
         "end": 8.3,
         "speaker": "Others",
-        "text": "The second candidate did really well on the system design interview.",
-        "id": 1
+        "text": "The second candidate did really well on the system design interview."
       },
       {
+        "id": 2,
         "start": 8.92,
         "end": 11.32,
         "speaker": "Me",
-        "text": "Then the decision is to make her an offer this week.",
-        "id": 2
+        "text": "Then the decision is to make her an offer this week."
       },
       {
+        "id": 3,
         "start": 12.02,
         "end": 16.04,
         "speaker": "Others",
-        "text": "Okay, I will prepare the offer letter and send it to Legal on Wednesday.",
-        "id": 3
+        "text": "Okay, I will prepare the offer letter and send it to Legal on Wednesday."
       },
       {
+        "id": 4,
         "start": 16.66,
         "end": 19.42,
         "speaker": "Me",
-        "text": "And I will schedule a reference call with her last manager.",
-        "id": 4
+        "text": "And I will schedule a reference call with her last manager."
       }
     ],
     "duration": 19.42,
@@ -46,29 +46,23 @@
   "raw": {
     "summary": [
       {
-        "text": "The team reviewed the back-end hiring loop and decided to make the second candidate an offer.",
+        "text": "Review of back-end hiring loop",
+        "segments": [0]
+      },
+      {
+        "text": "Decision to make the second candidate an offer",
         "segments": [1, 2]
       },
       {
-        "text": "The next steps include preparing the offer letter and scheduling a reference call.",
+        "text": "Preparation of offer letter and scheduling of reference call",
         "segments": [3, 4]
       }
     ],
     "decisions": [
       {
-        "text": "Make the second candidate an offer this week.",
-        "quote": "Then the decision is to make her an offer this week.",
+        "text": "Make the second candidate an offer this week",
+        "quote": "The decision is to make her an offer this week",
         "segments": [2]
-      },
-      {
-        "text": "Prepare the offer letter and send it to Legal on Wednesday.",
-        "quote": "I will prepare the offer letter and send it to Legal on Wednesday.",
-        "segments": [3]
-      },
-      {
-        "text": "Schedule a reference call with the candidate's last manager.",
-        "quote": "And I will schedule a reference call with her last manager.",
-        "segments": [4]
       }
     ],
     "action_items": [

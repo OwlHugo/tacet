@@ -18,6 +18,7 @@ const c = (over: Partial<CaseResult> = {}): CaseResult => ({
   dueWrong: [],
   emptyParts: [],
   guard: { injected: 4, rejected: 4 },
+  meaning: undefined,
   ...over,
 })
 const report = (cases: CaseResult[]): Report => ({
@@ -75,5 +76,19 @@ describe('eval report', () => {
     const md = toMarkdown(report([c(), c({ id: 'single', speakerAccuracy: undefined })]))
     expect(md).toContain('| a | 30.0s | 10.0% | 100.0% |')
     expect(md).toContain('| single | 30.0s | 10.0% | – |')
+  })
+
+  it('adds the answer key table only for cases that have one', () => {
+    const meaning = {
+      subject: false,
+      decisions: { given: 3, right: 1, found: 1, total: 2 },
+      tasks: { given: 2, right: 2, found: 2, total: 3 },
+      wrongOwner: 1,
+      invented: ['decision: x', 'decision: y'],
+    }
+    const md = toMarkdown(report([c(), c({ id: 'k', meaning })]))
+    expect(md).toContain('| k | no | 1/3 | 1/2 | 2/2 | 2/3 | 1 | 2 |')
+    expect(md.split('Invented items')[1]).not.toContain('| a | ')
+    expect(toMarkdown(report([c()]))).not.toContain('Invented items')
   })
 })

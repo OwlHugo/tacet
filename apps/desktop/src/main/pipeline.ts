@@ -73,6 +73,7 @@ export async function runPipeline(
         ffmpeg: findFfmpeg({ ...binaries(env), explicit: env.ffmpegBin }),
         model: await ensureModel(settings.whisperModel, env.modelsDir),
         language: settings.language,
+        vocabulary: [],
         env: process.env,
       }),
       whisperModel: settings.whisperModel,

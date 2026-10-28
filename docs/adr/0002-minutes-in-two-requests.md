@@ -1,5 +1,7 @@
 # 0002. The minutes take two requests: overview, then tasks
 
+Status: superseded by [0004](0004-minutes-one-request-per-list.md) for the request layout; the seed and the rule of never filling an empty part stay.
+
 Date: 2026-10-25
 
 ## Context

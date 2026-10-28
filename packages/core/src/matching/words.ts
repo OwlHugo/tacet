@@ -54,10 +54,10 @@ export function findPhrase(phrase: string, text: string): string | undefined {
   return undefined
 }
 
-const contentWords = (text: string): string[] =>
+export const contentWords = (text: string): string[] =>
   words(text).filter((w) => w.length > 1 && !STOPWORDS.has(w))
 
-const stem = (w: string) => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w)
+export const stem = (w: string) => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w)
 
 /** Share of the content words of `needle` found in `haystack` (0..1), with light plural stemming. */
 export function coverage(needle: string, haystack: string): number {

@@ -1,5 +1,5 @@
 import { generateMinutes } from '../minutes/generate.ts'
-import type { GenerateRawMinutes } from '../minutes/types.ts'
+import type { GenerateRawMinutes, Self } from '../minutes/types.ts'
 import { transcribe } from '../transcript/transcribe.ts'
 import type { Track, TranscribeTrack } from '../transcript/types.ts'
 import type { Meeting } from './types.ts'
@@ -11,7 +11,14 @@ export interface ProcessDeps {
   /** Whisper model name, recorded in the transcript. */
   readonly whisperModel: string
   /** Undefined when there is no LLM (Ollama not running, or --no-minutes): transcript only. */
-  readonly minutes?: { readonly generate: GenerateRawMinutes; readonly model: string } | undefined
+  readonly minutes?:
+    | {
+        readonly generate: GenerateRawMinutes
+        readonly model: string
+        /** Who recorded the meeting, when the user set it. */
+        readonly self?: Self | undefined
+      }
+    | undefined
   readonly now: () => number
   readonly onStage?: (stage: Stage) => void
 }

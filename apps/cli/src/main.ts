@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { basename, extname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import {
@@ -11,6 +11,7 @@ import {
   findWhisperOrUndefined,
   installedModels,
   MeetingLibrary,
+  madeUp,
   ollamaMinutes,
   ollamaModels,
   processMeeting,
@@ -23,6 +24,8 @@ import { parseTracks } from './tracks.ts'
 
 const VERSION = '0.1.0'
 const DEFAULT_LLM = 'qwen2.5:7b'
+/** A vocabulary whisper.cpp takes whole as its prompt: about 220 tokens of mostly names. */
+const VOCABULARY_CHARS = 600
 
 const HELP = `tacet ${VERSION}  local meeting transcription, nothing leaves your machine
 
@@ -40,6 +43,9 @@ Transcribe options
                         (default: the best one downloaded, else base)
   -l, --language CODE   en, pt, ... or auto (default auto)
   --llm MODEL           Ollama model for the minutes (default ${DEFAULT_LLM})
+  --vocab FILE          words whisper should expect (names, product terms), one per line
+  --me NAME             your name, so tasks asked of you get you as owner
+  --alias NAME          another name people call you (repeatable)
   --no-minutes          transcript only
   -t, --title TEXT      meeting title
   -o, --out DIR         save Markdown into DIR (default: print to stdout)
@@ -56,10 +62,38 @@ const TranscribeArgs = z.object({
   language: z.string().regex(/^(auto|[a-z]{2,3})$/, 'language must be a code like en, pt or auto'),
   llm: z.string().min(1),
   'no-minutes': z.boolean(),
+  vocab: z.string().optional(),
+  me: z.string().trim().min(1).optional(),
+  alias: z.array(z.string().trim().min(1)),
   title: z.string().min(1).optional(),
   out: z.string().optional(),
   json: z.boolean(),
 })
+
+/** One word or name per line; blank lines and lines starting with # are skipped. */
+function vocabularyFile(path: string): string[] {
+  if (!existsSync(path) || !statSync(path).isFile())
+    throw new Error(`vocabulary file not found: ${path}`)
+  const listed = readFileSync(path, 'utf8')
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l !== '' && !l.startsWith('#'))
+  // whisper.cpp keeps only about 220 tokens of its prompt and drops the rest without a word.
+  if (listed.join(', ').length > VOCABULARY_CHARS)
+    throw new Error(
+      `the vocabulary in ${path} is too long for whisper (${listed.length} lines); keep it under ${VOCABULARY_CHARS} characters, the names and terms it gets wrong.`,
+    )
+  return listed
+}
+
+/** What the user told Tacet about their meetings: words to expect and who they are. */
+function personal(args: z.infer<typeof TranscribeArgs>) {
+  if (args.alias.length > 0 && args.me === undefined) throw new Error('--alias needs --me NAME.')
+  return {
+    vocabulary: args.vocab === undefined ? [] : vocabularyFile(resolve(args.vocab)),
+    self: args.me === undefined ? undefined : { name: args.me, aliases: args.alias },
+  }
+}
 
 async function transcribeCommand(argv: string[]): Promise<void> {
   const { values: raw, positionals } = parseArgs({
@@ -72,6 +106,9 @@ async function transcribeCommand(argv: string[]): Promise<void> {
       language: { type: 'string', short: 'l', default: 'auto' },
       llm: { type: 'string', default: DEFAULT_LLM },
       'no-minutes': { type: 'boolean', default: false },
+      vocab: { type: 'string' },
+      me: { type: 'string' },
+      alias: { type: 'string', multiple: true, default: [] },
       title: { type: 'string', short: 't' },
       out: { type: 'string', short: 'o' },
       json: { type: 'boolean', default: false },
@@ -86,6 +123,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
   if (!first) throw new Error('no audio given. Try `tacet transcribe meeting.wav`.')
   const missing = tracks.find((t) => !existsSync(t.path))
   if (missing) throw new Error(`file not found: ${missing.path}`)
+  const { vocabulary, self } = personal(args)
 
   const llmUp = !args['no-minutes'] && (await ollamaModels(config.OLLAMA_HOST)) !== undefined
   if (!args['no-minutes'] && !llmUp)
@@ -103,6 +141,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
         ffmpeg: findFfmpeg({ ...binaries, explicit: config.TACET_FFMPEG_BIN }),
         model: await ensureModel(args.model, config.TACET_MODELS_DIR),
         language: args.language,
+        vocabulary,
         env: process.env,
       }),
       whisperModel: args.model,
@@ -110,6 +149,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
         ? {
             generate: ollamaMinutes({ host: config.OLLAMA_HOST, model: args.llm }),
             model: args.llm,
+            self,
           }
         : undefined,
       now: () => performance.now(),
@@ -125,9 +165,7 @@ async function transcribeCommand(argv: string[]): Promise<void> {
   err(
     `done: ${meeting.transcript.segments.length} segments, ${meeting.transcript.duration.toFixed(1)}s of audio, ` +
       `transcribe ${(meeting.timings.transcribeSeconds / audioMinutes).toFixed(1)}s per audio minute` +
-      (meeting.minutes
-        ? `, ${meeting.minutes.rejected.filter((r) => r.kind !== 'deadline').length} ungrounded item(s) dropped`
-        : '') +
+      (meeting.minutes ? `, ${madeUp(meeting.minutes)} ungrounded item(s) dropped` : '') +
       '\n',
   )
   if (args.out) err(`saved ${new MeetingLibrary(resolve(args.out)).save(meeting)}\n`)

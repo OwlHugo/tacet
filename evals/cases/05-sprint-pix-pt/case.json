@@ -177,5 +177,19 @@
       "due": "terca",
       "optional": true
     }
-  ]
+  ],
+  "answer_key": {
+    "subject": ["pix|compix", "checkout|check"],
+    "decisions": [
+      { "keywords": ["login", "google"] },
+      { "keywords": ["producao|subida", "terca"] },
+      { "keywords": ["sprint", "pix|compix"], "optional": true }
+    ],
+    "tasks": [
+      { "keywords": ["expirado|espirado|inspirado"], "owner": ["Larissa"] },
+      { "keywords": ["tela|qr"], "owner": ["Camila"] },
+      { "keywords": ["textos|erro"], "owner": ["Me"] },
+      { "keywords": ["homologacao"], "owner": ["Camila"] }
+    ]
+  }
 }

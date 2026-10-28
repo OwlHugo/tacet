@@ -29,12 +29,44 @@ export async function ollamaModels(host: string): Promise<string[] | undefined> 
   return Tags.parse(await res.json()).models.map((m) => m.name)
 }
 
-const Chat = z.object({ message: z.object({ content: z.string() }) })
+/** One line of a streamed chat answer: a piece of the content, until `done`. */
+const ChatChunk = z.object({ message: z.object({ content: z.string() }), done: z.boolean() })
+
+/**
+ * The content of a streamed answer. Streaming keeps bytes flowing while a large model thinks: a
+ * whole answer at once leaves the connection silent for minutes, and fetch gives up on it after
+ * five (headers timeout).
+ */
+async function streamedContent(body: ReadableStream<Uint8Array>): Promise<string> {
+  let content = ''
+  let pending = ''
+  const take = (line: string) => {
+    if (line.trim() !== '') content += ChatChunk.parse(JSON.parse(line)).message.content
+  }
+  const decoder = new TextDecoder()
+  for await (const bytes of body) {
+    const buffer = pending + decoder.decode(bytes, { stream: true })
+    const end = buffer.lastIndexOf('\n') + 1
+    for (const line of buffer.slice(0, end).split('\n')) take(line)
+    pending = buffer.slice(end)
+  }
+  take(pending)
+  return content
+}
 
 const JSON_SCHEMA: Record<MinutesPart, unknown> = {
-  overview: z.toJSONSchema(PART_SCHEMA.overview),
+  summary: z.toJSONSchema(PART_SCHEMA.summary),
+  decisions: z.toJSONSchema(PART_SCHEMA.decisions),
   tasks: z.toJSONSchema(PART_SCHEMA.tasks),
+  confirm: z.toJSONSchema(PART_SCHEMA.confirm),
+  deadline: z.toJSONSchema(PART_SCHEMA.deadline),
 }
+
+/**
+ * Context window asked of Ollama. A transcript chunk plus the longest prompt fits in it, and a 7B
+ * model at this size runs on a 16 GB laptop next to the app.
+ */
+const NUM_CTX = 8192
 
 /**
  * Same answer for the same transcript: greedy decoding and a fixed seed. Real recordings still vary;
@@ -44,7 +76,7 @@ const SEED = 7
 
 /**
  * Ollama adapter for the GenerateRawMinutes port: structured output constrained by the JSON schema
- * of the part asked for, so the model cannot leave a list out or answer outside it.
+ * of the part asked for, so the model cannot leave a field out or answer outside it.
  */
 export function ollamaMinutes(opts: {
   readonly host: string
@@ -57,22 +89,16 @@ export function ollamaMinutes(opts: {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: opts.model,
-        stream: false,
+        stream: true,
         format: JSON_SCHEMA[part],
-        options: { temperature: 0, seed: SEED, num_ctx: 16384 },
+        options: { temperature: 0, seed: SEED, num_ctx: NUM_CTX },
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
       }),
     })
-    if (!res.ok) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
-    const content = Chat.parse(await res.json()).message.content
-    return {
-      summary: [],
-      decisions: [],
-      action_items: [],
-      ...PART_SCHEMA[part].parse(JSON.parse(content)),
-    }
+    if (!res.ok || res.body === null) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
+    return PART_SCHEMA[part].parse(JSON.parse(await streamedContent(res.body)))
   }
 }

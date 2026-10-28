@@ -1,4 +1,5 @@
 import type { Meeting } from '@tacet/core'
+import { madeUp } from '@tacet/core/browser'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { day, duration, time, timestamp } from './format.ts'
 import { api } from './platform.ts'
@@ -55,8 +56,8 @@ function Minutes({
   jump: (id: number) => void
 }) {
   const first = (segments: readonly [number, ...number[]]) => () => jump(segments[0])
-  // A dropped deadline leaves its task in the minutes: it is not an item that went missing.
-  const madeUp = minutes.rejected.filter((r) => r.kind !== 'deadline').length
+  // A dropped deadline leaves its task, and an unconfirmed decision was said: neither is made up.
+  const made = madeUp(minutes)
   return (
     <>
       <Block
@@ -92,7 +93,7 @@ function Minutes({
       </Block>
       <p className="footnote">
         Every line links to the transcript.{' '}
-        {madeUp > 0 ? `${madeUp} item(s) the model made up were dropped. ` : ''}
+        {made > 0 ? `${made} item(s) the model made up were dropped. ` : ''}
         Written by {minutes.model} on this machine.
       </p>
     </>
