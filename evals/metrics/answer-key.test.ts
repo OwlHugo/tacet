@@ -1,6 +1,6 @@
 import type { Minutes } from '@tacet/core'
 import { describe, expect, it } from 'vitest'
-import { type AnswerKey, checkAnswerKey, holds } from './answer-key.ts'
+import { type AnswerKey, AnswerKeySchema, checkAnswerKey, holds } from './answer-key.ts'
 
 const cite = { segments: [0] as [number], at: 0 }
 const minutes = (over: Partial<Minutes> = {}): Minutes => ({
@@ -29,6 +29,15 @@ describe('holds', () => {
     expect(holds(['relatorio'], 'Sem Relatórios por enquanto')).toBe(true)
     expect(holds(['bucket|nuvem', 'nota'], 'a nota vai pra nuvem')).toBe(true)
     expect(holds(['bucket|nuvem', 'nota'], 'a nota vai pro disco')).toBe(false)
+  })
+})
+
+describe('AnswerKeySchema', () => {
+  it('refuses a keyword alternative that is only stopwords, since it could never match', () => {
+    const key = (k: string) => ({ subject: ['portal'], decisions: [{ keywords: [k] }], tasks: [] })
+    expect(AnswerKeySchema.safeParse(key('relatorio|sim')).success).toBe(false)
+    expect(AnswerKeySchema.safeParse(key('ok')).success).toBe(false)
+    expect(AnswerKeySchema.safeParse(key('relatorio|nuvem')).success).toBe(true)
   })
 })
 
