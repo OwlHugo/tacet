@@ -562,6 +562,19 @@ describe('groundMinutes', () => {
       expect(band.actionItems[0]?.due).toBe('On Friday')
     })
 
+    it('keeps a deadline on a longer reply that only agrees to the task', () => {
+      const t = line(
+        'Você pode revisar o cardápio do quiosque?',
+        'Fechado, consigo entregar isso até sexta sem problema.',
+        'Fechado, e na sexta a gente escolhe a banda da festa nova.',
+      )
+      const menu = (segments: number[], due: string) =>
+        run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
+          .actionItems[0]
+      expect(menu([0, 1], 'até sexta')?.due).toBe('até sexta')
+      expect(menu([0, 2], 'na sexta')).not.toHaveProperty('due')
+    })
+
     it('cuts the deadline from the end of the task with the word that leads into it', () => {
       const t = line(
         'Vou mandar as notas antes de sexta.',

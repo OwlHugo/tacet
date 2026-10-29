@@ -283,6 +283,20 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
 const REPLY_WORDS = 2
 
 /**
+ * Words of agreeing to do something, which bring no subject of their own: "Fechado, consigo
+ * entregar isso até sexta sem problema" is still a reply about the task asked just before.
+ */
+const AGREEING = new Set(
+  (
+    'sure fine deal done deliver get finish manage problem worries absolutely course right ' +
+    'that isso fechado beleza combinado certo claro pode deixa consigo entregar entrego faco fazer ' +
+    'termino terminar problema tranquilo boa ai'
+  )
+    .split(' ')
+    .map(stem),
+)
+
+/**
  * Whether the line holding a deadline talks about this task: it says some of the task's words, or
  * it is a short reply that brings no subject of its own. "On Friday we pick the band for the party?" after "Book
  * the hall first" names another piece of work, so its deadline is not the hall's.
@@ -290,7 +304,8 @@ const REPLY_WORDS = 2
 function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
   const rest = contentWords(line.text.replace(said, ' ')).map(stem)
-  return rest.some((w) => own.has(w)) || rest.length <= REPLY_WORDS
+  const subject = rest.filter((w) => !AGREEING.has(w))
+  return rest.some((w) => own.has(w)) || subject.length <= REPLY_WORDS
 }
 
 /**
