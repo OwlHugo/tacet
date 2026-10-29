@@ -111,21 +111,22 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 
 ## Eval
 
-`pnpm eval:sem-ia` replays the recorded outputs and is one of the gates (`./scripts/verificar.sh`, and [`ci.yml`](.github/workflows/ci.yml) for macOS, Windows and Linux runners). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), a one-track sprint meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), and a two-track call recorded by someone who set their name, scored for who owns each task ([`06-bakery-self-en`](evals/cases/06-bakery-self-en/case.json)).
+`pnpm eval:sem-ia` replays the recorded outputs and is one of the gates (`./scripts/verificar.sh`, and [`ci.yml`](.github/workflows/ci.yml) for macOS, Windows and Linux runners). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), a one-track sprint meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), and two two-track calls recorded by someone who set their name, scored for who owns each task ([`06-bakery-self-en`](evals/cases/06-bakery-self-en/case.json), and [`07-print-shop-self-en`](evals/cases/07-print-shop-self-en/case.json), where the model writes that person's name as the owner and the minutes must say "Me"). A task whose owner the answer key does not allow fails the eval.
 
 Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |
 |---|---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.53 | 90.03 | 5/5 | 3/3 | 2/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 3.34 | 60.27 | 3/3 | 2/2 | 1/1 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.44 | 58.46 | 3/3 | 1/2 | 1/1 |
-| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.29 | 38.32 | 5/5 | 3/3 | 2/2 |
-| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.51 | 31.93 | 9/9 | 4/4 | 2/4 |
-| 06-bakery-self-en | 28.8s | 0.0% | 100.0% | 0.03s | 2.67 | 88.56 | 7/7 | 3/3 | 2/2 |
-| **Total** | 318.9s | 9.4% | | | 1.84 | 47.49 | 32/32 | 94.1% | 10/13 |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 3.05 | 85.77 | 5/5 | 3/3 | 2/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 3.43 | 71.03 | 3/3 | 2/2 | 1/1 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.90 | 69.90 | 3/3 | 1/2 | 1/1 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.52 | 44.73 | 5/5 | 3/3 | 2/2 |
+| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.75 | 38.36 | 9/9 | 4/4 | 2/4 |
+| 06-bakery-self-en | 28.8s | 0.0% | 100.0% | 0.03s | 3.04 | 105.82 | 7/7 | 3/3 | 2/2 |
+| 07-print-shop-self-en | 28.6s | 6.5% | 100.0% | 0.01s | 2.78 | 52.27 | 4/4 | 3/3 | 2/2 |
+| **Total** | 347.4s | 9.1% | | | 2.18 | 54.32 | 36/36 | 95.0% | 12/15 |
 
-Hallucination guard: **77/77** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
+Hallucination guard: **89/89** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
 
 With `large-v3-turbo` (the default when it is downloaded), the WER drops to **6.5%** overall (0.0% / 3.4% / 5.7% / 3.5% / 9.6%) at 10.9 s per audio minute. That figure was measured with the minutes written in two requests (before [ADR 0004](docs/adr/0004-minutes-one-request-per-list.md)); the minutes columns above are the current pipeline.
 
