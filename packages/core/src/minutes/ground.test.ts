@@ -719,7 +719,10 @@ describe('groundMinutes', () => {
         'Sure, no problem, I can finish the database migration by Friday.',
         'Combinado, pode deixar, até sexta sem problema.',
         'Sure, no worries, I will deliver it by Friday.',
-        'Of course, no problem, I will deliver it quickly by Friday.',
+        'Of course, no problem, I will deliver it by Friday.',
+        'Fechado, faço o deploy até sexta.',
+        "Sure, I'll deploy by Friday.",
+        'Fechado, esse aqui fica pronto até sexta.',
       )
       const menu = (segments: number[], due: string) =>
         run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
@@ -730,6 +733,10 @@ describe('groundMinutes', () => {
       expect(menu([0, 4], 'até sexta')?.due).toBe('até sexta')
       expect(menu([0, 5], 'by Friday')?.due).toBe('by Friday')
       expect(menu([0, 6], 'by Friday')?.due).toBe('by Friday')
+      // One word of other work is enough: the deploy is not the menu.
+      expect(menu([0, 7], 'até sexta')).not.toHaveProperty('due')
+      expect(menu([0, 8], 'by Friday')).not.toHaveProperty('due')
+      expect(menu([0, 9], 'até sexta')?.due).toBe('até sexta')
     })
 
     it('cuts the deadline from the end of the task with the word that leads into it', () => {

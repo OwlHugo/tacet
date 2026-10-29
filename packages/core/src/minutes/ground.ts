@@ -332,13 +332,9 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
   return [...owners].filter((o) => said.has(o)).length
 }
 
-/** Words a line may bring of its own and still be a reply about the task ("Sure, by Friday"). */
-const REPLY_WORDS = 2
-
 /**
- * What a reply says to agree, which brings no subject of its own: "Fechado, consigo entregar isso até
- * sexta sem problema" is still a reply about the task asked just before. Only agreeing: a verb of
- * doing ("fazer", "deliver") may be about other work ("Fechado, consigo fazer o deploy até sexta").
+ * What a reply says to agree: "Fechado", "sure", "sem problema", "pode deixar". Agreeing brings no
+ * subject of its own.
  */
 const AGREEING_PHRASES =
   /\b(sem problemas?|no problems?|no worries|of course|pode deixar|deixa comigo|pode ser|tudo bem|tudo certo|by all means)\b/g
@@ -352,16 +348,32 @@ const AGREEING = new Set(
 )
 
 /**
+ * Verbs a reply takes the asked work on with ("consigo entregar", "I'll finish"). They name no work,
+ * so they are not a subject either, but any other word is: "Fechado, faço o deploy até sexta" names
+ * the deploy, not the task asked before it.
+ */
+const DOING = new Set(
+  (
+    'consigo entrego entregar faco fazer termino terminar mando mandar envio enviar resolvo ' +
+    'fica deliver finish send get have ready manage handle ill pronto ' +
+    // Words that point back at the task asked ("esse aqui", "that one") bring no subject either.
+    'esse essa este esta isto aqui ali la entao one here there then also too'
+  )
+    .split(' ')
+    .map(stem),
+)
+
+/**
  * Whether the line holding a deadline talks about this task: it says some of the task's words, or
- * it is a short reply that brings no subject of its own. "On Friday we pick the band for the party?" after "Book
- * the hall first" names another piece of work, so its deadline is not the hall's.
+ * it is a reply that only agrees to do it and brings no subject of its own. "On Friday we pick the
+ * band for the party?" after "Book the hall first" names another piece of work, so its deadline is
+ * not the hall's.
  */
 function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
   const reply = normalize(line.text.replace(said, ' ')).replace(AGREEING_PHRASES, ' ')
   const rest = contentWords(reply).map(stem)
-  const subject = rest.filter((w) => !AGREEING.has(w))
-  return rest.some((w) => own.has(w)) || subject.length <= REPLY_WORDS
+  return rest.some((w) => own.has(w)) || rest.every((w) => AGREEING.has(w) || DOING.has(w))
 }
 
 /**
