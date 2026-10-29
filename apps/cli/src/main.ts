@@ -44,7 +44,8 @@ Transcribe options
   -l, --language CODE   en, pt, ... or auto (default auto)
   --llm MODEL           Ollama model for the minutes (default ${DEFAULT_LLM})
   --vocab FILE          words whisper should expect (names, product terms), one per line
-  --me NAME             your name, so tasks asked of you get you as owner
+  --me NAME             your name: with --mic/--system your tasks go to Me; on one
+                        track, tasks asked of you get your name as owner
   --alias NAME          another name people call you (repeatable)
   --no-minutes          transcript only
   -t, --title TEXT      meeting title
