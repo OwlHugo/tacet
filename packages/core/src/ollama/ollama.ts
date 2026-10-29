@@ -29,8 +29,14 @@ export async function ollamaModels(host: string): Promise<string[] | undefined> 
   return Tags.parse(await res.json()).models.map((m) => m.name)
 }
 
-/** One line of a streamed chat answer: a piece of the content, until `done`. */
-const ChatChunk = z.object({ message: z.object({ content: z.string() }), done: z.boolean() })
+/**
+ * One line of a streamed chat answer: a piece of the content, until `done`, or the error that
+ * stopped the runner midway.
+ */
+const ChatChunk = z.union([
+  z.object({ error: z.string() }),
+  z.object({ message: z.object({ content: z.string() }), done: z.boolean() }),
+])
 
 /**
  * The content of a streamed answer. Streaming keeps bytes flowing while a large model thinks: a
@@ -41,7 +47,10 @@ async function streamedContent(body: ReadableStream<Uint8Array>): Promise<string
   let content = ''
   let pending = ''
   const take = (line: string) => {
-    if (line.trim() !== '') content += ChatChunk.parse(JSON.parse(line)).message.content
+    if (line.trim() === '') return
+    const chunk = ChatChunk.parse(JSON.parse(line))
+    if ('error' in chunk) throw new Error(`Ollama: ${chunk.error}`)
+    content += chunk.message.content
   }
   const decoder = new TextDecoder()
   for await (const bytes of body) {
