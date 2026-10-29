@@ -253,7 +253,7 @@ tacet doctor
 - **Timestamps on long, fast calls.** whisper sometimes glues a line to the one before it on the same track, and that line loses its own start (about 6 s mean error on case 05, against 10 ms on the scripted cases).
 - **A deadline on a line that names two people.** "Ana reviews the contract and Pedro deploys by Friday": if the model returns only Ana's task, she can get Pedro's deadline. Deadlines are otherwise kept only on a line that a single task stands on.
 - **Only macOS Apple Silicon is built and tested.** The Windows and Linux paths (WASAPI and PulseAudio loopback, bundled whisper.cpp) are written but not tried on a real machine.
-- macOS builds are signed ad-hoc, not notarized: right-click → Open the first time. Local builds keep the identifier `dev.tacet.app`, so permissions granted once survive rebuilds.
+- macOS builds are signed ad-hoc, not notarized: the first launch needs right-click → Open, or System Settings → Privacy & Security → Open Anyway on macOS 15 and later, or `xattr -dr com.apple.quarantine /Applications/Tacet.app` (see Install). Local builds keep the identifier `dev.tacet.app`, so permissions granted once survive rebuilds.
 - On macOS 14.2+ Electron can use either ScreenCaptureKit or the Core Audio tap for loopback. Tacet uses ScreenCaptureKit by default (it only needs the Screen Recording permission). Set `TACET_CATAP=1` to try the Core Audio tap, which only works from the packaged `.app`.
 - If recording or playback hangs on macOS, Core Audio is wedged: `sudo killall coreaudiod` fixes it.
 

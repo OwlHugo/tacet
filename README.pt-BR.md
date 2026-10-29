@@ -105,7 +105,7 @@ tacet doctor
 - **Horários em call longa e rápida.** O whisper às vezes cola uma fala na anterior da mesma faixa, e essa fala perde o próprio início (uns 6 s de erro médio no caso 05, contra 10 ms nos casos roteirizados).
 - **Prazo numa fala que cita duas pessoas.** "A Ana revisa o contrato e o Pedro sobe até sexta": se o modelo devolver só a tarefa da Ana, ela pode ficar com o prazo do Pedro.
 - **Só o macOS Apple Silicon é gerado e testado.** Windows e Linux estão escritos, mas não foram testados numa máquina de verdade.
-- O build do macOS é assinado ad-hoc, sem notarização: botão direito → Abrir na primeira vez.
+- O build do macOS é assinado ad-hoc, sem notarização: na primeira vez, botão direito → Abrir, ou Ajustes do Sistema → Privacidade e Segurança → Abrir Mesmo Assim no macOS 15 em diante, ou `xattr -dr com.apple.quarantine /Applications/Tacet.app` (veja a instalação).
 
 ## Desenvolvimento
 
