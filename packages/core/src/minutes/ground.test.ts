@@ -288,6 +288,12 @@ describe('groundMinutes', () => {
         ['As we said in the last meeting, can you send the invoice?', 'Send the invoice'],
         ['Could you send the invoice? Thanks, see you.', 'Send the invoice'],
         ['🙂, can you send the invoice?', 'Send the invoice'],
+        ['Please, send me the deck.', 'Send the deck'],
+        ['Book the room for Monday, please.', 'Book the room for Monday'],
+        ['Por favor, você pode revisar o contrato?', 'Revisar o contrato'],
+        ['Por favor, revisa o contrato.', 'Revisar o contrato'],
+        ['Actually, can you send the invoice?', 'Send the invoice'],
+        ['Você pode revisar o contrato que eu mandei?', 'Revisar o contrato'],
         ['Could you please send the invoice?', 'Send the invoice'],
         ['O contrato fica com você.', 'Revisar o contrato'],
         ['Eu preciso que você revise o contrato.', 'Revisar o contrato'],
@@ -328,6 +334,8 @@ describe('groundMinutes', () => {
         ['Te mando o contrato amanhã.', 'Mandar o contrato amanhã'],
         ['Pode deixar, eu mando o contrato amanhã.', 'Mandar o contrato amanhã'],
         ['Can you wait? I will send the invoice.', 'Send the invoice'],
+        // A request and, in the rest of the line, the one speaking taking work on: not clear whose.
+        ['Could you send the invoice? Eu pago depois.', 'Send the invoice'],
         ['Somebody prints the flyers later, thank you.', 'Print the flyers later'],
         ['Your flyers get printed later.', 'Print the flyers later'],
         ['You know, the flyers get printed later.', 'Print the flyers later'],
@@ -349,6 +357,10 @@ describe('groundMinutes', () => {
         ['Can you see my screen? The vendor sends the invoice.', 'Send the invoice'],
         // Whisper often drops the "?": without it, "pode mandar" is not read as a request.
         ['Pode mandar o contrato hoje.', 'Mandar o contrato hoje'],
+        ['You have to admit, the vendor sends the invoice late.', 'Send the invoice'],
+        ['Please note that Bia sends the invoice.', 'Send the invoice'],
+        ['Thanks, the vendor sends the invoice.', 'Send the invoice'],
+        ['The vendor said you need to send the invoice.', 'Send the invoice'],
         ['Send the deck tomorrow.', 'Send the deck tomorrow'],
       ]
       expect(notAsked.map(([text = '', task = '']) => onLine(text, task))).toEqual(

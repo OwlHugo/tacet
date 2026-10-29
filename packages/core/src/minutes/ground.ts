@@ -148,45 +148,56 @@ const wasSaid = (name: string, index: TranscriptIndex) =>
 
 /** Work someone can be asked to do, after "você pode", "pode ...?", "consegue ...?". */
 const PT_TASK_VERB =
-  '(mandar|enviar|revisar|fazer|ver se|olhar|cuidar|preparar|marcar|agendar|ligar|escrever|atualizar|resolver|subir|checar|conferir|corrigir|arrumar|testar|organizar|levar|trazer|pagar|comprar|reservar|imprimir|avisar|falar|terminar|entregar|assinar|pegar|tirar)'
+  '(mandar|enviar|revisar|fazer|ver se|olhar|cuidar|preparar|marcar|agendar|ligar|escrever|atualizar|resolver|subir|checar|conferir|corrigir|arrumar|testar|organizar|levar|trazer|pagar|comprar|reservar|imprimir|avisar|falar|terminar|entregar|assinar|pegar|tirar|renovar)'
 
-/** Work someone can be asked to do, after "can you", "could you". */
+/** Work someone can be asked to do, after "can you", "please", "you need to". */
 const EN_TASK_VERB =
-  '(send|book|call|check|fix|review|write|print|order|update|prepare|draft|schedule|set up|look into|take care|handle|finish|deliver|sign|pick up|buy|pay|share|forward|email|ask|tell|follow up|organize|clean|test|deploy|upload|move|cancel|confirm|reply|cover|take|bring|get|make|do|run|own|lead|plan)'
+  '(send|book|call|check|fix|review|write|print|order|update|prepare|draft|schedule|set up|look into|take care|handle|finish|deliver|sign|pick up|buy|pay|share|forward|email|ask|tell|follow up|organize|clean|test|deploy|upload|move|cancel|confirm|reply|cover|take|bring|get|make|do|run|own|lead|plan|renew)'
+
+/** Portuguese imperatives a "por favor" turns into a request ("Por favor, revisa o contrato"). */
+const PT_IMPERATIVE =
+  '(manda|mande|envia|envie|revisa|revise|faz|faca|liga|ligue|marca|marque|prepara|prepare|olha|olhe|confere|confira|resolve|resolva|assina|assine|imprime|imprima|reserva|reserve)'
 
 /**
- * A request made to "you", as normalized text: only these forms count, so a bare "you" ("thank you",
- * "I will send you", "te mando", "you sent it yesterday", "você tem razão", "can you see my screen")
- * is not one.
+ * A request made to "you": a clause (normalized) that starts with one of these forms, and names
+ * work. A "you" anywhere else is not one: "thank you", "I will send you", "te mando", "you sent it
+ * yesterday", "você tem razão", "can you see my screen", "you have to admit", "please note".
  */
 const ASKS_YOU = new RegExp(
-  [
-    String.raw`\b(can|could|would|will) you ${EN_TASK_VERB}\b`,
-    String.raw`\byou (need|have|must|got) to\b`,
-    String.raw`\b(i need|i want|i d like|id like|i would like) you to\b`,
-    String.raw`\bplease\b`,
-    String.raw`\b(voce|vc|tu) (pode|podes|poderia|podia|consegue|consegues|precisa) ${PT_TASK_VERB}\b`,
-    String.raw`\b(eu )?(preciso|quero|queria) que (voce|vc|tu)\b`,
-    String.raw`\b(voce|vc) fica com\b`,
-    String.raw`\bfica com (voce|vc)\b`,
-    String.raw`\bpor favor\b`,
-    String.raw`^me (manda|mande|envia|envie|passa|passe|avisa|avise|mostra|mostre)\b`,
-    String.raw`^(send|give|tell|show|forward|email) me\b`,
-    String.raw`\blet me know\b`,
-  ].join('|'),
+  // A clause may open with "and" / "e" or a "please": "..., e eu quero que você assine".
+  '^(and |e |also |tambem )?(please |por favor )?(' +
+    [
+      `(can|could|would|will) you (please )?${EN_TASK_VERB}`,
+      `you (need|have|must|got) to ${EN_TASK_VERB}`,
+      `(i need|i want|i d like|id like|i would like) you to ${EN_TASK_VERB}`,
+      `(voce|vc|tu) (pode|podes|poderia|podia|consegue|consegues|precisa) ${PT_TASK_VERB}`,
+      '(eu )?(preciso|quero|queria) que (voce|vc|tu)',
+      '(voce|vc) fica com',
+      'me (manda|mande|envia|envie|passa|passe|avisa|avise|mostra|mostre)',
+      '(send|give|tell|show|forward|email) me',
+    ].join('|') +
+    String.raw`)\b`,
 )
-const ASKS_YOU_ALL = new RegExp(ASKS_YOU.source, 'g')
+
+/** A bare imperative is a request only with a "please" on it: "Please book the room", "Book the room, please". */
+const PLEASE = new RegExp(
+  String.raw`^(please|por favor) (${EN_TASK_VERB}|${PT_IMPERATIVE})\b|^(${EN_TASK_VERB}|${PT_IMPERATIVE})\b.* (please|por favor)$`,
+)
+
+/** "O contrato fica com você": the work is handed to "you" at the end of the clause. */
+const HANDED_TO_YOU = /\bfica com (voce|vc)$/
 
 /** Asked as a question: "Pode mandar o contrato?", "Consegue revisar hoje?" ("Pode crer." is not). */
 const ASKS_AS_QUESTION = new RegExp(
   String.raw`^(pode|poderia|podia|consegue|conseguiria|da pra) ${PT_TASK_VERB}\b`,
 )
 
-/** A word that greets or agrees, not a name said to someone ("Okay, can you…", "Ah, pode…"). */
+/** A word that greets, agrees or asks nicely, not a name said to someone ("Okay, can you…"). */
 const NOT_A_VOCATIVE = new Set(
   (
-    'ok okay so and then well right sure yes yeah hey hi oh ah great good e entao bom beleza ' +
-    'certo ta olha oi opa sim pessoal gente galera guys everyone team folks'
+    'ok okay so and then well right sure yes yeah hey hi oh ah great good actually also please ' +
+    'thanks e entao bom beleza certo ta olha oi opa sim agora por favor obrigado obrigada ' +
+    'pessoal gente galera guys everyone team folks'
   ).split(' '),
 )
 
@@ -203,20 +214,31 @@ function saidToSomeone(line: Segment): boolean {
 }
 
 /**
- * A line that asks the listener to do something, and where the one speaking takes nothing on once
- * the request itself is set apart ("Eu preciso que você revise" asks; "Can you wait? I will send
- * it" does not).
+ * The clauses of a line, normalized. A "please" / "por favor" said apart, before or after, stays
+ * on the clause it asks for ("Please, send the deck", "Book the room, please").
+ */
+const clausesOf = (text: string) =>
+  text
+    .replace(/^\s*(please|por favor)\s*,\s*/i, '$1 ')
+    .replace(/,\s*(please|por favor)\s*([.!?]*)\s*$/i, ' $1$2')
+    .split(/(?<=[,.;:!?])/)
+    .map((c) => normalize(c))
+
+/**
+ * A line that asks the listener to do something, and where the one speaking takes nothing on in the
+ * rest of it ("Can you wait? I will send the invoice", "Você pode revisar o que eu mandei?" counts:
+ * the "eu" is inside the request).
  */
 function asksYou(line: Segment): boolean {
-  const asks = line.text.split(/(?<=[,.;:!?])/).some((clause) => {
-    const n = normalize(clause)
-    return ASKS_YOU.test(n) || (clause.includes('?') && ASKS_AS_QUESTION.test(n))
-  })
-  return (
-    asks &&
-    !I_WILL.test(line.text) &&
-    !COMMITMENT.test(normalize(line.text).replace(ASKS_YOU_ALL, ' '))
-  )
+  const question = line.text.includes('?')
+  const asked = (c: string) =>
+    ASKS_YOU.test(c) ||
+    PLEASE.test(c) ||
+    HANDED_TO_YOU.test(c) ||
+    (question && ASKS_AS_QUESTION.test(c))
+  const clauses = clausesOf(line.text)
+  const rest = clauses.filter((c) => !asked(c)).join(' ')
+  return clauses.some(asked) && !COMMITMENT.test(rest) && !I_WILL.test(line.text)
 }
 
 /** Whether a line asks the recorder: a "you" said to nobody by name. */
