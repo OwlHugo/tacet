@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { importedMeeting, recordedTracks } from './pipeline.ts'
+import { importedMeeting, recordedTracks, selfOf } from './pipeline.ts'
+import { defaultSettings } from './settings.ts'
 
 describe('pipeline input', () => {
   it('turns an imported file into one track titled after the file', () => {
@@ -16,5 +17,14 @@ describe('pipeline input', () => {
         { track: 'system', path: '/a/system.wav', seconds: 3 },
       ]).map((t) => t.speaker),
     ).toEqual(['Me', 'Others'])
+  })
+
+  it('passes who recorded the meeting only once the user gave a name', () => {
+    const defaults = defaultSettings('/docs', 'base')
+    expect(selfOf(defaults)).toBeUndefined()
+    expect(selfOf({ ...defaults, myName: 'Nadia', nicknames: ['Nad'] })).toEqual({
+      name: 'Nadia',
+      aliases: ['Nad'],
+    })
   })
 })

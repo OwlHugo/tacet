@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { audioFiles, capitalize, duration, ipcErrorMessage, shortcutLabel } from './format.ts'
+import {
+  audioFiles,
+  capitalize,
+  duration,
+  ipcErrorMessage,
+  listOf,
+  shortcutLabel,
+} from './format.ts'
 
 describe('format', () => {
   it('shows short durations in seconds and longer ones in minutes', () => {
@@ -12,6 +19,15 @@ describe('format', () => {
   })
   it('capitalizes', () => {
     expect(capitalize('transcribing')).toBe('Transcribing')
+  })
+
+  it('reads a list of names typed with commas or one per line', () => {
+    expect(listOf(' Rafa, Rafinha ,,\nKubernetes\n\nRafa ')).toEqual([
+      'Rafa',
+      'Rafinha',
+      'Kubernetes',
+    ])
+    expect(listOf('  ')).toEqual([])
   })
 
   it('keeps only the audio files Tacet can import', () => {

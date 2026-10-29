@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import type { Health, Settings } from '../../shared/contract.ts'
+import { ipcErrorMessage, listOf } from './format.ts'
 import { api } from './platform.ts'
 
 type Patch = Partial<Omit<Settings, 'outputDir'>>
@@ -26,7 +28,16 @@ export function SettingsPanel(props: {
   onClose: () => void
 }) {
   const { settings } = props
-  const set = async (patch: Patch) => props.onChange(await api.setSettings(patch))
+  const [error, setError] = useState<string>()
+  const set = async (patch: Patch) => {
+    setError(undefined)
+    props.onChange(
+      await api.setSettings(patch).catch((e: unknown) => {
+        setError(ipcErrorMessage(e))
+        return settings
+      }),
+    )
+  }
   const llms = [...new Set([settings.llmModel, ...(props.health?.ollamaModels ?? [])])]
   const downloaded = new Set(props.health?.whisperModels)
   return (
@@ -103,6 +114,45 @@ export function SettingsPanel(props: {
         />
         <span>Keep the audio files after transcribing</span>
       </label>
+      <h3 className="settings-group">About you</h3>
+      <label className="field">
+        <span>Your name</span>
+        <input
+          key={`name-${settings.myName}`}
+          defaultValue={settings.myName}
+          onBlur={(e) => void set({ myName: e.target.value.trim() })}
+          placeholder="Ana"
+        />
+        <small>
+          Tasks asked of you get your name as owner. On a recording, that is your microphone track.
+        </small>
+      </label>
+      <label className="field">
+        <span>Nicknames</span>
+        <input
+          key={`nick-${settings.nicknames.join(',')}`}
+          defaultValue={settings.nicknames.join(', ')}
+          onBlur={(e) => void set({ nicknames: listOf(e.target.value) })}
+          placeholder="Aninha, Ana B."
+          disabled={settings.myName === ''}
+        />
+        <small>Other names people call you, separated by commas.</small>
+      </label>
+      <label className="field">
+        <span>Vocabulary</span>
+        <textarea
+          key={`vocab-${settings.vocabulary.join(',')}`}
+          defaultValue={settings.vocabulary.join('\n')}
+          onBlur={(e) => void set({ vocabulary: listOf(e.target.value) })}
+          rows={4}
+          spellCheck={false}
+          placeholder={'Kubernetes\nPedro Alcântara'}
+        />
+        <small>
+          Names and terms the transcription gets wrong, one per line. They stay on this machine.
+        </small>
+      </label>
+      {error && <p className="field settings-error">{error}</p>}
     </div>
   )
 }

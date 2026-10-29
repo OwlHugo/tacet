@@ -27,6 +27,15 @@ describe('settings', () => {
     })
   })
 
+  it('round-trips the name, nicknames and vocabulary, and saves no list left as the default', () => {
+    const f = file()
+    saveSettings(f, { ...defaults, language: 'pt' }, defaults, NOT_PICKED)
+    expect(JSON.parse(readFileSync(f, 'utf8'))).not.toHaveProperty('vocabulary')
+    const mine = { ...defaults, myName: 'Nadia', nicknames: ['Nad'], vocabulary: ['Kubernetes'] }
+    saveSettings(f, mine, defaults, NOT_PICKED)
+    expect(loadSettings(f, defaults)).toEqual(mine)
+  })
+
   it('writes only what differs from the defaults, so a better default model still applies', () => {
     const f = file()
     saveSettings(f, { ...defaults, language: 'pt' }, defaults, NOT_PICKED)

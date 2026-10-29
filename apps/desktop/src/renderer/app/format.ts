@@ -35,3 +35,13 @@ export const ipcErrorMessage = (e: unknown): string =>
   (e instanceof Error ? e.message : String(e))
     .replace(/^Error invoking remote method '[^']+': /, '')
     .replace(/^(?:[A-Za-z]*Error: )+/, '')
+
+/** "Rafa, Rafinha\n" or one per line -> ["Rafa", "Rafinha"]: trimmed, no blanks, no repeats. */
+export const listOf = (text: string): string[] => [
+  ...new Set(
+    text
+      .split(/[,\n]/)
+      .map((w) => w.trim())
+      .filter((w) => w !== ''),
+  ),
+]

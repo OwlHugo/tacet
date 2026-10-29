@@ -38,3 +38,25 @@ describe('meetings:import contract', () => {
     )
   })
 })
+
+describe('settings:set contract', () => {
+  const set = INVOKE['settings:set']
+  it('takes a name, nicknames and a vocabulary, trimmed', () => {
+    expect(
+      set.parse([{ myName: ' Nadia ', nicknames: ['Nad'], vocabulary: [' Kubernetes '] }]),
+    ).toEqual([{ myName: 'Nadia', nicknames: ['Nad'], vocabulary: ['Kubernetes'] }])
+  })
+
+  it('refuses a blank nickname and a vocabulary too long for the whisper prompt', () => {
+    expect(set.safeParse([{ nicknames: ['  '] }]).success).toBe(false)
+    const long = Array.from({ length: 80 }, (_, i) => `Term${i}`)
+    expect(set.safeParse([{ vocabulary: long }]).success).toBe(false)
+    // 600 characters as whisper gets it ("a, b, ..."): accepted at the limit, refused one past it
+    const words = (last: number) => [
+      ...Array.from({ length: 7 }, () => 'w'.repeat(73)),
+      'z'.repeat(last),
+    ]
+    expect(set.safeParse([{ vocabulary: words(75) }]).success).toBe(true)
+    expect(set.safeParse([{ vocabulary: words(76) }]).success).toBe(false)
+  })
+})
