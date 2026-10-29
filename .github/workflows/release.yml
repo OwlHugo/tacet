@@ -8,11 +8,9 @@ permissions:
   contents: write
 
 jobs:
+  # Only the Apple Silicon .dmg is tested and published; Windows and Linux builds are not yet.
   app:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: macos-latest
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: false
     steps:
@@ -23,15 +21,13 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm dist
+      - run: pnpm dist:mac
       - uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: |
-            apps/desktop/release/*.dmg
-            apps/desktop/release/*.exe
-            apps/desktop/release/*.AppImage
+          files: apps/desktop/release/*-arm64.dmg
 
+  # The CLI bundles the core, which stays private: only `tacet` goes to npm.
   npm:
     runs-on: ubuntu-latest
     steps:
@@ -43,6 +39,6 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: pnpm --filter @tacet/core --filter tacet publish --access public --no-git-checks
+      - run: pnpm --filter tacet publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
