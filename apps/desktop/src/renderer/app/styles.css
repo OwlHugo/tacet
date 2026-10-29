@@ -563,6 +563,29 @@ h3 {
 .field input:focus {
   border-color: var(--violet);
 }
+.field textarea {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  outline: 0;
+  font: inherit;
+  resize: vertical;
+}
+.field textarea:focus {
+  border-color: var(--violet);
+}
+.settings-group {
+  margin: 0;
+  padding: 28px 32px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.settings-error {
+  color: var(--amber);
+  font-size: 12px;
+}
 .field input[type="checkbox"] {
   accent-color: var(--violet);
 }

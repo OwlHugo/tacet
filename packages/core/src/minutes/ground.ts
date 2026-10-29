@@ -22,8 +22,9 @@ export interface GroundingOptions {
   /** Minimum share of a summary point's content words found in the cited lines. */
   readonly summaryThreshold?: number
   /**
-   * The person who recorded the meeting and what people call them ("Ana", "Aninha"). An owner that
-   * is one of these is that person, said in the meeting or not: they were there.
+   * The person who recorded the meeting and what people call them ("Ana", "Aninha"). On two tracks
+   * that person is the "Me" track, so an owner that is one of these names is "Me". On one track it is
+   * their name, kept only if one of these was said or the task's line asks it of "you".
    */
   readonly self?: Self | undefined
 }
@@ -136,6 +137,24 @@ const OTHERS_WORDS = new Set(['others', 'outros', 'them'])
 const NOBODY = new Set(['', 'unassigned', 'unknown', 'none', 'n a', 'ninguem'])
 const COMMITMENT = /\b(i ll|i will|i can|vou|eu)\b/
 
+const wasSaid = (name: string, index: TranscriptIndex) =>
+  words(name).every((w) => index.spoken.has(w))
+
+/** A line that asks something of "you": on one track, of the person recording in a one-to-one call. */
+const ASKS_YOU = /\b(you|your|voce|vc|tu|te)\b/
+
+/**
+ * The owner as the person who recorded the meeting: "Me" on two tracks. On one track their name,
+ * when one of their names was said in the meeting or the task's line asks it of "you".
+ */
+function asSelf(n: string, self: Self, source: Lines, index: TranscriptIndex): string | undefined {
+  const names = [self.name, ...self.aliases]
+  if (!names.some((s) => normalize(s) === n)) return undefined
+  if (index.speakers.has(ME)) return ME
+  const named = names.some((s) => wasSaid(s, index))
+  return named || ASKS_YOU.test(normalize(textOf(source))) ? self.name : undefined
+}
+
 /**
  * A named owner is kept only if the name was actually said in the meeting, and "Me"/"Others" only
  * if that track exists: an imported file has a single mixed track, so nobody there is "Others".
@@ -147,8 +166,8 @@ function resolveOwner(
   self: Self | undefined,
 ): string {
   const n = normalize(owner)
-  if (self !== undefined && [self.name, ...self.aliases].some((s) => normalize(s) === n))
-    return self.name
+  const me = self === undefined ? undefined : asSelf(n, self, source, index)
+  if (me !== undefined) return me
   if (SELF.has(n) && index.speakers.has(ME)) return ME
   if (OTHERS_WORDS.has(n) && index.speakers.has(OTHERS_LABEL)) return OTHERS_LABEL
   if (
@@ -156,7 +175,7 @@ function resolveOwner(
     !SELF.has(n) &&
     !OTHERS_WORDS.has(n) &&
     !words(owner).includes(normalize(SPEAKER)) &&
-    words(owner).every((w) => index.spoken.has(w))
+    wasSaid(owner, index)
   )
     return owner.trim()
   // "I will send the notes": whoever said that line owns the task, if we know who that was.
@@ -264,6 +283,20 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
 const REPLY_WORDS = 2
 
 /**
+ * Words of agreeing to do something, which bring no subject of their own: "Fechado, consigo
+ * entregar isso até sexta sem problema" is still a reply about the task asked just before.
+ */
+const AGREEING = new Set(
+  (
+    'sure fine deal done deliver get finish manage problem worries absolutely course right ' +
+    'that isso fechado beleza combinado certo claro pode deixa consigo entregar entrego faco fazer ' +
+    'termino terminar problema tranquilo boa ai'
+  )
+    .split(' ')
+    .map(stem),
+)
+
+/**
  * Whether the line holding a deadline talks about this task: it says some of the task's words, or
  * it is a short reply that brings no subject of its own. "On Friday we pick the band for the party?" after "Book
  * the hall first" names another piece of work, so its deadline is not the hall's.
@@ -271,7 +304,8 @@ const REPLY_WORDS = 2
 function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
   const rest = contentWords(line.text.replace(said, ' ')).map(stem)
-  return rest.some((w) => own.has(w)) || rest.length <= REPLY_WORDS
+  const subject = rest.filter((w) => !AGREEING.has(w))
+  return rest.some((w) => own.has(w)) || subject.length <= REPLY_WORDS
 }
 
 /**

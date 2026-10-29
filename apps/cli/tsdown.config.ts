@@ -5,4 +5,6 @@ export default defineConfig({
   format: 'esm',
   platform: 'node',
   dts: false,
+  // The @tacet npm scope belongs to someone else: the core ships inside the CLI, not as a package.
+  deps: { alwaysBundle: ['@tacet/core'] },
 })

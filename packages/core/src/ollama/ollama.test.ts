@@ -43,6 +43,10 @@ beforeAll(async () => {
         res.statusCode = 404
         return res.end('model "missing" not found')
       }
+      if (lastBody?.model === 'crashes') {
+        res.write(`${JSON.stringify({ message: { content: '{"sum' }, done: false })}\n`)
+        return res.end(`${JSON.stringify({ error: 'llama runner process has terminated' })}\n`)
+      }
       // Streamed like Ollama: one JSON line per piece of the content, split mid-line on the wire.
       const content = JSON.stringify(chatReply)
       const half = Math.floor(content.length / 2)
@@ -87,6 +91,12 @@ describe('ollama adapter', () => {
     ).rejects.toThrow()
     await expect(ollamaMinutes({ host, model: 'missing' })('s', 'u', 'tasks')).rejects.toThrow(
       /Ollama 404: model "missing" not found/,
+    )
+  })
+
+  it("surfaces Ollama's own message when the runner fails in the middle of the answer", async () => {
+    await expect(ollamaMinutes({ host, model: 'crashes' })('s', 'u', 'summary')).rejects.toThrow(
+      'Ollama: llama runner process has terminated',
     )
   })
 })

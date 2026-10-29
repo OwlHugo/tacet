@@ -8,3 +8,4 @@ reports/
 *.log
 .DS_Store
 apps/desktop/resources/bin/
+*.tgz

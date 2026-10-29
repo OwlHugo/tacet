@@ -1,0 +1,132 @@
+{
+  "whisperModel": "base",
+  "llmModel": "qwen2.5:7b",
+  "transcript": {
+    "segments": [
+      {
+        "start": 0.6,
+        "end": 4.28,
+        "speaker": "Others",
+        "text": "Thanks for joining. Today we plan the opening of the Second Bakery.",
+        "id": 0
+      },
+      {
+        "start": 4.88,
+        "end": 7.78,
+        "speaker": "Me",
+        "text": "\"Good, the landlord wants the signed lease back this week.\"",
+        "id": 1
+      },
+      {
+        "start": 8.46,
+        "end": 12.280000000000001,
+        "speaker": "Others",
+        "text": "Nadia, can you sign the lease and send it to the Landlord by Friday?",
+        "id": 2
+      },
+      {
+        "start": 12.9,
+        "end": 15.42,
+        "speaker": "Me",
+        "text": "\"Yes, I will send the signed lease on Friday.\"",
+        "id": 3
+      },
+      {
+        "start": 16.06,
+        "end": 18.740000000000002,
+        "speaker": "Others",
+        "text": "We decided to open on the first Monday of March.",
+        "id": 4
+      },
+      {
+        "start": 19.44,
+        "end": 22.6,
+        "speaker": "Me",
+        "text": "\"Fine, Omar, can you order the new oven for the kitchen?\"",
+        "id": 5
+      },
+      {
+        "start": 23.240000000000002,
+        "end": 25.82,
+        "speaker": "Others",
+        "text": "Sure, I will order the new oven by tomorrow.",
+        "id": 6
+      },
+      {
+        "start": 26.44,
+        "end": 28.82,
+        "speaker": "Me",
+        "text": "\"And I will write the job post for two bakers.\"",
+        "id": 7
+      }
+    ],
+    "duration": 28.82,
+    "language": "en",
+    "model": "base"
+  },
+  "raw": {
+    "summary": [
+      {
+        "text": "Plan for opening the Second Bakery",
+        "segments": [0, 4, 7]
+      },
+      {
+        "text": "Sign and send the lease by Friday",
+        "segments": [1, 2]
+      },
+      {
+        "text": "Order a new oven for the kitchen",
+        "segments": [6]
+      },
+      {
+        "text": "Write job post for two bakers",
+        "segments": [7]
+      }
+    ],
+    "decisions": [
+      {
+        "text": "Sign and send the lease by Friday",
+        "quote": "Yes, I will send the signed lease on Friday",
+        "segments": [1, 3]
+      },
+      {
+        "text": "Open on the first Monday of March",
+        "quote": "We decided to open on the first Monday of March",
+        "segments": [4]
+      },
+      {
+        "text": "Order the new oven by tomorrow",
+        "quote": "Sure, I will order the new oven by tomorrow",
+        "segments": [6]
+      },
+      {
+        "text": "Write the job post for two bakers",
+        "quote": "And I will write the job post for two bakers",
+        "segments": [7]
+      }
+    ],
+    "action_items": [
+      {
+        "task": "sign the lease and send it to the Landlord by Friday",
+        "owner": "Me",
+        "due": "by Friday",
+        "quote": "Yes, I will send the signed lease on Friday.",
+        "segments": [1, 2]
+      },
+      {
+        "task": "order the new oven for the kitchen by tomorrow",
+        "owner": "Others",
+        "due": "by tomorrow",
+        "quote": "Sure, I will order the new oven by tomorrow.",
+        "segments": [6]
+      },
+      {
+        "task": "write the job post for two bakers",
+        "owner": "Me",
+        "due": "",
+        "quote": "And I will write the job post for two bakers.",
+        "segments": [7]
+      }
+    ]
+  }
+}

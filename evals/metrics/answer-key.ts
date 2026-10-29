@@ -5,7 +5,17 @@ import { z } from 'zod'
  * The words that identify an item. Each must be in it; "a|b" accepts either word, since a model
  * writes "attachment" or "file" for the same thing.
  */
-const Keywords = z.array(z.string().min(1)).min(1)
+const Keywords = z
+  .array(
+    z
+      .string()
+      .min(1)
+      // `holds` matches by content words, so an alternative made only of stopwords never matches.
+      .refine((k) => k.split('|').every((alt) => coverage(alt, alt) === 1), {
+        message: 'each alternative needs a content word (not only stopwords like "sim", "ok")',
+      }),
+  )
+  .min(1)
 
 const Decision = z.object({
   keywords: Keywords,

@@ -15,6 +15,9 @@ export function defaultSettings(
     llmModel: 'qwen2.5:7b',
     shortcut: 'CommandOrControl+Shift+M',
     keepAudio: true,
+    myName: '',
+    nicknames: [],
+    vocabulary: [],
   }
 }
 
@@ -58,7 +61,8 @@ export function saveSettings(
   const changed = Object.fromEntries(
     Object.entries(settings).filter(
       ([k, v]) =>
-        defaults[k as keyof Settings] !== v || (k === 'whisperModel' && chose.whisperModel),
+        JSON.stringify(defaults[k as keyof Settings]) !== JSON.stringify(v) ||
+        (k === 'whisperModel' && chose.whisperModel),
     ),
   )
   mkdirSync(dirname(file), { recursive: true })

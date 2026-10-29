@@ -13,6 +13,7 @@ describe('loadCases', () => {
       '03-planejamento-pt',
       '04-sprint-import-en',
       '05-sprint-pix-pt',
+      '06-bakery-self-en',
     ])
     const labels = cases.map((c) => c.tracks.map((t) => t.speaker).sort())
     expect(labels).toEqual([
@@ -21,7 +22,12 @@ describe('loadCases', () => {
       ['Me', 'Others'],
       ['Speaker'],
       ['Me', 'Others'],
+      ['Me', 'Others'],
     ])
+    expect(cases.find((c) => c.id === '06-bakery-self-en')?.self).toEqual({
+      name: 'Nadia',
+      aliases: ['Nad'],
+    })
     for (const c of cases) {
       expect(c.fixture?.transcript.segments.length).toBeGreaterThan(0)
       expect(c.reference.length).toBeGreaterThan(0)

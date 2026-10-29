@@ -50,6 +50,10 @@ export const importedMeeting = (path: string) => ({
   tracks: [{ path, speaker: SPEAKER }],
 })
 
+/** Who recorded the meeting, as set in Settings: undefined until the user gives their name. */
+export const selfOf = (settings: Settings) =>
+  settings.myName === '' ? undefined : { name: settings.myName, aliases: settings.nicknames }
+
 /** Run the core pipeline with the user's settings and save the note. Minutes only if Ollama is up. */
 export async function runPipeline(
   input: {
@@ -73,7 +77,7 @@ export async function runPipeline(
         ffmpeg: findFfmpeg({ ...binaries(env), explicit: env.ffmpegBin }),
         model: await ensureModel(settings.whisperModel, env.modelsDir),
         language: settings.language,
-        vocabulary: [],
+        vocabulary: settings.vocabulary,
         env: process.env,
       }),
       whisperModel: settings.whisperModel,
@@ -81,6 +85,7 @@ export async function runPipeline(
         ? {
             generate: ollamaMinutes({ host: env.ollamaHost, model: settings.llmModel }),
             model: settings.llmModel,
+            self: selfOf(settings),
           }
         : undefined,
       now: () => performance.now(),

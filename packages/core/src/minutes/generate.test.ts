@@ -198,7 +198,11 @@ describe('generateMinutes', () => {
   it('gives the user their own tasks when they said who they are', async () => {
     const mixed = {
       ...TRANSCRIPT,
-      segments: TRANSCRIPT.segments.map((s) => ({ ...s, speaker: 'Speaker' })),
+      segments: TRANSCRIPT.segments.map((s) => ({
+        ...s,
+        speaker: 'Speaker',
+        text: s.id === 2 ? `${s.text} Thanks, Rafa.` : s.text,
+      })),
     }
     const { calls, generate } = fake({
       tasks: () => ({ action_items: [{ ...releaseNotes(), owner: 'Rafa' }] }),

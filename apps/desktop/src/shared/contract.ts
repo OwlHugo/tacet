@@ -28,6 +28,11 @@ const AcceleratorSchema = z
   .string()
   .regex(/^([A-Za-z]+\+){1,3}[A-Za-z0-9]$/, 'expected an accelerator like CommandOrControl+Shift+M')
 
+const NameSchema = z.string().trim().min(1).max(80)
+
+/** whisper.cpp takes the vocabulary whole as its prompt: about 220 tokens of mostly names. */
+const VOCABULARY_CHARS = 600
+
 export const SettingsSchema = z.object({
   outputDir: z.string().min(1),
   whisperModel: z.enum(['tiny', 'base', 'small', 'large-v3-turbo']),
@@ -35,6 +40,17 @@ export const SettingsSchema = z.object({
   llmModel: z.string().min(1),
   shortcut: AcceleratorSchema,
   keepAudio: z.boolean(),
+  /** The user's name, so tasks asked of them get them as owner. Empty when not set. */
+  myName: z.string().trim().max(80),
+  /** Other names people call the user. */
+  nicknames: z.array(NameSchema).max(20),
+  /** Words whisper should expect (names, product terms). */
+  vocabulary: z
+    .array(NameSchema)
+    .refine(
+      (words) => words.join(', ').length <= VOCABULARY_CHARS,
+      `keep the vocabulary under ${VOCABULARY_CHARS} characters, the names and terms whisper gets wrong`,
+    ),
 })
 export type Settings = z.infer<typeof SettingsSchema>
 

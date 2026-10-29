@@ -179,31 +179,123 @@ describe('groundMinutes', () => {
     expect(bob.actionItems[0]?.owner).toBe('Unassigned')
   })
 
-  it('gives the person who recorded the meeting their tasks, by name or nickname', () => {
-    const mixed = {
-      ...TRANSCRIPT,
-      segments: TRANSCRIPT.segments.map((s) => ({ ...s, speaker: 'Speaker' })),
-    }
+  describe('the person who recorded the meeting', () => {
     const self = { name: 'Rafael', aliases: ['Rafa'] }
-    const owner = (o: string) =>
-      groundMinutes(
-        one('Send the release notes', o, 'I will send the release notes', [3]),
-        mixed,
-        't',
+    // Invented one-track call: the nickname is said on line 1, and line 2 asks something of "you".
+    const CALL: Transcript = {
+      language: 'en',
+      model: 'base',
+      duration: 12,
+      segments: [
+        { id: 0, start: 0, end: 3, speaker: 'Speaker', text: 'The kiosk menu needs new photos.' },
+        { id: 1, start: 3, end: 6, speaker: 'Speaker', text: 'Rafa, take the photos of the menu.' },
+        { id: 2, start: 6, end: 9, speaker: 'Speaker', text: 'Can you print the price list?' },
+        { id: 3, start: 9, end: 12, speaker: 'Speaker', text: 'Somebody prints the flyers later.' },
+      ],
+    }
+    const owner = (o: string, task: string, quote: string, line: number, t = CALL) =>
+      groundMinutes(one(task, o, quote, [line]), t, 't', { self }).actionItems[0]?.owner
+
+    it('gets their tasks on one track, by name or nickname, when one of them was said', () => {
+      expect(owner('rafa', 'Take the photos of the menu', 'take the photos of the menu', 1)).toBe(
+        'Rafael',
+      )
+      expect(owner('Rafael', 'Take the photos of the menu', 'take the photos of the menu', 1)).toBe(
+        'Rafael',
+      )
+      expect(owner('Pedro', 'Take the photos of the menu', 'take the photos of the menu', 1)).toBe(
+        'Unassigned',
+      )
+    })
+
+    it('needs every word of a full name said, not just the first', () => {
+      const full = { name: 'Rafael Lima', aliases: [] }
+      const said = (o: string) =>
+        groundMinutes(
+          one('Take the photos of the menu', o, 'take the photos of the menu', [1]),
+          {
+            ...CALL,
+            segments: CALL.segments.map((s) => ({ ...s, text: s.text.replace('Rafa', 'Rafael') })),
+          },
+          't',
+          { self: full },
+        ).actionItems[0]?.owner
+      expect(said('Rafael Lima')).toBe('Unassigned')
+      expect(said('Rafael Costa')).toBe('Unassigned')
+    })
+
+    it('gets a task asked of "you" on one track, even with no name said', () => {
+      const unnamed = {
+        ...CALL,
+        segments: CALL.segments.map((s) => (s.id === 1 ? { ...s, text: 'New menu photos.' } : s)),
+      }
+      expect(owner('Rafael', 'Print the price list', 'print the price list', 2, unnamed)).toBe(
+        'Rafael',
+      )
+    })
+
+    it('is not an owner on one track when no name of theirs was said and nothing asks "you"', () => {
+      const unnamed = {
+        ...CALL,
+        segments: CALL.segments.map((s) => (s.id === 1 ? { ...s, text: 'New menu photos.' } : s)),
+      }
+      expect(owner('Rafa', 'Print the flyers later', 'prints the flyers later', 3, unnamed)).toBe(
+        'Unassigned',
+      )
+    })
+
+    it('is the Me track on two tracks, whether the model wrote Me or their name', () => {
+      const tracks = {
+        ...CALL,
+        segments: CALL.segments.map((s) => ({ ...s, speaker: s.id === 2 ? 'Me' : 'Others' })),
+      }
+      const owners = groundMinutes(
         {
-          self,
+          summary: [],
+          decisions: [],
+          action_items: [
+            {
+              task: 'Take the photos of the menu',
+              owner: 'Rafael',
+              due: '',
+              quote: 'take the photos of the menu',
+              segments: [1],
+            },
+            {
+              task: 'Print the price list',
+              owner: 'Me',
+              due: '',
+              quote: 'print the price list',
+              segments: [2],
+            },
+            {
+              task: 'Print the flyers later',
+              owner: 'rafa',
+              due: '',
+              quote: 'prints the flyers later',
+              segments: [3],
+            },
+          ],
         },
-      ).actionItems[0]?.owner
-    expect(owner('rafa')).toBe('Rafael')
-    expect(owner('Rafael')).toBe('Rafael')
-    expect(owner('Pedro')).toBe('Unassigned')
-    expect(
-      groundMinutes(
-        one('Send the release notes', 'Rafa', 'I will send the release notes', [3]),
-        mixed,
+        tracks,
         't',
-      ).actionItems[0]?.owner,
-    ).toBe('Unassigned')
+        { self },
+      ).actionItems.map((a) => a.owner)
+      expect(owners).toEqual(['Me', 'Me', 'Me'])
+    })
+
+    it('without --me, their nickname is a name like any other', () => {
+      expect(
+        groundMinutes(
+          one('Send the release notes', 'Rafa', 'I will send the release notes', [3]),
+          {
+            ...TRANSCRIPT,
+            segments: TRANSCRIPT.segments.map((s) => ({ ...s, speaker: 'Speaker' })),
+          },
+          't',
+        ).actionItems[0]?.owner,
+      ).toBe('Unassigned')
+    })
   })
 
   it('never takes the single-track label as a name, even when "speaker" was said', () => {
@@ -468,6 +560,19 @@ describe('groundMinutes', () => {
       expect(hall([0, 2], 'by Monday')?.due).toBe('by Monday')
       const band = run(t, item('Pick the band', '', 'we pick the band', [1], 'On Friday'))
       expect(band.actionItems[0]?.due).toBe('On Friday')
+    })
+
+    it('keeps a deadline on a longer reply that only agrees to the task', () => {
+      const t = line(
+        'Você pode revisar o cardápio do quiosque?',
+        'Fechado, consigo entregar isso até sexta sem problema.',
+        'Fechado, e na sexta a gente escolhe a banda da festa nova.',
+      )
+      const menu = (segments: number[], due: string) =>
+        run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
+          .actionItems[0]
+      expect(menu([0, 1], 'até sexta')?.due).toBe('até sexta')
+      expect(menu([0, 2], 'na sexta')).not.toHaveProperty('due')
     })
 
     it('cuts the deadline from the end of the task with the word that leads into it', () => {

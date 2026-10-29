@@ -21,15 +21,40 @@
 
 ## Instalação
 
-```bash
-# App de bandeja: baixe o .dmg, .exe ou .AppImage em Releases
-open https://github.com/OwlHugo/tacet/releases/latest
+O Tacet usa dois programas que rodam na sua máquina: o whisper.cpp para a transcrição e o Ollama
+para a ata. No macOS com [Homebrew](https://brew.sh):
 
-# CLI, sem instalar
-npx tacet transcribe reuniao.wav
+```bash
+brew install whisper-cpp ffmpeg     # whisper-cli, e ffmpeg para .m4a / .mp3
+brew install ollama                 # ou o app em https://ollama.com/download
+ollama serve &                      # pule se o app do Ollama estiver aberto
+ollama pull qwen2.5:7b              # 4,7 GB, roda num Mac de 16 GB
 ```
 
-Precisa do [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install whisper-cpp` no macOS; os builds de Windows e Linux já trazem) e, para a ata, do [Ollama](https://ollama.com) com um modelo (`ollama pull qwen2.5:7b`). `npx tacet doctor` confere tudo.
+No Linux, compile o [whisper.cpp](https://github.com/ggml-org/whisper.cpp#quick-start) e deixe o
+`whisper-cli` no `PATH` (ou use `TACET_WHISPER_BIN`), instale o ffmpeg pelo gerenciador de pacotes
+e o Ollama com `curl -fsSL https://ollama.com/install.sh | sh`. Sem o Ollama, o Tacet salva só a
+transcrição.
+
+O Tacet usa o melhor modelo do whisper que já estiver em `~/.cache/whisper`; sem nenhum, a primeira
+execução baixa o `base` (142 MB) do Hugging Face.
+
+**App (macOS, Apple Silicon).** Baixe o `Tacet-0.1.0-mac-arm64.dmg` em
+[Releases](https://github.com/OwlHugo/tacet/releases), arraste para Aplicativos e, na primeira vez,
+clique com o botão direito → Abrir (o build é assinado ad-hoc, sem notarização). O Tacet fica na
+barra de menus.
+
+**CLI (macOS, Linux; Node 22.18+).**
+
+```bash
+npm install -g tacet
+tacet doctor                        # confere whisper.cpp, ffmpeg, modelo e Ollama
+tacet transcribe reuniao.m4a
+```
+
+**Pelo código** (Node 24.12+ e pnpm 10): `git clone https://github.com/OwlHugo/tacet && cd tacet && pnpm install`,
+depois `pnpm desktop` (app em modo dev) ou `pnpm dist:mac` (gera o .dmg em `apps/desktop/release`).
+Os builds de Windows e Linux estão configurados, mas ainda não foram testados nem publicados.
 
 ## Seus dados ficam na sua máquina
 
@@ -45,7 +70,9 @@ Precisa do [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install
 - **Duas faixas, sem driver.** Microfone e áudio do sistema gravados em arquivos separados, então "Eu" e "Outros" vêm de graça. O eco do microfone é removido quando você não usa fone.
 - **Ata ancorada.** Resumo, decisões e tarefas com dono e prazo. Cada item cita as linhas da transcrição; o que não está na transcrição sai da ata, e os horários vêm da transcrição, nunca do modelo.
 - **Uma chamada por parte.** Resumo, decisões e tarefas são pedidos separados ao modelo; cada decisão é confirmada nas próprias falas (pergunta, piada ou reclamação não vira decisão) e cada prazo é conferido contra a tarefa dele.
-- **Arquivo de uma faixa só.** Importe um `.wav`, `.m4a` ou `.mp3`. Na CLI, com `--me Seu Nome` (e `--alias Apelido`), o que for pedido a você sai com você de dono, e com `--vocab palavras.txt` o whisper escreve certo os nomes e termos que você lista. No app essas opções ainda não existem.
+- **Arquivo de uma faixa só.** Importe um `.wav`, `.m4a` ou `.mp3` e ele passa pelo mesmo fluxo.
+- **Quem é você.** Nos Ajustes, informe seu nome e apelidos (na CLI, `--me` e `--alias`). Numa gravação, o que for pedido a você vai para a sua faixa "Me"; num arquivo importado, sai com seu nome quando um dos seus nomes foi dito ou a fala pede a "você".
+- **Seu vocabulário.** Nos Ajustes (ou `--vocab palavras.txt`), liste os nomes e termos que o whisper erra, e ele passa a escrever do seu jeito. A lista fica na sua máquina.
 - **Markdown pronto para o Obsidian**, busca em todas as reuniões, atalho global `⌘⇧M` / `Ctrl+Shift+M`.
 
 ## CLI
@@ -62,6 +89,14 @@ tacet list [--dir ~/notas]
 tacet doctor
 ```
 
+## Limitações conhecidas (v0.1)
+
+- **Resumo de call longa.** Resumo e decisões são pedidos em pedaços de uns 4000 caracteres, então uma call de 30 minutos pode ganhar muitos pontos de resumo e mais de um "assunto principal". Ainda não são juntados.
+- **Horários em call longa e rápida.** O whisper às vezes cola uma fala na anterior da mesma faixa, e essa fala perde o próprio início (uns 6 s de erro médio no caso 05, contra 10 ms nos casos roteirizados).
+- **Prazo numa fala que cita duas pessoas.** "A Ana revisa o contrato e o Pedro sobe até sexta": se o modelo devolver só a tarefa da Ana, ela pode ficar com o prazo do Pedro.
+- **Só o macOS Apple Silicon é gerado e testado.** Windows e Linux estão escritos, mas não foram testados numa máquina de verdade.
+- O build do macOS é assinado ad-hoc, sem notarização: botão direito → Abrir na primeira vez.
+
 ## Desenvolvimento
 
 ```bash
@@ -71,7 +106,7 @@ pnpm tacet transcribe x.wav     # a CLI direto do código
 pnpm desktop                    # Electron em modo dev
 ```
 
-Node 24.12+ e pnpm 10. Regras para quem contribui: [AGENTS.md](AGENTS.md) e [CONTRIBUTING.md](CONTRIBUTING.md). O resto da documentação (eval, arquitetura, permissões, problemas conhecidos) está no [README em inglês](README.md).
+Node 24.12+ e pnpm 10. Regras para quem contribui: [AGENTS.md](AGENTS.md) e [CONTRIBUTING.md](CONTRIBUTING.md). O resto da documentação (eval, arquitetura, permissões) está no [README em inglês](README.md).
 
 ## Licença
 
