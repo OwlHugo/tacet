@@ -736,6 +736,14 @@ describe('groundMinutes', () => {
         'Fechado, faço o deploy até sexta.',
         "Sure, I'll deploy by Friday.",
         'Fechado, esse aqui fica pronto até sexta.',
+        'Sure, I’ll deploy by Friday.',
+        'Sure, I’ll deliver it by Friday.',
+        'Great, by Friday.',
+        'Tá bom, até sexta.',
+        'Claro, posso fazer até sexta.',
+        'Sounds good, by Monday.',
+        'Yes, works for me, by Friday.',
+        'Yes, works nicely for me, by Friday.',
       )
       const menu = (segments: number[], due: string) =>
         run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
@@ -750,6 +758,16 @@ describe('groundMinutes', () => {
       expect(menu([0, 7], 'até sexta')).not.toHaveProperty('due')
       expect(menu([0, 8], 'by Friday')).not.toHaveProperty('due')
       expect(menu([0, 9], 'até sexta')?.due).toBe('até sexta')
+      // A curly apostrophe is still "I'll".
+      expect(menu([0, 10], 'by Friday')).not.toHaveProperty('due')
+      expect(menu([0, 11], 'by Friday')?.due).toBe('by Friday')
+      // A short answer with no verb of its own is still a reply about the task.
+      expect(menu([0, 12], 'by Friday')?.due).toBe('by Friday')
+      expect(menu([0, 13], 'até sexta')?.due).toBe('até sexta')
+      expect(menu([0, 14], 'até sexta')?.due).toBe('até sexta')
+      expect(menu([0, 15], 'by Monday')?.due).toBe('by Monday')
+      expect(menu([0, 16], 'by Friday')?.due).toBe('by Friday')
+      expect(menu([0, 17], 'by Friday')?.due).toBe('by Friday')
     })
 
     it('cuts the deadline from the end of the task with the word that leads into it', () => {

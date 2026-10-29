@@ -360,6 +360,9 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
   return [...owners].filter((o) => said.has(o)).length
 }
 
+/** Words an answer may bring of its own and still be a reply about the task ("Great, by Friday"). */
+const REPLY_WORDS = 2
+
 /**
  * What a reply says to agree: "Fechado", "sure", "sem problema", "pode deixar". Agreeing brings no
  * subject of its own.
@@ -368,40 +371,47 @@ const AGREEING_PHRASES =
   /\b(sem problemas?|no problems?|no worries|of course|pode deixar|deixa comigo|pode ser|tudo bem|tudo certo|by all means)\b/g
 const AGREEING = new Set(
   (
-    'sure fine deal done agreed absolutely right perfect alright fechado beleza combinado ' +
-    'certo claro isso tranquilo boa perfeito feito ai'
+    'sure fine deal done agreed absolutely right perfect alright great good sounds yep fechado ' +
+    'beleza combinado certo claro isso tranquilo boa bom otimo joia perfeito feito ai'
   )
     .split(' ')
     .map(stem),
 )
 
 /**
- * Verbs a reply takes the asked work on with ("consigo entregar", "I'll finish"). They name no work,
- * so they are not a subject either, but any other word is: "Fechado, faço o deploy até sexta" names
- * the deploy, not the task asked before it.
+ * Verbs a reply takes the asked work on with ("consigo entregar", "I'll finish", "posso fazer"). They
+ * name no work, but a reply that has one says what it will do: then any other word is the work, and
+ * if it is not this task's ("Fechado, faço o deploy até sexta"), the deadline is another task's.
  */
-const DOING = new Set(
+const TAKING_ON = new Set(
   (
-    'consigo entrego entregar faco fazer termino terminar mando mandar envio enviar resolvo ' +
-    'fica deliver finish send get have ready manage handle ill pronto ' +
-    // Words that point back at the task asked ("esse aqui", "that one") bring no subject either.
-    'esse essa este esta isto aqui ali la entao one here there then also too'
+    'consigo posso podemos entrego entregar faco fazer termino terminar mando mandar envio enviar ' +
+    'resolvo fica deliver finish send get have ready manage handle ill pronto'
   )
     .split(' ')
     .map(stem),
+)
+
+/** Words that point back at the task asked ("esse aqui", "that one"): no subject of their own. */
+const POINTING = new Set(
+  'esse essa este esta isto aqui ali la entao one here there then also too'.split(' ').map(stem),
 )
 
 /**
  * Whether the line holding a deadline talks about this task: it says some of the task's words, or
- * it is a reply that only agrees to do it and brings no subject of its own. "On Friday we pick the
- * band for the party?" after "Book the hall first" names another piece of work, so its deadline is
- * not the hall's.
+ * it is a reply about the task asked. A reply that takes work on ("consigo entregar até sexta")
+ * brings nothing else; one that only answers ("Great, by Friday", "Tá bom, até sexta") brings at
+ * most a couple of words. "On Friday we pick the band for the party?" after "Book the hall first"
+ * names another piece of work, so its deadline is not the hall's.
  */
 function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
-  const reply = normalize(line.text.replace(said, ' ')).replace(AGREEING_PHRASES, ' ')
-  const rest = contentWords(reply).map(stem)
-  return rest.some((w) => own.has(w)) || rest.every((w) => AGREEING.has(w) || DOING.has(w))
+  // "I’ll" with a curly apostrophe is "I'll": normalize would split it into "i ll".
+  const text = line.text.replace(said, ' ').replace(/’/g, "'")
+  const rest = contentWords(normalize(text).replace(AGREEING_PHRASES, ' ')).map(stem)
+  if (rest.some((w) => own.has(w))) return true
+  const other = rest.filter((w) => !AGREEING.has(w) && !TAKING_ON.has(w) && !POINTING.has(w))
+  return rest.some((w) => TAKING_ON.has(w)) ? other.length === 0 : other.length <= REPLY_WORDS
 }
 
 /**
