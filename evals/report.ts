@@ -64,6 +64,11 @@ function totals(r: Report) {
     dueTotal: sum(r.cases, (c) => c.dueTotal),
     dueWrong: r.cases.flatMap((c) => c.dueWrong.map((w) => `${c.id}: ${w}`)),
     emptyParts: r.cases.flatMap((c) => c.emptyParts.map((p) => `${c.id}: no ${p}`)),
+    wrongOwner: r.cases.flatMap((c) =>
+      c.meaning === undefined || c.meaning.wrongOwner === 0
+        ? []
+        : [`${c.id}: ${c.meaning.wrongOwner} task(s)`],
+    ),
     injected: sum(r.cases, (c) => c.guard.injected),
     rejected: sum(r.cases, (c) => c.guard.rejected),
   }
@@ -124,6 +129,7 @@ export function failures(r: Report, maxWer: number | undefined): string[] {
     ...(t.rejected === t.injected ? [] : ['the hallucination guard let a fabricated item through']),
     ...t.dueWrong.map((w) => `wrong deadline: ${w}`),
     ...t.emptyParts.map((p) => `empty minutes part: ${p}`),
+    ...t.wrongOwner.map((w) => `owner the answer key does not allow: ${w}`),
     ...(t.dueTotal > 0 && t.dueRight / t.dueTotal < MIN_DUE_RECALL
       ? [`only ${t.dueRight}/${t.dueTotal} deadlines found`]
       : []),

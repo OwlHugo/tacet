@@ -51,6 +51,19 @@ describe('eval report', () => {
       'empty minutes part: a: no decisions',
     ])
   })
+  it('fails on a task whose owner the answer key does not allow', () => {
+    const meaning = {
+      subject: true,
+      decisions: { given: 1, right: 1, found: 1, total: 1 },
+      tasks: { given: 2, right: 2, found: 2, total: 2 },
+      wrongOwner: 1,
+      invented: [],
+    }
+    expect(failures(report([c({ meaning })]), undefined)).toEqual([
+      'owner the answer key does not allow: a: 1 task(s)',
+    ])
+    expect(failures(report([c({ meaning: { ...meaning, wrongOwner: 0 } })]), undefined)).toEqual([])
+  })
   it('fails when too few of the deadlines said were found', () => {
     expect(failures(report([c({ dueRight: 1, dueTotal: 2 })]), undefined)).toEqual([
       'only 1/2 deadlines found',

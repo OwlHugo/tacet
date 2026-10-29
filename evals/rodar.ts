@@ -12,8 +12,8 @@
  * A case with an `answer_key` is also scored for meaning: decisions and tasks that match the key
  * (precision, recall), items that match nothing (invented) and tasks with the wrong owner.
  *
- * Fails if any decision or task lacks a source, if an injected hallucination survives, or if WER
- * goes above --max-wer.
+ * Fails if any decision or task lacks a source, if an injected hallucination survives, if a task
+ * carries an owner its answer key does not allow, or if WER goes above --max-wer.
  */
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'

@@ -159,5 +159,40 @@
         }
       ]
     }
+  },
+  {
+    "id": "07-print-shop-self-en",
+    "title": "Print shop catalog, recorded by Helena with --me, tasks given to her by name",
+    "language": "en",
+    "voices": { "Me": "Samantha", "Others": "Daniel" },
+    "lines": [
+      {
+        "speaker": "Others",
+        "text": "Morning. Today we plan the spring catalog for the print shop."
+      },
+      { "speaker": "Me", "text": "Right. The paper order is still open." },
+      { "speaker": "Others", "text": "Helena will call the paper supplier by Monday." },
+      { "speaker": "Me", "text": "Okay, that works for me. What about the cover?" },
+      { "speaker": "Others", "text": "Victor will fix the cover photo by Thursday." },
+      { "speaker": "Me", "text": "Good, the old photo was too dark anyway." },
+      { "speaker": "Others", "text": "And Helena sends the price list to the designer." },
+      { "speaker": "Me", "text": "Sure, I have the latest prices here." },
+      { "speaker": "Others", "text": "We decided to print five hundred copies of the catalog." }
+    ],
+    "expected_actions": [["supplier"], ["cover"], ["price", "list"]],
+    "expected_due": [
+      { "task": ["supplier"], "due": "monday" },
+      { "task": ["cover"], "due": "thursday" }
+    ],
+    "self": { "name": "Helena", "aliases": ["Lena"] },
+    "answer_key": {
+      "subject": ["catalog|catalogue"],
+      "decisions": [{ "keywords": ["five|500", "copies|catalog|catalogue"] }],
+      "tasks": [
+        { "keywords": ["supplier"], "owner": ["Me"] },
+        { "keywords": ["cover"], "owner": ["Victor", "Others"] },
+        { "keywords": ["price"], "owner": ["Me"] }
+      ]
+    }
   }
 ]

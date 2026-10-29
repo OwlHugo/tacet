@@ -1,0 +1,120 @@
+{
+  "whisperModel": "base",
+  "llmModel": "qwen2.5:7b",
+  "transcript": {
+    "segments": [
+      {
+        "start": 0.5,
+        "end": 3.74,
+        "speaker": "Others",
+        "text": "Morning. Today we plan the spring catalogue for the print shop.",
+        "id": 0
+      },
+      {
+        "start": 4.42,
+        "end": 6.62,
+        "speaker": "Me",
+        "text": "Right, the paper order is still open.",
+        "id": 1
+      },
+      {
+        "start": 7.28,
+        "end": 9.68,
+        "speaker": "Others",
+        "text": "Helena will call the paper supplier by Monday.",
+        "id": 2
+      },
+      {
+        "start": 10.3,
+        "end": 13.1,
+        "speaker": "Me",
+        "text": "OK, that works for me, what about the cover?",
+        "id": 3
+      },
+      {
+        "start": 13.74,
+        "end": 16.240000000000002,
+        "speaker": "Others",
+        "text": "Victor will fix the cover photo by Thursday.",
+        "id": 4
+      },
+      {
+        "start": 16.84,
+        "end": 19.32,
+        "speaker": "Me",
+        "text": "Good, the old photo was too dark anyway.",
+        "id": 5
+      },
+      {
+        "start": 19.96,
+        "end": 22.240000000000002,
+        "speaker": "Others",
+        "text": "And Helena sends the price list to the designer.",
+        "id": 6
+      },
+      {
+        "start": 22.86,
+        "end": 24.96,
+        "speaker": "Me",
+        "text": "Sure, I have the latest prices here.",
+        "id": 7
+      },
+      {
+        "start": 25.580000000000002,
+        "end": 28.580000000000002,
+        "speaker": "Others",
+        "text": "We decided to print 500 copies of the catalogue.",
+        "id": 8
+      }
+    ],
+    "duration": 28.580000000000002,
+    "language": "en",
+    "model": "base"
+  },
+  "raw": {
+    "summary": [
+      {
+        "text": "Planning the spring catalogue for the print shop",
+        "segments": [0]
+      },
+      {
+        "text": "Setting deadlines for paper order and cover photo",
+        "segments": [1, 2, 3, 4]
+      },
+      {
+        "text": "Determining the print quantity at 500 copies",
+        "segments": [8]
+      }
+    ],
+    "decisions": [
+      {
+        "text": "Print 500 copies of the catalogue",
+        "quote": "We decided to print 500 copies of the catalogue.",
+        "segments": [8]
+      }
+    ],
+    "action_items": [
+      {
+        "task": "call the paper supplier by Monday",
+        "owner": "Helena",
+        "due": "by Monday",
+        "quote": "Helena will call the paper supplier by Monday.",
+        "segments": [2]
+      },
+      {
+        "task": "fix the cover photo by Thursday",
+        "owner": "Victor",
+        "due": "by Thursday",
+        "quote": "Victor will fix the cover photo by Thursday.",
+        "segments": [4]
+      },
+      {
+        "task": "send the price list to the designer",
+        "owner": "Helena",
+        "due": "",
+        "quote": "And Helena sends the price list to the designer.",
+        "segments": [6]
+      }
+    ]
+  }
+}

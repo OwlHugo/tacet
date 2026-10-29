@@ -186,10 +186,10 @@
       { "keywords": ["sprint", "pix|compix"], "optional": true }
     ],
     "tasks": [
-      { "keywords": ["expirado|espirado|inspirado"], "owner": ["Larissa"] },
-      { "keywords": ["tela|qr"], "owner": ["Camila"] },
+      { "keywords": ["expirado|espirado|inspirado"], "owner": ["Larissa", "Others"] },
+      { "keywords": ["tela|qr"], "owner": ["Camila", "Others"] },
       { "keywords": ["textos|erro"], "owner": ["Me"] },
-      { "keywords": ["homologacao"], "owner": ["Camila"] }
+      { "keywords": ["homologacao"], "owner": ["Camila", "Others"] }
     ]
   }
 }
