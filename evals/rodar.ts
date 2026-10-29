@@ -156,7 +156,7 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
   const minutes = groundMinutes(run.raw, minutesOn, USES_LLM ? values.llm : recorded(c).llmModel, {
     self: c.self,
   })
-  const grounding = checkGrounding(minutes, minutesOn, c.expected_actions)
+  const grounding = checkGrounding(minutes, minutesOn, c.expected_actions, c.self)
   const deadlines = checkDeadlines(minutes, c.expected_due)
   const perMinute = (s: number | undefined) =>
     s === undefined ? undefined : s / (run.transcript.duration / 60)

@@ -153,7 +153,7 @@ for (const c of cases) {
         continue
       }
       const { minutes } = result
-      const grounding = checkGrounding(minutes, transcript, c.expected_actions)
+      const grounding = checkGrounding(minutes, transcript, c.expected_actions, c.self)
       const deadlines = checkDeadlines(minutes, c.expected_due)
       runs.push({
         caseId: c.id,

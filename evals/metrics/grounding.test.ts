@@ -78,6 +78,10 @@ describe('checkGrounding', () => {
       true,
     ])
     expect(ok('Pedro')).toBe(false)
+    // The user's own name, set with --me, may own a task without being said.
+    const asSelf = (owner: string) =>
+      checkGrounding(task(owner), T, [], { name: 'Pedro', aliases: ['Pepe'] }).grounded === 1
+    expect([asSelf('Pedro'), asSelf('Pepe'), asSelf('Paulo')]).toEqual([true, true, false])
     // "the others" is said, but there is no Others track: still not an owner
     const single = {
       ...T,
