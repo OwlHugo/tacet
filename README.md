@@ -108,14 +108,15 @@ Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |
 |---|---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.01 | 67.56 | 5/5 | 3/3 | 2/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.10 | 52.13 | 3/3 | 2/2 | 1/1 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 1.82 | 50.75 | 3/3 | 1/2 | 1/1 |
-| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.10 | 33.86 | 5/5 | 3/3 | 2/2 |
-| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.36 | 28.54 | 9/9 | 4/4 | 2/4 |
-| **Total** | 290.0s | 10.3% | | | 1.45 | 37.13 | 25/25 | 92.9% | 8/11 |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.53 | 90.03 | 5/5 | 3/3 | 2/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 3.34 | 60.27 | 3/3 | 2/2 | 1/1 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.44 | 58.46 | 3/3 | 1/2 | 1/1 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.29 | 38.32 | 5/5 | 3/3 | 2/2 |
+| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.51 | 31.93 | 9/9 | 4/4 | 2/4 |
+| 06-bakery-self-en | 28.8s | 0.0% | 100.0% | 0.03s | 2.67 | 88.56 | 7/7 | 3/3 | 2/2 |
+| **Total** | 318.9s | 9.4% | | | 1.84 | 47.49 | 32/32 | 94.1% | 10/13 |
 
-Hallucination guard: **65/65** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
+Hallucination guard: **77/77** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
 
 With `large-v3-turbo` (the default when it is downloaded), the WER drops to **6.5%** overall (0.0% / 3.4% / 5.7% / 3.5% / 9.6%) at 10.9 s per audio minute. That figure was measured with the minutes written in two requests (before [ADR 0004](docs/adr/0004-minutes-one-request-per-list.md)); the minutes columns above are the current pipeline.
 
