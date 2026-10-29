@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Health, Settings } from '../../shared/contract.ts'
-import { ipcErrorMessage, listOf } from './format.ts'
+import { ipcErrorMessage, linesOf, listOf } from './format.ts'
 import { api } from './platform.ts'
 
 type Patch = Partial<Omit<Settings, 'outputDir'>>
@@ -141,9 +141,9 @@ export function SettingsPanel(props: {
       <label className="field">
         <span>Vocabulary</span>
         <textarea
-          key={`vocab-${settings.vocabulary.join(',')}`}
+          key={`vocab-${settings.vocabulary.join('\n')}`}
           defaultValue={settings.vocabulary.join('\n')}
-          onBlur={(e) => void set({ vocabulary: listOf(e.target.value) })}
+          onBlur={(e) => void set({ vocabulary: linesOf(e.target.value) })}
           rows={4}
           spellCheck={false}
           placeholder={'Kubernetes\nPedro Alcântara'}
