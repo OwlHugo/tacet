@@ -14,6 +14,7 @@ describe('loadCases', () => {
       '04-sprint-import-en',
       '05-sprint-pix-pt',
       '06-bakery-self-en',
+      '07-print-shop-self-en',
     ])
     const labels = cases.map((c) => c.tracks.map((t) => t.speaker).sort())
     expect(labels).toEqual([
@@ -21,6 +22,7 @@ describe('loadCases', () => {
       ['Me', 'Others'],
       ['Me', 'Others'],
       ['Speaker'],
+      ['Me', 'Others'],
       ['Me', 'Others'],
       ['Me', 'Others'],
     ])

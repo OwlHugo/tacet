@@ -4,6 +4,7 @@ import {
   capitalize,
   duration,
   ipcErrorMessage,
+  linesOf,
   listOf,
   shortcutLabel,
 } from './format.ts'
@@ -28,6 +29,13 @@ describe('format', () => {
       'Kubernetes',
     ])
     expect(listOf('  ')).toEqual([])
+  })
+
+  it('reads the vocabulary one term per line, keeping a comma inside a term', () => {
+    expect(linesOf('Silva, Pedro\n Kubernetes \n\nSilva, Pedro')).toEqual([
+      'Silva, Pedro',
+      'Kubernetes',
+    ])
   })
 
   it('keeps only the audio files Tacet can import', () => {

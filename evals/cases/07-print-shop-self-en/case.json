@@ -1,0 +1,99 @@
+{
+  "id": "07-print-shop-self-en",
+  "title": "Print shop catalog, recorded by Helena with --me, tasks given to her by name",
+  "language": "en",
+  "tracks": [
+    {
+      "file": "others.wav",
+      "speaker": "Others"
+    },
+    {
+      "file": "me.wav",
+      "speaker": "Me"
+    }
+  ],
+  "reference": [
+    {
+      "speaker": "Others",
+      "text": "Morning. Today we plan the spring catalog for the print shop.",
+      "start": 0.5
+    },
+    {
+      "speaker": "Me",
+      "text": "Right. The paper order is still open.",
+      "start": 4.42
+    },
+    {
+      "speaker": "Others",
+      "text": "Helena will call the paper supplier by Monday.",
+      "start": 7.25
+    },
+    {
+      "speaker": "Me",
+      "text": "Okay, that works for me. What about the cover?",
+      "start": 10.31
+    },
+    {
+      "speaker": "Others",
+      "text": "Victor will fix the cover photo by Thursday.",
+      "start": 13.74
+    },
+    {
+      "speaker": "Me",
+      "text": "Good, the old photo was too dark anyway.",
+      "start": 16.85
+    },
+    {
+      "speaker": "Others",
+      "text": "And Helena sends the price list to the designer.",
+      "start": 19.95
+    },
+    {
+      "speaker": "Me",
+      "text": "Sure, I have the latest prices here.",
+      "start": 22.87
+    },
+    {
+      "speaker": "Others",
+      "text": "We decided to print five hundred copies of the catalog.",
+      "start": 25.58
+    }
+  ],
+  "expected_actions": [["supplier"], ["cover"], ["price", "list"]],
+  "expected_due": [
+    {
+      "task": ["supplier"],
+      "due": "monday"
+    },
+    {
+      "task": ["cover"],
+      "due": "thursday"
+    }
+  ],
+  "answer_key": {
+    "subject": ["catalog|catalogue"],
+    "decisions": [
+      {
+        "keywords": ["five|500", "copies|catalog|catalogue"]
+      }
+    ],
+    "tasks": [
+      {
+        "keywords": ["supplier"],
+        "owner": ["Me"]
+      },
+      {
+        "keywords": ["cover"],
+        "owner": ["Victor", "Others"]
+      },
+      {
+        "keywords": ["price"],
+        "owner": ["Me"]
+      }
+    ]
+  },
+  "self": {
+    "name": "Helena",
+    "aliases": ["Lena"]
+  }
+}

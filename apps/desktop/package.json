@@ -16,7 +16,7 @@
     "start": "electron-vite preview",
     "fetch-whisper": "node scripts/fetch-whisper.ts",
     "dist": "pnpm run build && pnpm run fetch-whisper && electron-builder --publish never",
-    "dist:mac": "pnpm run build && electron-builder --mac dmg --arm64 --publish never"
+    "dist:mac": "pnpm run build && pnpm run fetch-whisper && electron-builder --mac dmg --arm64 --publish never"
   },
   "devDependencies": {
     "@tacet/core": "workspace:*",

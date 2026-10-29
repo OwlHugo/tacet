@@ -1,4 +1,4 @@
-import { coverage, type Minutes, similarity, type Transcript } from '@tacet/core'
+import { coverage, type Minutes, type Self, similarity, type Transcript } from '@tacet/core'
 
 export interface GroundingReport {
   readonly items: number
@@ -11,12 +11,14 @@ export interface GroundingReport {
 /**
  * Independent check, written apart from groundMinutes: an item is grounded only if it cites real
  * segments, its timestamp is the start of the first one, its quote is in them, and (for tasks) its
- * owner is a track of this transcript, a name that was said, or nobody.
+ * owner is a track of this transcript, a name that was said, the user's own name on a one-track
+ * file (set with --me, it may be theirs without being said), or nobody.
  */
 export function checkGrounding(
   minutes: Minutes,
   transcript: Transcript,
   expectedActions: readonly (readonly string[])[],
+  self?: Self,
 ): GroundingReport {
   const byId = new Map(transcript.segments.map((s) => [s.id, s]))
   const items = [
@@ -43,8 +45,11 @@ export function checkGrounding(
   // labels count only as tracks: "Others" is not an owner of a one-track import just because someone
   // said "the others". "Speaker" (one mixed track) says nothing about who spoke, so it never is.
   const TRACK_LABELS = new Set(['me', 'others', 'speaker'])
+  // On two tracks the user is the "Me" track, so their name is never the owner there.
+  const selfNames = self === undefined || speakers.has('Me') ? [] : [self.name, ...self.aliases]
   const ownerGrounded = (owner: string) =>
     owner === 'Unassigned' ||
+    selfNames.includes(owner) ||
     (TRACK_LABELS.has(owner.trim().toLowerCase()) || /\bspeaker\b/i.test(owner)
       ? owner !== 'Speaker' && speakers.has(owner)
       : speakers.has(owner) || coverage(owner, spoken) === 1)

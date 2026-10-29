@@ -12,8 +12,8 @@
  * A case with an `answer_key` is also scored for meaning: decisions and tasks that match the key
  * (precision, recall), items that match nothing (invented) and tasks with the wrong owner.
  *
- * Fails if any decision or task lacks a source, if an injected hallucination survives, or if WER
- * goes above --max-wer.
+ * Fails if any decision or task lacks a source, if an injected hallucination survives, if a task
+ * carries an owner its answer key does not allow, or if WER goes above --max-wer.
  */
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -156,7 +156,7 @@ async function evaluate(c: EvalCase): Promise<CaseResult> {
   const minutes = groundMinutes(run.raw, minutesOn, USES_LLM ? values.llm : recorded(c).llmModel, {
     self: c.self,
   })
-  const grounding = checkGrounding(minutes, minutesOn, c.expected_actions)
+  const grounding = checkGrounding(minutes, minutesOn, c.expected_actions, c.self)
   const deadlines = checkDeadlines(minutes, c.expected_due)
   const perMinute = (s: number | undefined) =>
     s === undefined ? undefined : s / (run.transcript.duration / 60)

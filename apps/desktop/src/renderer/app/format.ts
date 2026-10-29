@@ -36,12 +36,19 @@ export const ipcErrorMessage = (e: unknown): string =>
     .replace(/^Error invoking remote method '[^']+': /, '')
     .replace(/^(?:[A-Za-z]*Error: )+/, '')
 
-/** "Rafa, Rafinha\n" or one per line -> ["Rafa", "Rafinha"]: trimmed, no blanks, no repeats. */
-export const listOf = (text: string): string[] => [
+/**
+ * The items of a list, split on `separator`: trimmed, no blanks, no repeats. Nicknames take commas
+ * or lines ("Rafa, Rafinha"); the vocabulary takes lines only, since a term may hold a comma
+ * ("Silva, Pedro").
+ */
+export const listOf = (text: string, separator: RegExp = /[,\n]/): string[] => [
   ...new Set(
     text
-      .split(/[,\n]/)
+      .split(separator)
       .map((w) => w.trim())
       .filter((w) => w !== ''),
   ),
 ]
+
+/** One term per line: a comma belongs to the term. */
+export const linesOf = (text: string): string[] => listOf(text, /\n/)

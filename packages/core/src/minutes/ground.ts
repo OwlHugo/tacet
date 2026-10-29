@@ -135,24 +135,127 @@ export function sourceLines(
 const SELF = new Set(['me', 'eu', 'i'])
 const OTHERS_WORDS = new Set(['others', 'outros', 'them'])
 const NOBODY = new Set(['', 'unassigned', 'unknown', 'none', 'n a', 'ninguem'])
+/** "I will", "vou", "eu": whoever says it takes the work on. "I'll" is checked on the raw text. */
 const COMMITMENT = /\b(i ll|i will|i can|vou|eu)\b/
+/** "I'll" normalizes to "ill", the same word as the adjective ("Bia is ill"): only the apostrophe tells them apart. */
+const I_WILL = /\bI['’]ll\b/i
+
+/** Whether the one speaking takes work on in this text. */
+const commits = (text: string) => I_WILL.test(text) || COMMITMENT.test(normalize(text))
 
 const wasSaid = (name: string, index: TranscriptIndex) =>
   words(name).every((w) => index.spoken.has(w))
 
-/** A line that asks something of "you": on one track, of the person recording in a one-to-one call. */
-const ASKS_YOU = /\b(you|your|voce|vc|tu|te)\b/
+/** Work someone can be asked to do, after "você pode", "pode ...?", "consegue ...?". */
+const PT_TASK_VERB =
+  '(mandar|enviar|revisar|fazer|ver se|olhar|cuidar|preparar|marcar|agendar|ligar|escrever|atualizar|resolver|subir|checar|conferir|corrigir|arrumar|testar|organizar|levar|trazer|pagar|comprar|reservar|imprimir|avisar|falar|terminar|entregar|assinar|pegar|tirar|renovar)'
+
+/** Work someone can be asked to do, after "can you", "please", "you need to". */
+const EN_TASK_VERB =
+  '(send|book|call|check|fix|review|write|print|order|update|prepare|draft|schedule|set up|look into|take care|handle|finish|deliver|sign|pick up|buy|pay|share|forward|email|ask|tell|follow up|organize|clean|test|deploy|upload|move|cancel|confirm|reply|cover|take|bring|get|make|do|run|own|lead|plan|renew)'
+
+/** Portuguese imperatives a "por favor" turns into a request ("Por favor, revisa o contrato"). */
+const PT_IMPERATIVE =
+  '(manda|mande|envia|envie|revisa|revise|faz|faca|liga|ligue|marca|marque|prepara|prepare|olha|olhe|confere|confira|resolve|resolva|assina|assine|imprime|imprima|reserva|reserve)'
+
+/**
+ * A request made to "you": a clause (normalized) that starts with one of these forms, and names
+ * work. A "you" anywhere else is not one: "thank you", "I will send you", "te mando", "you sent it
+ * yesterday", "você tem razão", "can you see my screen", "you have to admit", "please note".
+ */
+const ASKS_YOU = new RegExp(
+  // A clause may open with "and" / "e" or a "please": "..., e eu quero que você assine".
+  '^(and |e |also |tambem )?(please |por favor )?(' +
+    [
+      `(can|could|would|will) you (please )?${EN_TASK_VERB}`,
+      `you (need|have|must|got) to ${EN_TASK_VERB}`,
+      `(i need|i want|i d like|id like|i would like) you to ${EN_TASK_VERB}`,
+      `(voce|vc|tu) (pode|podes|poderia|podia|consegue|consegues|precisa) ${PT_TASK_VERB}`,
+      '(eu )?(preciso|quero|queria) que (voce|vc|tu)',
+      '(voce|vc) fica com',
+      'me (manda|mande|envia|envie|passa|passe|avisa|avise|mostra|mostre)',
+      '(send|give|tell|show|forward|email) me',
+    ].join('|') +
+    String.raw`)\b`,
+)
+
+/** A bare imperative is a request only with a "please" on it: "Please book the room", "Book the room, please". */
+const PLEASE = new RegExp(
+  String.raw`^(please|por favor) (${EN_TASK_VERB}|${PT_IMPERATIVE})\b|^(${EN_TASK_VERB}|${PT_IMPERATIVE})\b.* (please|por favor)$`,
+)
+
+/** "O contrato fica com você": the work is handed to "you" at the end of the clause. */
+const HANDED_TO_YOU = /\bfica com (voce|vc)$/
+
+/** Asked as a question: "Pode mandar o contrato?", "Consegue revisar hoje?" ("Pode crer." is not). */
+const ASKS_AS_QUESTION = new RegExp(
+  String.raw`^(pode|poderia|podia|consegue|conseguiria|da pra) ${PT_TASK_VERB}\b`,
+)
+
+/** A word that greets, agrees or asks nicely, not a name said to someone ("Okay, can you…"). */
+const NOT_A_VOCATIVE = new Set(
+  (
+    'ok okay so and then well right sure yes yeah hey hi oh ah great good actually also please ' +
+    'thanks e entao bom beleza certo ta olha oi opa sim agora por favor obrigado obrigada ' +
+    'pessoal gente galera guys everyone team folks'
+  ).split(' '),
+)
+
+/**
+ * Whether a line starts by naming who it is said to ("Bia, consegue…?", "Pedro, please…"). A request
+ * said to someone by name is theirs, even with a "you" in it; when that name is the recorder's, it
+ * was said, and the task is theirs anyway.
+ */
+function saidToSomeone(line: Segment): boolean {
+  const head = /^([^,.;:!?]{1,40}),/.exec(line.text)?.[1]
+  if (head === undefined) return false
+  const said = words(head)
+  return said.length <= 3 && !said.every((w) => NOT_A_VOCATIVE.has(w))
+}
+
+/**
+ * The clauses of a line, normalized. A "please" / "por favor" said apart, before or after, stays
+ * on the clause it asks for ("Please, send the deck", "Book the room, please").
+ */
+const clausesOf = (text: string) =>
+  text
+    .replace(/^\s*(please|por favor)\s*,\s*/i, '$1 ')
+    .replace(/,\s*(please|por favor)\s*([.!?]*)\s*$/i, ' $1$2')
+    .split(/(?<=[,.;:!?])/)
+    .map((c) => normalize(c))
+
+/**
+ * A line that asks the listener to do something, and where the one speaking takes nothing on in the
+ * rest of it ("Can you wait? I will send the invoice", "Você pode revisar o que eu mandei?" counts:
+ * the "eu" is inside the request).
+ */
+function asksYou(line: Segment): boolean {
+  const question = line.text.includes('?')
+  const asked = (c: string) =>
+    ASKS_YOU.test(c) ||
+    PLEASE.test(c) ||
+    HANDED_TO_YOU.test(c) ||
+    (question && ASKS_AS_QUESTION.test(c))
+  const clauses = clausesOf(line.text)
+  const rest = clauses.filter((c) => !asked(c)).join(' ')
+  return clauses.some(asked) && !COMMITMENT.test(rest) && !I_WILL.test(line.text)
+}
+
+/** Whether a line asks the recorder: a "you" said to nobody by name. */
+const asksSelf = (line: Segment) => asksYou(line) && !saidToSomeone(line)
 
 /**
  * The owner as the person who recorded the meeting: "Me" on two tracks. On one track their name,
- * when one of their names was said in the meeting or the task's line asks it of "you".
+ * when one of their names was said in the meeting or a line of the task asks it of "you". A name
+ * with no letter or digit ("🙂", "-") is no name: it would match the empty owner, and is never shown.
  */
 function asSelf(n: string, self: Self, source: Lines, index: TranscriptIndex): string | undefined {
-  const names = [self.name, ...self.aliases]
+  const names = [self.name, ...self.aliases].filter((s) => words(s).length > 0)
+  const [shown] = names
   if (!names.some((s) => normalize(s) === n)) return undefined
   if (index.speakers.has(ME)) return ME
   const named = names.some((s) => wasSaid(s, index))
-  return named || ASKS_YOU.test(normalize(textOf(source))) ? self.name : undefined
+  return named || source.some(asksSelf) ? shown : undefined
 }
 
 /**
@@ -180,7 +283,7 @@ function resolveOwner(
     return owner.trim()
   // "I will send the notes": whoever said that line owns the task, if we know who that was.
   const said = source[0].speaker
-  return COMMITMENT.test(normalize(textOf(source))) && said !== SPEAKER ? said : 'Unassigned'
+  return commits(textOf(source)) && said !== SPEAKER ? said : 'Unassigned'
 }
 
 const cite = (lines: Lines) => ({
@@ -279,18 +382,43 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
   return [...owners].filter((o) => said.has(o)).length
 }
 
-/** Words a line may bring of its own and still be a reply about the task ("Sure, by Friday"). */
-const REPLY_WORDS = 2
-
 /**
- * Words of agreeing to do something, which bring no subject of their own: "Fechado, consigo
- * entregar isso até sexta sem problema" is still a reply about the task asked just before.
+ * What a reply says to agree: "Fechado", "sure", "sem problema", "pode deixar". Agreeing brings no
+ * subject of its own.
  */
+const AGREEING_PHRASES =
+  /\b(sem problemas?|no problems?|no worries|of course|pode deixar|deixa comigo|pode ser|tudo bem|tudo certo|by all means)\b/g
 const AGREEING = new Set(
   (
-    'sure fine deal done deliver get finish manage problem worries absolutely course right ' +
-    'that isso fechado beleza combinado certo claro pode deixa consigo entregar entrego faco fazer ' +
-    'termino terminar problema tranquilo boa ai'
+    'sure fine deal done agreed absolutely right perfect alright great good sounds yep fechado ' +
+    'beleza combinado certo claro isso tranquilo boa bom otimo joia perfeito feito ai'
+  )
+    .split(' ')
+    .map(stem),
+)
+
+/**
+ * Verbs a reply takes the asked work on with ("consigo entregar", "I'll finish", "posso fazer"). They
+ * name no work, but a reply that has one says what it will do: then any other word is the work, and
+ * if it is not this task's ("Fechado, faço o deploy até sexta"), the deadline is another task's.
+ */
+const TAKING_ON = new Set(
+  (
+    'consigo posso podemos entrego entregar faco fazer termino terminar mando mandar envio enviar ' +
+    'resolvo fica deliver finish send get have ready manage handle ill pronto'
+  )
+    .split(' ')
+    .map(stem),
+)
+
+/**
+ * Words that point back at the task asked ("esse aqui", "that one") or round an answer off ("works
+ * for me", "sounds good to us"): no subject of their own.
+ */
+const POINTING = new Set(
+  (
+    'esse essa este esta isto aqui ali la entao one here there then also too works work sounds ' +
+    'nicely totally definitely ja mesmo'
   )
     .split(' ')
     .map(stem),
@@ -298,14 +426,19 @@ const AGREEING = new Set(
 
 /**
  * Whether the line holding a deadline talks about this task: it says some of the task's words, or
- * it is a short reply that brings no subject of its own. "On Friday we pick the band for the party?" after "Book
- * the hall first" names another piece of work, so its deadline is not the hall's.
+ * it is a reply that adds nothing of its own: every other word agrees ("Great, by Friday", "Tá bom,
+ * até sexta"), takes the asked work on ("consigo entregar"), or points back at it ("esse aqui").
+ * Any other word may be other work ("Beleza, o deploy até sexta"), so the deadline is dropped: a
+ * missing deadline is better than a wrong one. "On Friday we pick the band for the party?" after
+ * "Book the hall first" names another piece of work, so its deadline is not the hall's.
  */
 function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
-  const rest = contentWords(line.text.replace(said, ' ')).map(stem)
-  const subject = rest.filter((w) => !AGREEING.has(w))
-  return rest.some((w) => own.has(w)) || subject.length <= REPLY_WORDS
+  // "I’ll" with a curly apostrophe is "I'll": normalize would split it into "i ll".
+  const text = line.text.replace(said, ' ').replace(/’/g, "'")
+  const rest = contentWords(normalize(text).replace(AGREEING_PHRASES, ' ')).map(stem)
+  if (rest.some((w) => own.has(w))) return true
+  return rest.every((w) => AGREEING.has(w) || TAKING_ON.has(w) || POINTING.has(w))
 }
 
 /**

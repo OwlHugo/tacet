@@ -78,6 +78,14 @@ describe('checkGrounding', () => {
       true,
     ])
     expect(ok('Pedro')).toBe(false)
+    // The user's own name, set with --me, may own a task without being said.
+    const pedro = { name: 'Pedro', aliases: ['Pepe'] }
+    const mixed = { ...T, segments: T.segments.map((s) => ({ ...s, speaker: 'Speaker' })) }
+    const asSelf = (owner: string, t: Transcript = mixed) =>
+      checkGrounding(task(owner), t, [], pedro).grounded === 1
+    expect([asSelf('Pedro'), asSelf('Pepe'), asSelf('Paulo')]).toEqual([true, true, false])
+    // On two tracks the user is "Me": their name as owner is not grounded.
+    expect(asSelf('Pedro', T)).toBe(false)
     // "the others" is said, but there is no Others track: still not an owner
     const single = {
       ...T,
