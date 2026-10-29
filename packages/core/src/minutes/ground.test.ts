@@ -305,6 +305,8 @@ describe('groundMinutes', () => {
         ],
         ['Me manda o contrato amanhã.', 'Mandar o contrato amanhã'],
         ['Send me the deck tomorrow.', 'Send the deck tomorrow'],
+        ['Amanhã, você pode mandar o contrato?', 'Mandar o contrato'],
+        ['Can you send the invoice, by Friday?', 'Send the invoice'],
       ]
       expect(asked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
         asked.map(() => 'Rafael'),
@@ -362,6 +364,16 @@ describe('groundMinutes', () => {
         ['Thanks, the vendor sends the invoice.', 'Send the invoice'],
         ['The vendor said you need to send the invoice.', 'Send the invoice'],
         ['Send the deck tomorrow.', 'Send the deck tomorrow'],
+        // Said to someone else by name after the request.
+        ['Can you send the invoice, Bia?', 'Send the invoice'],
+        ['Pode mandar o contrato, Bia?', 'Mandar o contrato'],
+        // "Que você" and "você fica com" only with work after them.
+        ['Quero que você saiba que o fornecedor manda a nota.', 'Mandar a nota'],
+        ['Você fica com raiva quando o fornecedor atrasa a nota.', 'Mandar a nota'],
+        // The "?" of another sentence does not make this one a question.
+        ['Dá pra mandar a nota depois. Alguém viu?', 'Mandar a nota depois'],
+        // A request for other work on the same line: the cover is Pedro's.
+        ['Can you send the invoice? Also Pedro fixes the cover.', 'Fix the cover'],
       ]
       expect(notAsked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
         notAsked.map(() => 'Unassigned'),
@@ -758,6 +770,9 @@ describe('groundMinutes', () => {
         'Yes, works nicely for me, by Friday.',
         'Beleza, o deploy até sexta.',
         'Sure, the migration by Friday.',
+        'Não, até sexta não dá.',
+        'No, not by Friday.',
+        "Sure, but I can't by Friday.",
       )
       const menu = (segments: number[], due: string) =>
         run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
@@ -785,6 +800,10 @@ describe('groundMinutes', () => {
       // A reply that names other work, even with no verb, is about that work.
       expect(menu([0, 18], 'até sexta')).not.toHaveProperty('due')
       expect(menu([0, 19], 'by Friday')).not.toHaveProperty('due')
+      // A refusal keeps nothing: the deadline said is the one refused.
+      expect(menu([0, 20], 'até sexta')).not.toHaveProperty('due')
+      expect(menu([0, 21], 'by Friday')).not.toHaveProperty('due')
+      expect(menu([0, 22], 'by Friday')).not.toHaveProperty('due')
     })
 
     it('cuts the deadline from the end of the task with the word that leads into it', () => {

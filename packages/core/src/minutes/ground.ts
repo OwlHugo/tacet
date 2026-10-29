@@ -154,6 +154,10 @@ const PT_TASK_VERB =
 const EN_TASK_VERB =
   '(send|book|call|check|fix|review|write|print|order|update|prepare|draft|schedule|set up|look into|take care|handle|finish|deliver|sign|pick up|buy|pay|share|forward|email|ask|tell|follow up|organize|clean|test|deploy|upload|move|cancel|confirm|reply|cover|take|bring|get|make|do|run|own|lead|plan|renew)'
 
+/** Work asked with "que você": "preciso que você revise", "queria que você mandasse". */
+const PT_TASK_SUBJUNCTIVE =
+  '(mand|envi|revis|fac|fiz|olh|cuid|prepar|marqu|marc|agend|ligu|lig|escrev|atualiz|resolv|sub|chequ|confir|confer|corrij|corrig|arrum|test|organiz|lev|traga|troux|pagu|pag|compr|reserv|imprim|avis|fal|termin|entreg|assin|pegu|peg|tir|renov)[a-z]*'
+
 /** Portuguese imperatives a "por favor" turns into a request ("Por favor, revisa o contrato"). */
 const PT_IMPERATIVE =
   '(manda|mande|envia|envie|revisa|revise|faz|faca|liga|ligue|marca|marque|prepara|prepare|olha|olhe|confere|confira|resolve|resolva|assina|assine|imprime|imprima|reserva|reserve)'
@@ -171,8 +175,8 @@ const ASKS_YOU = new RegExp(
       `you (need|have|must|got) to ${EN_TASK_VERB}`,
       `(i need|i want|i d like|id like|i would like) you to ${EN_TASK_VERB}`,
       `(voce|vc|tu) (pode|podes|poderia|podia|consegue|consegues|precisa) ${PT_TASK_VERB}`,
-      '(eu )?(preciso|quero|queria) que (voce|vc|tu)',
-      '(voce|vc) fica com',
+      `(eu )?(preciso|quero|queria) que (voce|vc|tu) ${PT_TASK_SUBJUNCTIVE}`,
+      '(voce|vc) fica com (o|a|os|as|esse|essa|esses|essas|isso|isto|este|esta)',
       'me (manda|mande|envia|envie|passa|passe|avisa|avise|mostra|mostre)',
       '(send|give|tell|show|forward|email) me',
     ].join('|') +
@@ -192,14 +196,20 @@ const ASKS_AS_QUESTION = new RegExp(
   String.raw`^(pode|poderia|podia|consegue|conseguiria|da pra) ${PT_TASK_VERB}\b`,
 )
 
-/** A word that greets, agrees or asks nicely, not a name said to someone ("Okay, can you…"). */
+/** A word that greets, agrees, asks nicely or says when, not a name said to someone ("Okay, can you…"). */
 const NOT_A_VOCATIVE = new Set(
   (
     'ok okay so and then well right sure yes yeah hey hi oh ah great good actually also please ' +
     'thanks e entao bom beleza certo ta olha oi opa sim agora por favor obrigado obrigada ' +
-    'pessoal gente galera guys everyone team folks'
+    'pessoal gente galera guys everyone team folks hoje amanha depois today tomorrow later now'
   ).split(' '),
 )
+
+/** A short run of words that names someone, not a greeting or a "thanks" ("Bia", "Ana Clara Souza"). */
+const isVocative = (text: string) => {
+  const said = words(text)
+  return said.length > 0 && said.length <= 3 && !said.every((w) => NOT_A_VOCATIVE.has(w))
+}
 
 /**
  * Whether a line starts by naming who it is said to ("Bia, consegue…?", "Pedro, please…"). A request
@@ -208,54 +218,94 @@ const NOT_A_VOCATIVE = new Set(
  */
 function saidToSomeone(line: Segment): boolean {
   const head = /^([^,.;:!?]{1,40}),/.exec(line.text)?.[1]
-  if (head === undefined) return false
-  const said = words(head)
-  return said.length <= 3 && !said.every((w) => NOT_A_VOCATIVE.has(w))
+  return head !== undefined && isVocative(head)
+}
+
+interface Clause {
+  /** As said, with its punctuation. */
+  readonly said: string
+  /** Normalized. */
+  readonly text: string
+  /** Whether the sentence it is in is a question. */
+  readonly question: boolean
 }
 
 /**
- * The clauses of a line, normalized. A "please" / "por favor" said apart, before or after, stays
- * on the clause it asks for ("Please, send the deck", "Book the room, please").
+ * The clauses of a line. A "please" / "por favor" said apart, before or after, stays on the clause
+ * it asks for ("Please, send the deck", "Book the room, please"). A clause is a question only when
+ * its own sentence ends with "?": in "Dá pra mandar a nota depois. Alguém viu?" nothing is asked.
  */
-const clausesOf = (text: string) =>
+const clausesOf = (text: string): Clause[] =>
   text
-    .replace(/^\s*(please|por favor)\s*,\s*/i, '$1 ')
-    .replace(/,\s*(please|por favor)\s*([.!?]*)\s*$/i, ' $1$2')
-    .split(/(?<=[,.;:!?])/)
-    .map((c) => normalize(c))
+    .trim()
+    .replace(/^(please|por favor)\s*,\s*/i, '$1 ')
+    .replace(/,\s*(please|por favor)\s*([.!?]*)$/i, ' $1$2')
+    .split(/(?<=[.!?])\s*/)
+    .flatMap((sentence) =>
+      sentence
+        .split(/(?<=[,;:])/)
+        .map((said) => ({ said, text: normalize(said), question: sentence.endsWith('?') })),
+    )
+
+const asked = (c: Clause) =>
+  ASKS_YOU.test(c.text) ||
+  PLEASE.test(c.text) ||
+  HANDED_TO_YOU.test(c.text) ||
+  (c.question && ASKS_AS_QUESTION.test(c.text))
 
 /**
- * A line that asks the listener to do something, and where the one speaking takes nothing on in the
- * rest of it ("Can you wait? I will send the invoice", "Você pode revisar o que eu mandei?" counts:
- * the "eu" is inside the request).
+ * Whether a line asks the recorder for this task: a clause of it is a request that names some of the
+ * task's words, said to nobody by name before ("Bia, consegue…?") or right after it ("Can you send the
+ * invoice, Bia?"), and the one speaking takes nothing on in the rest of the line ("Can you wait? I
+ * will send the invoice"; "Você pode revisar o que eu mandei?" counts: the "eu" is inside the
+ * request). A request for other work on the same line ("Can you send the invoice? Also Pedro fixes the
+ * cover.") does not make the cover theirs.
  */
-function asksYou(line: Segment): boolean {
-  const question = line.text.includes('?')
-  const asked = (c: string) =>
-    ASKS_YOU.test(c) ||
-    PLEASE.test(c) ||
-    HANDED_TO_YOU.test(c) ||
-    (question && ASKS_AS_QUESTION.test(c))
+function asksSelf(line: Segment, task: ReadonlySet<string>): boolean {
   const clauses = clausesOf(line.text)
-  const rest = clauses.filter((c) => !asked(c)).join(' ')
-  return clauses.some(asked) && !COMMITMENT.test(rest) && !I_WILL.test(line.text)
+  const rest = clauses
+    .filter((c) => !asked(c))
+    .map((c) => c.text)
+    .join(' ')
+  // A name said after the request is written with a capital, unlike "…, by Friday?".
+  const namedAfter = (i: number) => {
+    const next = clauses[i + 1]
+    return (
+      clauses[i]?.said.endsWith(',') === true &&
+      next !== undefined &&
+      /^\s*\p{Lu}/u.test(next.said) &&
+      isVocative(next.said)
+    )
+  }
+  return (
+    !saidToSomeone(line) &&
+    clauses.some(
+      (c, i) => asked(c) && contentWords(c.text).some((w) => task.has(stem(w))) && !namedAfter(i),
+    ) &&
+    !COMMITMENT.test(rest) &&
+    !I_WILL.test(line.text)
+  )
 }
-
-/** Whether a line asks the recorder: a "you" said to nobody by name. */
-const asksSelf = (line: Segment) => asksYou(line) && !saidToSomeone(line)
 
 /**
  * The owner as the person who recorded the meeting: "Me" on two tracks. On one track their name,
  * when one of their names was said in the meeting or a line of the task asks it of "you". A name
  * with no letter or digit ("🙂", "-") is no name: it would match the empty owner, and is never shown.
  */
-function asSelf(n: string, self: Self, source: Lines, index: TranscriptIndex): string | undefined {
+function asSelf(
+  n: string,
+  self: Self,
+  source: Lines,
+  index: TranscriptIndex,
+  task: string,
+): string | undefined {
   const names = [self.name, ...self.aliases].filter((s) => words(s).length > 0)
   const [shown] = names
   if (!names.some((s) => normalize(s) === n)) return undefined
   if (index.speakers.has(ME)) return ME
   const named = names.some((s) => wasSaid(s, index))
-  return named || source.some(asksSelf) ? shown : undefined
+  const own = new Set(contentWords(task).map(stem))
+  return named || source.some((l) => asksSelf(l, own)) ? shown : undefined
 }
 
 /**
@@ -267,9 +317,10 @@ function resolveOwner(
   source: Lines,
   index: TranscriptIndex,
   self: Self | undefined,
+  task: string,
 ): string {
   const n = normalize(owner)
-  const me = self === undefined ? undefined : asSelf(n, self, source, index)
+  const me = self === undefined ? undefined : asSelf(n, self, source, index, task)
   if (me !== undefined) return me
   if (SELF.has(n) && index.speakers.has(ME)) return ME
   if (OTHERS_WORDS.has(n) && index.speakers.has(OTHERS_LABEL)) return OTHERS_LABEL
@@ -424,9 +475,14 @@ const POINTING = new Set(
     .map(stem),
 )
 
+/** A "no" on the line: the deadline said there may be the one refused ("Não, até sexta não dá"). */
+const NEGATION =
+  /\b(no|nao|not|nope|never|nunca|cannot)\b|\b(can|won|don|didn|isn|couldn|wouldn)\s?t\b/
+
 /**
- * Whether the line holding a deadline talks about this task: it says some of the task's words, or
- * it is a reply that adds nothing of its own: every other word agrees ("Great, by Friday", "Tá bom,
+ * Whether the line holding a deadline talks about this task. A line that says no anywhere is not
+ * ("Não, até sexta não dá", "No, not by Friday"): the deadline may be the one refused. Otherwise it
+ * says some of the task's words, or it is a reply that adds nothing of its own: every other word agrees ("Great, by Friday", "Tá bom,
  * até sexta"), takes the asked work on ("consigo entregar"), or points back at it ("esse aqui").
  * Any other word may be other work ("Beleza, o deploy até sexta"), so the deadline is dropped: a
  * missing deadline is better than a wrong one. "On Friday we pick the band for the party?" after
@@ -436,7 +492,9 @@ function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
   // "I’ll" with a curly apostrophe is "I'll": normalize would split it into "i ll".
   const text = line.text.replace(said, ' ').replace(/’/g, "'")
-  const rest = contentWords(normalize(text).replace(AGREEING_PHRASES, ' ')).map(stem)
+  const kept = normalize(text).replace(AGREEING_PHRASES, ' ')
+  if (NEGATION.test(kept)) return false
+  const rest = contentWords(kept).map(stem)
   if (rest.some((w) => own.has(w))) return true
   return rest.every((w) => AGREEING.has(w) || TAKING_ON.has(w) || POINTING.has(w))
 }
@@ -531,7 +589,7 @@ function groundActions(
       const due = groundDue(c, citedBy, owners, rejected)
       return {
         task: withoutDeadline(c.task, due ?? c.raw.due),
-        owner: resolveOwner(c.raw.owner, c.lines, index, self),
+        owner: resolveOwner(c.raw.owner, c.lines, index, self, c.task),
         ...(due === undefined ? {} : { due }),
         quote: c.raw.quote.trim(),
         ...cite(c.lines),
