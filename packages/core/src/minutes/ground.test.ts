@@ -115,6 +115,17 @@ describe('groundMinutes', () => {
       't',
     )
     expect(r.actionItems[0]?.owner).toBe('Me')
+    const ill = groundMinutes(
+      one('Send the release notes', '', 'I will send the release notes', [3]),
+      {
+        ...TRANSCRIPT,
+        segments: TRANSCRIPT.segments.map((s) =>
+          s.id === 3 ? { ...s, text: "I'll send the release notes by Thursday." } : s,
+        ),
+      },
+      't',
+    )
+    expect(ill.actionItems[0]?.owner).toBe(TRANSCRIPT.segments[3]?.speaker)
   })
 
   it('maps "eu"/"outros" owners to the track labels', () => {
@@ -242,6 +253,76 @@ describe('groundMinutes', () => {
       expect(owner('Rafa', 'Print the flyers later', 'prints the flyers later', 3, unnamed)).toBe(
         'Unassigned',
       )
+    })
+
+    // Same call, no name of theirs said: only the line of the task can make it theirs.
+    const unnamedWith = (text: string): Transcript => ({
+      ...CALL,
+      segments: CALL.segments.map((s) =>
+        s.id === 1 ? { ...s, text: 'New menu photos.' } : s.id === 2 ? { ...s, text } : s,
+      ),
+    })
+    const onLine = (text: string, task: string, o = 'Rafael') =>
+      owner(o, task, text.replace(/[.?!]$/, ''), 2, unnamedWith(text))
+
+    it('gets a task on one track only when its line asks it of "you", as a request', () => {
+      const asked = [
+        ['Could you send the invoice?', 'Send the invoice'],
+        ['Please book the room for Monday.', 'Book the room for Monday'],
+        ['You need to renew the domain.', 'Renew the domain'],
+        ['Você pode revisar o cardápio?', 'Revisar o cardápio'],
+        ['Pode mandar o contrato hoje?', 'Mandar o contrato hoje'],
+        ['Bia, consegue mandar o contrato hoje?', 'Mandar o contrato hoje'],
+        ['O contrato fica com você.', 'Revisar o contrato'],
+        ['Bia, you call the paper supplier.', 'Call the paper supplier'],
+        ['Me manda o contrato amanhã.', 'Mandar o contrato amanhã'],
+        ['Send me the deck tomorrow.', 'Send the deck tomorrow'],
+      ]
+      expect(asked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
+        asked.map(() => 'Rafael'),
+      )
+      // The request and the reply cited together: the request is enough.
+      const replied = {
+        ...unnamedWith('Could you print the price list?'),
+        segments: [
+          ...unnamedWith('Could you print the price list?').segments,
+          { id: 4, start: 12, end: 14, speaker: 'Speaker', text: 'Sure.' },
+        ],
+      }
+      expect(
+        groundMinutes(
+          one('Print the price list', 'Rafa', 'print the price list', [2, 4]),
+          replied,
+          't',
+          { self },
+        ).actionItems[0]?.owner,
+      ).toBe('Rafael')
+    })
+
+    it('does not take "you" on a line where the one speaking takes the work on, or thanks', () => {
+      const notAsked = [
+        ['I will send you the deck tomorrow.', 'Send the deck tomorrow'],
+        ["Thank you, I'll book the room.", 'Book the room'],
+        ['Te mando o contrato amanhã.', 'Mandar o contrato amanhã'],
+        ['Pode deixar, eu mando o contrato amanhã.', 'Mandar o contrato amanhã'],
+        ['Can you wait? I will send the invoice.', 'Send the invoice'],
+        ['Somebody prints the flyers later, thank you.', 'Print the flyers later'],
+        ['Your flyers get printed later.', 'Print the flyers later'],
+        ['You know, the flyers get printed later.', 'Print the flyers later'],
+        ['Send the deck tomorrow.', 'Send the deck tomorrow'],
+      ]
+      expect(notAsked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
+        notAsked.map(() => 'Unassigned'),
+      )
+    })
+
+    it('is the Me track on a recording with the microphone only', () => {
+      const mic = { ...CALL, segments: CALL.segments.map((s) => ({ ...s, speaker: 'Me' })) }
+      const run = (o: string) =>
+        groundMinutes(one('Print the flyers later', o, 'prints the flyers later', [3]), mic, 't', {
+          self,
+        }).actionItems[0]?.owner
+      expect([run('Rafael'), run('rafa'), run('Others')]).toEqual(['Me', 'Me', 'Unassigned'])
     })
 
     it('is the Me track on two tracks, whether the model wrote Me or their name', () => {

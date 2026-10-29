@@ -135,24 +135,52 @@ export function sourceLines(
 const SELF = new Set(['me', 'eu', 'i'])
 const OTHERS_WORDS = new Set(['others', 'outros', 'them'])
 const NOBODY = new Set(['', 'unassigned', 'unknown', 'none', 'n a', 'ninguem'])
-const COMMITMENT = /\b(i ll|i will|i can|vou|eu)\b/
+/** "I will", "I'll" (normalized to "ill"), "vou": whoever says it takes the work on. */
+const COMMITMENT = /\b(i ll|ill|i will|i can|vou|eu)\b/
 
 const wasSaid = (name: string, index: TranscriptIndex) =>
   words(name).every((w) => index.spoken.has(w))
 
-/** A line that asks something of "you": on one track, of the person recording in a one-to-one call. */
-const ASKS_YOU = /\b(you|your|voce|vc|tu|te)\b/
+/**
+ * A request made to "you" ("can you", "could you", "please", "você pode", "pode revisar"), as
+ * normalized text. A bare "you" is not one: "thank you", "I will send you", "te mando".
+ */
+const ASKS_YOU = new RegExp(
+  [
+    String.raw`\b(can|could|would|will) you\b`,
+    String.raw`\byou (need|have|must|got) to\b`,
+    String.raw`\byou should\b`,
+    String.raw`\b(i need|i want|i d like|id like|i would like) you to\b`,
+    String.raw`\bplease\b`,
+    String.raw`\b(voce|vc|tu) (pode|podes|poderia|podia|consegue|consegues|precisa|fica com)\b`,
+    String.raw`\b(preciso|quero|queria) que (voce|vc|tu)\b`,
+    String.raw`\bfica com (voce|vc)\b`,
+    String.raw`\bpor favor\b`,
+    // "Pode revisar o cardápio?", "Ana, consegue mandar hoje?": not "pode deixar", "pode ser".
+    String.raw`^(pode|poderia|podia|consegue|conseguiria|da pra) (?!deixar\b|ser\b)\w`,
+    // Told to the listener: "Ana, you call the supplier", "me manda o contrato", "send me the deck".
+    String.raw`^(you|voce|vc|tu) (?!know|see|mean|think|guys|are|were|re|was|did|do|said)\w`,
+    String.raw`^me (manda|mande|envia|envie|passa|passe|avisa|avise|mostra|mostre)\b`,
+    String.raw`^(send|give|tell|show|forward|email) me\b`,
+    String.raw`\blet me know\b`,
+  ].join('|'),
+)
+
+/** A line that asks the listener to do something, and where the one speaking takes nothing on. */
+const asksYou = (line: Segment) =>
+  !COMMITMENT.test(normalize(line.text)) &&
+  line.text.split(/[,.;:!?]/).some((clause) => ASKS_YOU.test(normalize(clause)))
 
 /**
  * The owner as the person who recorded the meeting: "Me" on two tracks. On one track their name,
- * when one of their names was said in the meeting or the task's line asks it of "you".
+ * when one of their names was said in the meeting or a line of the task asks it of "you".
  */
 function asSelf(n: string, self: Self, source: Lines, index: TranscriptIndex): string | undefined {
   const names = [self.name, ...self.aliases]
   if (!names.some((s) => normalize(s) === n)) return undefined
   if (index.speakers.has(ME)) return ME
   const named = names.some((s) => wasSaid(s, index))
-  return named || ASKS_YOU.test(normalize(textOf(source))) ? self.name : undefined
+  return named || source.some(asksYou) ? self.name : undefined
 }
 
 /**
