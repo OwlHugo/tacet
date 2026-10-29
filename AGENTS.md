@@ -4,7 +4,8 @@ Local meeting transcriber (whisper.cpp + Ollama, Electron tray app, CLI). Nothin
 
 ## Layout
 
-- `packages/core`: the product logic, published as `@tacet/core`. Folders by feature:
+- `packages/core`: the product logic, `@tacet/core` (private workspace package, bundled into the
+  `tacet` CLI on npm). Folders by feature:
   - pure: `transcript/`, `minutes/`, `matching/`, `meeting/`. No I/O, no adapters.
   - adapters: `whisper/`, `ollama/`, `audio/`, `library/`. Node I/O is allowed here.
   - `index.ts` is the public API. `browser.ts` is the only entry the renderer may import.

@@ -10,9 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/OwlHugo/tacet/actions/workflows/ci.yml"><img src="https://github.com/OwlHugo/tacet/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/license-MIT-8B7CF6" alt="MIT" />
-  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-0E0F14" alt="platforms" />
+  <img src="https://img.shields.io/badge/macOS%20Apple%20Silicon-0E0F14" alt="macOS Apple Silicon" />
 </p>
 
 <p align="center">
@@ -27,15 +26,48 @@
 
 ## Install
 
-```bash
-# Desktop app (tray): download the .dmg, .exe or .AppImage from Releases
-open https://github.com/OwlHugo/tacet/releases/latest
+Tacet needs two programs that run on your machine: whisper.cpp for the transcript and Ollama for
+the minutes. On macOS with [Homebrew](https://brew.sh):
 
-# CLI, no install
-npx tacet transcribe meeting.wav
+```bash
+brew install whisper-cpp ffmpeg     # whisper-cli, and ffmpeg for .m4a / .mp3
+brew install ollama                 # or the app from https://ollama.com/download
+ollama serve &                      # skip if the Ollama app is running
+ollama pull qwen2.5:7b              # 4.7 GB, runs on a 16 GB Mac
 ```
 
-Requirements: [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`brew install whisper-cpp` on macOS; Windows and Linux builds ship it) and, for minutes, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`). Tacet uses the best whisper model already in `~/.cache/whisper` (`large-v3-turbo`, then `small`, `base`, `tiny`); with none there, the first run downloads `base` (142 MB) from Hugging Face. You can pick another in Settings or with `-m`. Run `npx tacet doctor` to check everything.
+On Linux, build [whisper.cpp](https://github.com/ggml-org/whisper.cpp#quick-start) and put
+`whisper-cli` on your `PATH` (or set `TACET_WHISPER_BIN`), install ffmpeg from your package manager
+and Ollama with `curl -fsSL https://ollama.com/install.sh | sh`. Without Ollama, Tacet still saves
+the transcript, only without minutes.
+
+Tacet uses the best whisper model already in `~/.cache/whisper` (`large-v3-turbo`, then `small`,
+`base`, `tiny`); with none there, the first run downloads `base` (142 MB) from Hugging Face. You can
+pick another in Settings or with `-m`.
+
+**Desktop app (macOS, Apple Silicon).** Download `Tacet-0.1.0-mac-arm64.dmg` from
+[Releases](https://github.com/OwlHugo/tacet/releases), drag Tacet to Applications, then right-click
+→ Open the first time (the build is signed ad-hoc, not notarized). Tacet lives in the menu bar.
+
+**CLI (macOS, Linux; Node 22.18+).**
+
+```bash
+npm install -g tacet
+tacet doctor                        # checks whisper.cpp, ffmpeg, the model and Ollama
+tacet transcribe meeting.m4a
+```
+
+**From source** (any platform, Node 24.12+ and pnpm 10):
+
+```bash
+git clone https://github.com/OwlHugo/tacet && cd tacet
+pnpm install
+pnpm tacet doctor
+pnpm desktop                        # the app in dev mode
+pnpm dist:mac                       # build the .dmg into apps/desktop/release
+```
+
+Windows and Linux desktop builds (`pnpm dist`) are configured but not tested or published yet.
 
 ## Your data stays on your machine
 
@@ -58,18 +90,19 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 
 - **Two tracks, no driver.** Your microphone and the system audio are recorded as separate files. System audio uses Chromium's loopback capture: ScreenCaptureKit on macOS 13+, WASAPI on Windows, the PulseAudio/PipeWire monitor on Linux. No BlackHole, no Loopback.app.
 - **Me / Others.** Each track is transcribed separately, so speaker labels come for free. Mic echo of the speakers is detected and removed when you are not using headphones.
-- **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms on the scripted cases (see the eval). On the 2.5 minute call (case 05) it is still about 6 s: whisper glues a line to the one before it, and a short reply ("Isso.") lands on the wrong segment ([issue #4](https://github.com/OwlHugo/tacet/issues/4)).
+- **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms on the scripted cases (see the eval). On the 2.5 minute call (case 05) it is still about 6 s: whisper glues a line to the one before it, and a short reply ("Isso.") lands on the wrong segment (see Known limitations).
 - **One request per part, each checked.** The summary, the decisions and the tasks are asked apart, so a small model looks at one thing at a time. Each decision is then confirmed on its own lines (a question, a joke or a complaint is not a decision), and each deadline is checked to be a time said for its task.
-- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word on a line that only this task stands on and that names at most one of the owners the model gave (a missing deadline is preferred to a wrong one; a second person the model left out is not seen, see issue #2), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
+- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word on a line that only this task stands on and that names at most one of the owners the model gave (a missing deadline is preferred to a wrong one; a second person the model left out is not seen, see Known limitations), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
 - **Global shortcut** `⌘⇧M` / `Ctrl+Shift+M` to start and stop from anywhere.
-- **Import audio.** Drop a `.wav`, `.m4a` or `.mp3` on the window (or use *Import audio*) to run the same pipeline on a recording you already have. No microphone or screen permission needed. An imported file is one mixed track, so lines are labelled "Speaker" and tasks only get an owner whose name was said, or you, when you say who you are (`--me`, `--alias`; CLI only for now, the app has no setting for it yet).
-- **Your vocabulary** (CLI). `--vocab words.txt` hands whisper.cpp the names and terms you expect, one per line, so it spells them your way. The list stays on your machine.
+- **Import audio.** Drop a `.wav`, `.m4a` or `.mp3` on the window (or use *Import audio*) to run the same pipeline on a recording you already have. No microphone or screen permission needed. An imported file is one mixed track, so lines are labelled "Speaker" and tasks only get an owner whose name was said.
+- **Who you are.** Set your name and nicknames in Settings (or `--me`, `--alias` in the CLI). On a recording, work given to you lands on your "Me" track; on an imported file it gets your name when one of your names was said or the line asks it of "you".
+- **Your vocabulary.** List the names and terms you expect in Settings (or `--vocab words.txt`), and whisper.cpp spells them your way. The list stays on your machine.
 
 ## Eval
 
-Run on every push, on macOS, Windows and Linux ([`ci.yml`](.github/workflows/ci.yml)). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), a one-track sprint meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, and a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)).
+`pnpm eval:sem-ia` replays the recorded outputs and is one of the gates (`./scripts/verificar.sh`, and [`ci.yml`](.github/workflows/ci.yml) for macOS, Windows and Linux runners). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), a one-track sprint meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), and a two-track call recorded by someone who set their name, scored for who owns each task ([`06-bakery-self-en`](evals/cases/06-bakery-self-en/case.json)).
 
 Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
 
@@ -108,7 +141,7 @@ What the columns mean:
 - **Deadlines right**: deadlines said in the script that reach the right task, in the words that were said. A task carrying a deadline other than the one said, or one the script gives no deadline, fails the eval; a missing one only lowers this count.
 - **Expected tasks found**: recall of the action items written in the script. The miss in the Portuguese case is on purpose kept visible: whisper `base` heard "como fornecedor" as "como for necedor", and Tacet would rather drop a task than write one the transcript does not say.
 
-Transcription runs for real on all three CI runners. The whisper and LLM outputs are recorded locally (`pnpm eval:gravar`) and replayed in CI, since GitHub runners have no GPU for a 7B model; the grounding checks run on those outputs every time.
+In CI, transcription runs for real on all three runners. The whisper and LLM outputs are recorded locally (`pnpm eval:gravar`) and replayed in CI, since GitHub runners have no GPU for a 7B model; the grounding checks run on those outputs every time.
 
 ```bash
 pnpm eval:sem-ia             # replay the recorded outputs (what CI runs on every PR)
@@ -129,7 +162,7 @@ apps/desktop  Electron tray app (React + Vite)
 
 apps/cli      `tacet transcribe | search | list | doctor`
 
-packages/core TypeScript, no Electron, published to npm as @tacet/core
+packages/core TypeScript, no Electron (@tacet/core, a workspace package bundled into the CLI)
   transcript  merge tracks into one timeline, drop mic echo           (pure)
   minutes     prompt, groundMinutes(): drop what is not said          (pure)
   meeting     processMeeting(), Obsidian Markdown, search             (pure)
@@ -151,7 +184,7 @@ fails CI if a pure module imports I/O or an adapter, or if there is an import cy
                                                      (JSON)    (drop what is not said)
 ```
 
-Using the core from your own code:
+Using the core from your own code, inside this workspace (it is not published to npm on its own):
 
 ```ts
 import { ensureModel, MeetingLibrary, ollamaMinutes, processMeeting, whisperTranscriber } from '@tacet/core'
@@ -202,8 +235,12 @@ tacet doctor
 - **Windows**: microphone access in Settings → Privacy. System audio needs nothing.
 - **Linux**: PulseAudio or PipeWire with `pipewire-pulse`. Tacet records the "Monitor of …" source of your output device.
 
-## Known issues (v0.1)
+## Known limitations (v0.1)
 
+- **Summary on long calls.** The summary and decisions are asked on chunks of about 4000 characters ([ADR 0004](docs/adr/0004-minutes-one-request-per-list.md)), so a 30-minute call can get many summary points and more than one "main subject". They are not merged yet.
+- **Timestamps on long, fast calls.** whisper sometimes glues a line to the one before it on the same track, and that line loses its own start (about 6 s mean error on case 05, against 10 ms on the scripted cases).
+- **A deadline on a line that names two people.** "Ana reviews the contract and Pedro deploys by Friday": if the model returns only Ana's task, she can get Pedro's deadline. Deadlines are otherwise kept only on a line that a single task stands on.
+- **Only macOS Apple Silicon is built and tested.** The Windows and Linux paths (WASAPI and PulseAudio loopback, bundled whisper.cpp) are written but not tried on a real machine.
 - macOS builds are signed ad-hoc, not notarized: right-click → Open the first time. Local builds keep the identifier `dev.tacet.app`, so permissions granted once survive rebuilds.
 - On macOS 14.2+ Electron can use either ScreenCaptureKit or the Core Audio tap for loopback. Tacet uses ScreenCaptureKit by default (it only needs the Screen Recording permission). Set `TACET_CATAP=1` to try the Core Audio tap, which only works from the packaged `.app`.
 - If recording or playback hangs on macOS, Core Audio is wedged: `sudo killall coreaudiod` fixes it.
@@ -215,8 +252,8 @@ pnpm install && pnpm check      # what CI runs: lint, types, architecture, knip,
 ./scripts/verificar.sh          # the same gates plus the build, stopping at the first failure
 pnpm tacet transcribe x.wav     # the CLI straight from source (Node runs the .ts directly)
 pnpm desktop                    # Electron in dev mode
-pnpm e2e                        # records 22 s through the real app and runs the whole pipeline
-pnpm dist                       # .dmg / .exe / .AppImage into apps/desktop/release
+pnpm e2e                        # records 60 s through the real app, runs the whole pipeline, checks the WAV length
+pnpm dist:mac                   # .dmg for Apple Silicon into apps/desktop/release
 ```
 
 Node 24.12+ and pnpm 10 for development. The published CLI and core run on Node 22.18+.
