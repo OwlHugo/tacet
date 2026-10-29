@@ -382,9 +382,6 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
   return [...owners].filter((o) => said.has(o)).length
 }
 
-/** Words an answer may bring of its own and still be a reply about the task ("Great, by Friday"). */
-const REPLY_WORDS = 2
-
 /**
  * What a reply says to agree: "Fechado", "sure", "sem problema", "pode deixar". Agreeing brings no
  * subject of its own.
@@ -414,17 +411,26 @@ const TAKING_ON = new Set(
     .map(stem),
 )
 
-/** Words that point back at the task asked ("esse aqui", "that one"): no subject of their own. */
+/**
+ * Words that point back at the task asked ("esse aqui", "that one") or round an answer off ("works
+ * for me", "sounds good to us"): no subject of their own.
+ */
 const POINTING = new Set(
-  'esse essa este esta isto aqui ali la entao one here there then also too'.split(' ').map(stem),
+  (
+    'esse essa este esta isto aqui ali la entao one here there then also too works work sounds ' +
+    'nicely totally definitely ja mesmo'
+  )
+    .split(' ')
+    .map(stem),
 )
 
 /**
  * Whether the line holding a deadline talks about this task: it says some of the task's words, or
- * it is a reply about the task asked. A reply that takes work on ("consigo entregar até sexta")
- * brings nothing else; one that only answers ("Great, by Friday", "Tá bom, até sexta") brings at
- * most a couple of words. "On Friday we pick the band for the party?" after "Book the hall first"
- * names another piece of work, so its deadline is not the hall's.
+ * it is a reply that adds nothing of its own: every other word agrees ("Great, by Friday", "Tá bom,
+ * até sexta"), takes the asked work on ("consigo entregar"), or points back at it ("esse aqui").
+ * Any other word may be other work ("Beleza, o deploy até sexta"), so the deadline is dropped: a
+ * missing deadline is better than a wrong one. "On Friday we pick the band for the party?" after
+ * "Book the hall first" names another piece of work, so its deadline is not the hall's.
  */
 function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
@@ -432,8 +438,7 @@ function aboutTask(line: Segment, said: string, task: string): boolean {
   const text = line.text.replace(said, ' ').replace(/’/g, "'")
   const rest = contentWords(normalize(text).replace(AGREEING_PHRASES, ' ')).map(stem)
   if (rest.some((w) => own.has(w))) return true
-  const other = rest.filter((w) => !AGREEING.has(w) && !TAKING_ON.has(w) && !POINTING.has(w))
-  return rest.some((w) => TAKING_ON.has(w)) ? other.length === 0 : other.length <= REPLY_WORDS
+  return rest.every((w) => AGREEING.has(w) || TAKING_ON.has(w) || POINTING.has(w))
 }
 
 /**

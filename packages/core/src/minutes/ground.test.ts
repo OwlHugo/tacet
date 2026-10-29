@@ -756,6 +756,8 @@ describe('groundMinutes', () => {
         'Sounds good, by Monday.',
         'Yes, works for me, by Friday.',
         'Yes, works nicely for me, by Friday.',
+        'Beleza, o deploy até sexta.',
+        'Sure, the migration by Friday.',
       )
       const menu = (segments: number[], due: string) =>
         run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
@@ -780,6 +782,9 @@ describe('groundMinutes', () => {
       expect(menu([0, 15], 'by Monday')?.due).toBe('by Monday')
       expect(menu([0, 16], 'by Friday')?.due).toBe('by Friday')
       expect(menu([0, 17], 'by Friday')?.due).toBe('by Friday')
+      // A reply that names other work, even with no verb, is about that work.
+      expect(menu([0, 18], 'até sexta')).not.toHaveProperty('due')
+      expect(menu([0, 19], 'by Friday')).not.toHaveProperty('due')
     })
 
     it('cuts the deadline from the end of the task with the word that leads into it', () => {
