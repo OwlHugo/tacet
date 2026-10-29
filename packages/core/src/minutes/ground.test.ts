@@ -126,6 +126,18 @@ describe('groundMinutes', () => {
       't',
     )
     expect(ill.actionItems[0]?.owner).toBe(TRANSCRIPT.segments[3]?.speaker)
+    // "ill" the adjective takes nothing on.
+    const sick = groundMinutes(
+      one('Send the release notes', '', 'send the release notes', [3]),
+      {
+        ...TRANSCRIPT,
+        segments: TRANSCRIPT.segments.map((s) =>
+          s.id === 3 ? { ...s, text: 'Bia is ill, so somebody must send the release notes.' } : s,
+        ),
+      },
+      't',
+    )
+    expect(sick.actionItems[0]?.owner).toBe('Unassigned')
   })
 
   it('maps "eu"/"outros" owners to the track labels', () => {
@@ -274,7 +286,13 @@ describe('groundMinutes', () => {
         ['Pode mandar o contrato hoje?', 'Mandar o contrato hoje'],
         ['Bia, consegue mandar o contrato hoje?', 'Mandar o contrato hoje'],
         ['O contrato fica com você.', 'Revisar o contrato'],
-        ['Bia, you call the paper supplier.', 'Call the paper supplier'],
+        ['Eu preciso que você revise o contrato.', 'Revisar o contrato'],
+        ['Eu queria que você mandasse o deck.', 'Mandar o deck'],
+        ['Could you cover the stand? Bia is ill.', 'Cover the stand'],
+        [
+          'Eu preciso que você revise o contrato, e eu quero que você assine.',
+          'Revisar o contrato',
+        ],
         ['Me manda o contrato amanhã.', 'Mandar o contrato amanhã'],
         ['Send me the deck tomorrow.', 'Send the deck tomorrow'],
       ]
@@ -309,6 +327,15 @@ describe('groundMinutes', () => {
         ['Somebody prints the flyers later, thank you.', 'Print the flyers later'],
         ['Your flyers get printed later.', 'Print the flyers later'],
         ['You know, the flyers get printed later.', 'Print the flyers later'],
+        ['You sent the invoice yesterday.', 'Send the invoice'],
+        ['Você tem razão, o contrato atrasou.', 'Revisar o contrato'],
+        ['Pode crer, o fornecedor manda a nota amanhã.', 'Mandar a nota amanhã'],
+        ['Pode ter certeza, o fornecedor manda a nota.', 'Mandar a nota'],
+        ['Dá pra ver que o fornecedor manda a nota.', 'Mandar a nota'],
+        ['Can you believe the vendor sends the invoice late?', 'Send the invoice'],
+        ['Você pode ter certeza, o fornecedor manda a nota.', 'Mandar a nota'],
+        ['Dá pra acreditar? O fornecedor manda a nota.', 'Mandar a nota'],
+        ['Dá pra mandar a nota depois.', 'Mandar a nota depois'],
         ['Send the deck tomorrow.', 'Send the deck tomorrow'],
       ]
       expect(notAsked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
@@ -330,6 +357,18 @@ describe('groundMinutes', () => {
       expect(run(tracks, { name: '-', aliases: [] }, '')).toBe('Unassigned')
       expect(run(CALL, blank, '')).toBe('Unassigned')
       expect(run(tracks, blank, 'Rafael')).toBe('Me')
+      // A name with no letter is never shown as the owner: the first real one is.
+      const asked = unnamedWith('Can you print the price list?')
+      expect(
+        groundMinutes(
+          one('Print the price list', 'Rafa', 'print the price list', [2]),
+          asked,
+          't',
+          {
+            self: { name: '🙂', aliases: ['Rafa'] },
+          },
+        ).actionItems[0]?.owner,
+      ).toBe('Rafa')
     })
 
     it('is the Me track on a recording with the microphone only', () => {

@@ -135,53 +135,77 @@ export function sourceLines(
 const SELF = new Set(['me', 'eu', 'i'])
 const OTHERS_WORDS = new Set(['others', 'outros', 'them'])
 const NOBODY = new Set(['', 'unassigned', 'unknown', 'none', 'n a', 'ninguem'])
-/** "I will", "I'll" (normalized to "ill"), "vou": whoever says it takes the work on. */
-const COMMITMENT = /\b(i ll|ill|i will|i can|vou|eu)\b/
+/** "I will", "vou", "eu": whoever says it takes the work on. "I'll" is checked on the raw text. */
+const COMMITMENT = /\b(i ll|i will|i can|vou|eu)\b/
+/** "I'll" normalizes to "ill", the same word as the adjective ("Bia is ill"): only the apostrophe tells them apart. */
+const I_WILL = /\bI['’]ll\b/i
+
+/** Whether the one speaking takes work on in this text. */
+const commits = (text: string) => I_WILL.test(text) || COMMITMENT.test(normalize(text))
 
 const wasSaid = (name: string, index: TranscriptIndex) =>
   words(name).every((w) => index.spoken.has(w))
 
+/** Work someone can be asked to do, after "você pode", "pode ...?", "consegue ...?". */
+const PT_TASK_VERB =
+  '(mandar|enviar|revisar|fazer|ver se|olhar|cuidar|preparar|marcar|agendar|ligar|escrever|atualizar|resolver|subir|checar|conferir|corrigir|arrumar|testar|organizar|levar|trazer|pagar|comprar|reservar|imprimir|avisar|falar|terminar|entregar|assinar|pegar|tirar)'
+
 /**
- * A request made to "you" ("can you", "could you", "please", "você pode", "pode revisar"), as
- * normalized text. A bare "you" is not one: "thank you", "I will send you", "te mando".
+ * A request made to "you", as normalized text: only these forms count, so a bare "you" ("thank you",
+ * "I will send you", "te mando", "you sent it yesterday", "você tem razão") is not one.
  */
 const ASKS_YOU = new RegExp(
   [
-    String.raw`\b(can|could|would|will) you\b`,
+    String.raw`\b(can|could|would|will) you (?!believe|imagine|hear)`,
     String.raw`\byou (need|have|must|got) to\b`,
-    String.raw`\byou should\b`,
     String.raw`\b(i need|i want|i d like|id like|i would like) you to\b`,
     String.raw`\bplease\b`,
-    String.raw`\b(voce|vc|tu) (pode|podes|poderia|podia|consegue|consegues|precisa|fica com)\b`,
-    String.raw`\b(preciso|quero|queria) que (voce|vc|tu)\b`,
+    String.raw`\b(voce|vc|tu) (pode|podes|poderia|podia|consegue|consegues|precisa) ${PT_TASK_VERB}\b`,
+    String.raw`\b(eu )?(preciso|quero|queria) que (voce|vc|tu)\b`,
+    String.raw`\b(voce|vc) fica com\b`,
     String.raw`\bfica com (voce|vc)\b`,
     String.raw`\bpor favor\b`,
-    // "Pode revisar o cardápio?", "Ana, consegue mandar hoje?": not "pode deixar", "pode ser".
-    String.raw`^(pode|poderia|podia|consegue|conseguiria|da pra) (?!deixar\b|ser\b)\w`,
-    // Told to the listener: "Ana, you call the supplier", "me manda o contrato", "send me the deck".
-    String.raw`^(you|voce|vc|tu) (?!know|see|mean|think|guys|are|were|re|was|did|do|said)\w`,
     String.raw`^me (manda|mande|envia|envie|passa|passe|avisa|avise|mostra|mostre)\b`,
     String.raw`^(send|give|tell|show|forward|email) me\b`,
     String.raw`\blet me know\b`,
   ].join('|'),
 )
+const ASKS_YOU_ALL = new RegExp(ASKS_YOU.source, 'g')
 
-/** A line that asks the listener to do something, and where the one speaking takes nothing on. */
-const asksYou = (line: Segment) =>
-  !COMMITMENT.test(normalize(line.text)) &&
-  line.text.split(/[,.;:!?]/).some((clause) => ASKS_YOU.test(normalize(clause)))
+/** Asked as a question: "Pode mandar o contrato?", "Consegue revisar hoje?" ("Pode crer." is not). */
+const ASKS_AS_QUESTION = new RegExp(
+  String.raw`^(pode|poderia|podia|consegue|conseguiria|da pra) ${PT_TASK_VERB}\b`,
+)
+
+/**
+ * A line that asks the listener to do something, and where the one speaking takes nothing on once
+ * the request itself is set apart ("Eu preciso que você revise" asks; "Can you wait? I will send
+ * it" does not).
+ */
+function asksYou(line: Segment): boolean {
+  const asks = line.text.split(/(?<=[,.;:!?])/).some((clause) => {
+    const n = normalize(clause)
+    return ASKS_YOU.test(n) || (clause.includes('?') && ASKS_AS_QUESTION.test(n))
+  })
+  return (
+    asks &&
+    !I_WILL.test(line.text) &&
+    !COMMITMENT.test(normalize(line.text).replace(ASKS_YOU_ALL, ' '))
+  )
+}
 
 /**
  * The owner as the person who recorded the meeting: "Me" on two tracks. On one track their name,
  * when one of their names was said in the meeting or a line of the task asks it of "you". A name
- * with no letter or digit ("🙂", "-") is no name: it would match the empty owner.
+ * with no letter or digit ("🙂", "-") is no name: it would match the empty owner, and is never shown.
  */
 function asSelf(n: string, self: Self, source: Lines, index: TranscriptIndex): string | undefined {
   const names = [self.name, ...self.aliases].filter((s) => words(s).length > 0)
+  const [shown] = names
   if (!names.some((s) => normalize(s) === n)) return undefined
   if (index.speakers.has(ME)) return ME
   const named = names.some((s) => wasSaid(s, index))
-  return named || source.some(asksYou) ? self.name : undefined
+  return named || source.some(asksYou) ? shown : undefined
 }
 
 /**
@@ -209,7 +233,7 @@ function resolveOwner(
     return owner.trim()
   // "I will send the notes": whoever said that line owns the task, if we know who that was.
   const said = source[0].speaker
-  return COMMITMENT.test(normalize(textOf(source))) && said !== SPEAKER ? said : 'Unassigned'
+  return commits(textOf(source)) && said !== SPEAKER ? said : 'Unassigned'
 }
 
 const cite = (lines: Lines) => ({
