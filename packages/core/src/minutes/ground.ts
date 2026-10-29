@@ -150,13 +150,18 @@ const wasSaid = (name: string, index: TranscriptIndex) =>
 const PT_TASK_VERB =
   '(mandar|enviar|revisar|fazer|ver se|olhar|cuidar|preparar|marcar|agendar|ligar|escrever|atualizar|resolver|subir|checar|conferir|corrigir|arrumar|testar|organizar|levar|trazer|pagar|comprar|reservar|imprimir|avisar|falar|terminar|entregar|assinar|pegar|tirar)'
 
+/** Work someone can be asked to do, after "can you", "could you". */
+const EN_TASK_VERB =
+  '(send|book|call|check|fix|review|write|print|order|update|prepare|draft|schedule|set up|look into|take care|handle|finish|deliver|sign|pick up|buy|pay|share|forward|email|ask|tell|follow up|organize|clean|test|deploy|upload|move|cancel|confirm|reply|cover|take|bring|get|make|do|run|own|lead|plan)'
+
 /**
  * A request made to "you", as normalized text: only these forms count, so a bare "you" ("thank you",
- * "I will send you", "te mando", "you sent it yesterday", "você tem razão") is not one.
+ * "I will send you", "te mando", "you sent it yesterday", "você tem razão", "can you see my screen")
+ * is not one.
  */
 const ASKS_YOU = new RegExp(
   [
-    String.raw`\b(can|could|would|will) you (?!believe|imagine|hear)`,
+    String.raw`\b(can|could|would|will) you ${EN_TASK_VERB}\b`,
     String.raw`\byou (need|have|must|got) to\b`,
     String.raw`\b(i need|i want|i d like|id like|i would like) you to\b`,
     String.raw`\bplease\b`,
@@ -177,6 +182,26 @@ const ASKS_AS_QUESTION = new RegExp(
   String.raw`^(pode|poderia|podia|consegue|conseguiria|da pra) ${PT_TASK_VERB}\b`,
 )
 
+/** A word that greets or agrees, not a name said to someone ("Okay, can you…", "Ah, pode…"). */
+const NOT_A_VOCATIVE = new Set(
+  (
+    'ok okay so and then well right sure yes yeah hey hi oh ah great good e entao bom beleza ' +
+    'certo ta olha oi opa sim pessoal gente galera guys everyone team folks'
+  ).split(' '),
+)
+
+/**
+ * Whether a line starts by naming who it is said to ("Bia, consegue…?", "Pedro, please…"). A request
+ * said to someone by name is theirs, even with a "you" in it; when that name is the recorder's, it
+ * was said, and the task is theirs anyway.
+ */
+function saidToSomeone(line: Segment): boolean {
+  const head = /^([^,.;:!?]{1,40}),/.exec(line.text)?.[1]
+  if (head === undefined) return false
+  const said = words(head)
+  return said.length <= 3 && !said.every((w) => NOT_A_VOCATIVE.has(w))
+}
+
 /**
  * A line that asks the listener to do something, and where the one speaking takes nothing on once
  * the request itself is set apart ("Eu preciso que você revise" asks; "Can you wait? I will send
@@ -194,6 +219,9 @@ function asksYou(line: Segment): boolean {
   )
 }
 
+/** Whether a line asks the recorder: a "you" said to nobody by name. */
+const asksSelf = (line: Segment) => asksYou(line) && !saidToSomeone(line)
+
 /**
  * The owner as the person who recorded the meeting: "Me" on two tracks. On one track their name,
  * when one of their names was said in the meeting or a line of the task asks it of "you". A name
@@ -205,7 +233,7 @@ function asSelf(n: string, self: Self, source: Lines, index: TranscriptIndex): s
   if (!names.some((s) => normalize(s) === n)) return undefined
   if (index.speakers.has(ME)) return ME
   const named = names.some((s) => wasSaid(s, index))
-  return named || source.some(asksYou) ? shown : undefined
+  return named || source.some(asksSelf) ? shown : undefined
 }
 
 /**

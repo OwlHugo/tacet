@@ -284,7 +284,11 @@ describe('groundMinutes', () => {
         ['You need to renew the domain.', 'Renew the domain'],
         ['Você pode revisar o cardápio?', 'Revisar o cardápio'],
         ['Pode mandar o contrato hoje?', 'Mandar o contrato hoje'],
-        ['Bia, consegue mandar o contrato hoje?', 'Mandar o contrato hoje'],
+        ['Okay, can you send the invoice?', 'Send the invoice'],
+        ['As we said in the last meeting, can you send the invoice?', 'Send the invoice'],
+        ['Could you send the invoice? Thanks, see you.', 'Send the invoice'],
+        ['🙂, can you send the invoice?', 'Send the invoice'],
+        ['Could you please send the invoice?', 'Send the invoice'],
         ['O contrato fica com você.', 'Revisar o contrato'],
         ['Eu preciso que você revise o contrato.', 'Revisar o contrato'],
         ['Eu queria que você mandasse o deck.', 'Mandar o deck'],
@@ -336,6 +340,15 @@ describe('groundMinutes', () => {
         ['Você pode ter certeza, o fornecedor manda a nota.', 'Mandar a nota'],
         ['Dá pra acreditar? O fornecedor manda a nota.', 'Mandar a nota'],
         ['Dá pra mandar a nota depois.', 'Mandar a nota depois'],
+        // Said to someone else by name: theirs, even with a "you" in it.
+        ['Bia, consegue mandar o contrato hoje?', 'Mandar o contrato hoje'],
+        ['Pedro, please send the invoice.', 'Send the invoice'],
+        ['Ana Clara Souza, can you send the invoice?', 'Send the invoice'],
+        ['Ok Bia, can you send the invoice?', 'Send the invoice'],
+        // "Can you" before something that is not work, then a statement about someone else.
+        ['Can you see my screen? The vendor sends the invoice.', 'Send the invoice'],
+        // Whisper often drops the "?": without it, "pode mandar" is not read as a request.
+        ['Pode mandar o contrato hoje.', 'Mandar o contrato hoje'],
         ['Send the deck tomorrow.', 'Send the deck tomorrow'],
       ]
       expect(notAsked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
