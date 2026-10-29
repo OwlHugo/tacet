@@ -316,6 +316,22 @@ describe('groundMinutes', () => {
       )
     })
 
+    it('a name or nickname with no letter or digit never matches a task with no owner', () => {
+      const blank = { name: 'Rafael', aliases: ['🙂', '-'] }
+      const tracks = {
+        ...CALL,
+        segments: CALL.segments.map((s) => ({ ...s, speaker: s.id === 2 ? 'Me' : 'Others' })),
+      }
+      const run = (t: Transcript, self: { name: string; aliases: string[] }, o: string) =>
+        groundMinutes(one('Print the flyers later', o, 'prints the flyers later', [3]), t, 't', {
+          self,
+        }).actionItems[0]?.owner
+      expect(run(tracks, blank, '')).toBe('Unassigned')
+      expect(run(tracks, { name: '-', aliases: [] }, '')).toBe('Unassigned')
+      expect(run(CALL, blank, '')).toBe('Unassigned')
+      expect(run(tracks, blank, 'Rafael')).toBe('Me')
+    })
+
     it('is the Me track on a recording with the microphone only', () => {
       const mic = { ...CALL, segments: CALL.segments.map((s) => ({ ...s, speaker: 'Me' })) }
       const run = (o: string) =>

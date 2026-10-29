@@ -173,10 +173,11 @@ const asksYou = (line: Segment) =>
 
 /**
  * The owner as the person who recorded the meeting: "Me" on two tracks. On one track their name,
- * when one of their names was said in the meeting or a line of the task asks it of "you".
+ * when one of their names was said in the meeting or a line of the task asks it of "you". A name
+ * with no letter or digit ("🙂", "-") is no name: it would match the empty owner.
  */
 function asSelf(n: string, self: Self, source: Lines, index: TranscriptIndex): string | undefined {
-  const names = [self.name, ...self.aliases]
+  const names = [self.name, ...self.aliases].filter((s) => words(s).length > 0)
   if (!names.some((s) => normalize(s) === n)) return undefined
   if (index.speakers.has(ME)) return ME
   const named = names.some((s) => wasSaid(s, index))
