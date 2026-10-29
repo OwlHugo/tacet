@@ -5,7 +5,7 @@
  * Each case has two tracks on one timeline, like a real call: me.wav (microphone) and others.wav
  * (system audio), 16 kHz mono PCM. Lines alternate between the tracks with a short gap.
  *
- *   node evals/gerar-audio.ts && pnpm eval:gravar
+ *   node evals/gerar-audio.ts [case-id] && pnpm eval:gravar
  */
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -25,7 +25,11 @@ const Script = z.object({
   lines: z.array(z.object({ speaker: z.string(), text: z.string() })),
   expected_actions: z.array(z.array(z.string())),
   expected_due: z.array(z.object({ task: z.array(z.string()), due: z.string() })),
+  /** Copied as is to case.json; `loadCases` validates them. */
+  self: z.unknown().optional(),
+  answer_key: z.unknown().optional(),
 })
+const ONLY = process.argv[2]
 
 const sh = (cmd: string, args: readonly string[]) =>
   execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'inherit'] }).toString()
@@ -79,7 +83,8 @@ function mixTrack(parts: readonly Placed[], total: number, out: string): void {
 
 for (const script of z
   .array(Script)
-  .parse(JSON.parse(readFileSync(join(ROOT, 'scripts.json'), 'utf8')))) {
+  .parse(JSON.parse(readFileSync(join(ROOT, 'scripts.json'), 'utf8')))
+  .filter((s) => ONLY === undefined || s.id === ONLY)) {
   const dir = join(ROOT, 'cases', script.id)
   const work = join(tmpdir(), `tacet-eval-${script.id}`)
   rmSync(work, { recursive: true, force: true })
@@ -113,6 +118,8 @@ for (const script of z
     reference,
     expected_actions: script.expected_actions,
     expected_due: script.expected_due,
+    ...(script.answer_key === undefined ? {} : { answer_key: script.answer_key }),
+    ...(script.self === undefined ? {} : { self: script.self }),
   }
   writeFileSync(join(dir, 'case.json'), `${JSON.stringify(kase, null, 2)}\n`)
   rmSync(work, { recursive: true, force: true })

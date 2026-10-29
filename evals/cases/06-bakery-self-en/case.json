@@ -1,0 +1,94 @@
+{
+  "id": "06-bakery-self-en",
+  "title": "Bakery opening, recorded by Nadia with --me",
+  "language": "en",
+  "tracks": [
+    {
+      "file": "others.wav",
+      "speaker": "Others"
+    },
+    {
+      "file": "me.wav",
+      "speaker": "Me"
+    }
+  ],
+  "reference": [
+    {
+      "speaker": "Others",
+      "text": "Thanks for joining. Today we plan the opening of the second bakery.",
+      "start": 0.5
+    },
+    {
+      "speaker": "Me",
+      "text": "Good. The landlord wants the signed lease back this week.",
+      "start": 4.89
+    },
+    {
+      "speaker": "Others",
+      "text": "Nadia, can you sign the lease and send it to the landlord by Friday?",
+      "start": 8.47
+    },
+    {
+      "speaker": "Me",
+      "text": "Yes, I will send the signed lease on Friday.",
+      "start": 12.9
+    },
+    {
+      "speaker": "Others",
+      "text": "We decided to open on the first Monday of March.",
+      "start": 16.05
+    },
+    {
+      "speaker": "Me",
+      "text": "Fine. Omar, can you order the new oven for the kitchen?",
+      "start": 19.36
+    },
+    {
+      "speaker": "Others",
+      "text": "Sure, I will order the new oven by tomorrow.",
+      "start": 23.24
+    },
+    {
+      "speaker": "Me",
+      "text": "And I will write the job post for two bakers.",
+      "start": 26.45
+    }
+  ],
+  "expected_actions": [["lease"], ["oven"], ["job", "post"]],
+  "expected_due": [
+    {
+      "task": ["lease"],
+      "due": "friday"
+    },
+    {
+      "task": ["oven"],
+      "due": "tomorrow"
+    }
+  ],
+  "answer_key": {
+    "subject": ["bakery"],
+    "decisions": [
+      {
+        "keywords": ["open", "march|monday"]
+      }
+    ],
+    "tasks": [
+      {
+        "keywords": ["lease"],
+        "owner": ["Me"]
+      },
+      {
+        "keywords": ["oven"],
+        "owner": ["Omar", "Others"]
+      },
+      {
+        "keywords": ["job|bakers"],
+        "owner": ["Me"]
+      }
+    ]
+  },
+  "self": {
+    "name": "Nadia",
+    "aliases": ["Nad"]
+  }
+}

@@ -79,5 +79,85 @@
     ],
     "expected_actions": [["testes", "pagamento"], ["contrato", "fornecedor"]],
     "expected_due": [{ "task": ["testes", "pagamento"], "due": "sexta" }]
+  },
+  {
+    "id": "06-bakery-self-en",
+    "title": "Bakery opening, recorded by Nadia with --me",
+    "language": "en",
+    "voices": {
+      "Me": "Samantha",
+      "Others": "Daniel"
+    },
+    "lines": [
+      {
+        "speaker": "Others",
+        "text": "Thanks for joining. Today we plan the opening of the second bakery."
+      },
+      {
+        "speaker": "Me",
+        "text": "Good. The landlord wants the signed lease back this week."
+      },
+      {
+        "speaker": "Others",
+        "text": "Nadia, can you sign the lease and send it to the landlord by Friday?"
+      },
+      {
+        "speaker": "Me",
+        "text": "Yes, I will send the signed lease on Friday."
+      },
+      {
+        "speaker": "Others",
+        "text": "We decided to open on the first Monday of March."
+      },
+      {
+        "speaker": "Me",
+        "text": "Fine. Omar, can you order the new oven for the kitchen?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Sure, I will order the new oven by tomorrow."
+      },
+      {
+        "speaker": "Me",
+        "text": "And I will write the job post for two bakers."
+      }
+    ],
+    "expected_actions": [["lease"], ["oven"], ["job", "post"]],
+    "expected_due": [
+      {
+        "task": ["lease"],
+        "due": "friday"
+      },
+      {
+        "task": ["oven"],
+        "due": "tomorrow"
+      }
+    ],
+    "self": {
+      "name": "Nadia",
+      "aliases": ["Nad"]
+    },
+    "answer_key": {
+      "subject": ["bakery"],
+      "decisions": [
+        {
+          "keywords": ["open", "march|monday"]
+        }
+      ],
+      "tasks": [
+        {
+          "keywords": ["lease"],
+          "owner": ["Me"]
+        },
+        {
+          "keywords": ["oven"],
+          "owner": ["Omar", "Others"]
+        },
+        {
+          "keywords": ["job|bakers"],
+          "owner": ["Me"]
+        }
+      ]
+    }
   }
 ]
