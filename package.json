@@ -22,6 +22,7 @@
     "tacet": "node --conditions=development apps/cli/src/main.ts",
     "desktop": "pnpm --filter @tacet/desktop dev",
     "dist": "pnpm --filter @tacet/core build && pnpm --filter @tacet/desktop dist",
+    "dist:mac": "pnpm --filter @tacet/core build && pnpm --filter @tacet/desktop dist:mac",
     "e2e": "./scripts/e2e-desktop.sh",
     "check": "pnpm lint && pnpm typecheck && pnpm arquitetura && pnpm knip && pnpm test:cobertura && pnpm eval:sem-ia"
   },

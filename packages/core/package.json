@@ -1,6 +1,7 @@
 {
   "name": "@tacet/core",
   "version": "0.1.0",
+  "private": true,
   "description": "Local-first meeting transcription and grounded minutes: whisper.cpp + Ollama, no cloud.",
   "license": "MIT",
   "type": "module",
