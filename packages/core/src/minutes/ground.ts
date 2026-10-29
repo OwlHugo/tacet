@@ -201,7 +201,9 @@ const NOT_A_VOCATIVE = new Set(
   (
     'ok okay so and then well right sure yes yeah hey hi oh ah great good actually also please ' +
     'thanks e entao bom beleza certo ta olha oi opa sim agora por favor obrigado obrigada ' +
-    'pessoal gente galera guys everyone team folks hoje amanha depois today tomorrow later now'
+    'pessoal gente galera guys everyone team folks hoje amanha depois today tomorrow later now ' +
+    'monday tuesday wednesday thursday friday saturday sunday segunda terca quarta quinta sexta ' +
+    'sabado domingo'
   ).split(' '),
 )
 
@@ -209,16 +211,6 @@ const NOT_A_VOCATIVE = new Set(
 const isVocative = (text: string) => {
   const said = words(text)
   return said.length > 0 && said.length <= 3 && !said.every((w) => NOT_A_VOCATIVE.has(w))
-}
-
-/**
- * Whether a line starts by naming who it is said to ("Bia, consegue…?", "Pedro, please…"). A request
- * said to someone by name is theirs, even with a "you" in it; when that name is the recorder's, it
- * was said, and the task is theirs anyway.
- */
-function saidToSomeone(line: Segment): boolean {
-  const head = /^([^,.;:!?]{1,40}),/.exec(line.text)?.[1]
-  return head !== undefined && isVocative(head)
 }
 
 interface Clause {
@@ -247,19 +239,67 @@ const clausesOf = (text: string): Clause[] =>
         .map((said) => ({ said, text: normalize(said), question: sentence.endsWith('?') })),
     )
 
+/**
+ * A clause that is only a name said to someone: "Bia," / "So, Bia," / "Bia?" before the request,
+ * or ", Bia?" / ", Pedro." after it. Past the first clause a name is written with a capital, unlike
+ * "…, by Friday?".
+ */
+const isName = (c: Clause, i: number, clauses: readonly Clause[]) =>
+  isVocative(c.said) &&
+  (i === 0 || /^\s*\p{Lu}/u.test(c.said)) &&
+  (/[,?]\s*$/.test(c.said) || clauses[i - 1]?.said.trimEnd().endsWith(',') === true)
+
+/** Words a name follows when it is who or where the work is for, not who is asked ("send it to Bia"). */
+const TO_SOMEONE = new Set(
+  'to for with from in on at into via para pra pro com ao a de do da em no na pelo pela'.split(' '),
+)
+
+/**
+ * A name at the end of a request with no comma, as whisper often writes it ("Can you send the invoice
+ * Bia?"): a capitalized word, not the first, not one of the task's, not after "to" / "pra".
+ */
+function endsWithName(c: Clause, task: ReadonlySet<string>): boolean {
+  const said = c.said.trim().split(/\s+/)
+  const last = said.at(-1)?.replace(/[.!?,;:]+$/, '') ?? ''
+  const before = normalize(said.at(-2) ?? '')
+  const word = normalize(last)
+  return (
+    said.length > 1 &&
+    /^\p{Lu}\p{Ll}+$/u.test(last) &&
+    !task.has(stem(word)) &&
+    !NOT_A_VOCATIVE.has(word) &&
+    !TO_SOMEONE.has(before)
+  )
+}
+
 const asked = (c: Clause) =>
   ASKS_YOU.test(c.text) ||
   PLEASE.test(c.text) ||
   HANDED_TO_YOU.test(c.text) ||
   (c.question && ASKS_AS_QUESTION.test(c.text))
 
+/** Verbs of work: a request with the same verb as the task may still be for other work. */
+const TASK_VERB = new RegExp(`^(${EN_TASK_VERB}|${PT_TASK_VERB}|${PT_IMPERATIVE})$`)
+
 /**
- * Whether a line asks the recorder for this task: a clause of it is a request that names some of the
- * task's words, said to nobody by name before ("Bia, consegue…?") or right after it ("Can you send the
- * invoice, Bia?"), and the one speaking takes nothing on in the rest of the line ("Can you wait? I
- * will send the invoice"; "Você pode revisar o que eu mandei?" counts: the "eu" is inside the
- * request). A request for other work on the same line ("Can you send the invoice? Also Pedro fixes the
- * cover.") does not make the cover theirs.
+ * The words a request must name to be for this task: what the work is on ("invoice", "contrato"),
+ * not the verb ("send", "mandar"), which a request for other work may share. A task that is only a
+ * verb keeps it.
+ */
+function taskWords(task: string): ReadonlySet<string> {
+  const all = contentWords(task).map(stem)
+  const objects = all.filter((w) => !TASK_VERB.test(w))
+  return new Set(objects.length > 0 ? objects : all)
+}
+
+/**
+ * Whether a line asks the recorder for this task: a clause of it is a request that names what the
+ * task is on, the line says no name to anyone ("Bia, consegue…?", "So, Bia, can you…", "Can you send
+ * the invoice, Bia?", "Can you send the invoice Bia?"), and the one speaking takes nothing on in the
+ * rest of it ("Can you wait? I will send the invoice"; "Você pode revisar o que eu mandei?" counts:
+ * the "eu" is inside the request). A request for other work on the same line ("Can you send the deck?
+ * Also Pedro sends the invoice.") does not make the invoice theirs. A request said to someone by name
+ * is theirs; when that name is the recorder's, it was said, and the task is theirs anyway.
  */
 function asksSelf(line: Segment, task: ReadonlySet<string>): boolean {
   const clauses = clausesOf(line.text)
@@ -267,20 +307,11 @@ function asksSelf(line: Segment, task: ReadonlySet<string>): boolean {
     .filter((c) => !asked(c))
     .map((c) => c.text)
     .join(' ')
-  // A name said after the request is written with a capital, unlike "…, by Friday?".
-  const namedAfter = (i: number) => {
-    const next = clauses[i + 1]
-    return (
-      clauses[i]?.said.endsWith(',') === true &&
-      next !== undefined &&
-      /^\s*\p{Lu}/u.test(next.said) &&
-      isVocative(next.said)
-    )
-  }
   return (
-    !saidToSomeone(line) &&
+    !clauses.some(isName) &&
     clauses.some(
-      (c, i) => asked(c) && contentWords(c.text).some((w) => task.has(stem(w))) && !namedAfter(i),
+      (c) =>
+        asked(c) && contentWords(c.text).some((w) => task.has(stem(w))) && !endsWithName(c, task),
     ) &&
     !COMMITMENT.test(rest) &&
     !I_WILL.test(line.text)
@@ -304,7 +335,7 @@ function asSelf(
   if (!names.some((s) => normalize(s) === n)) return undefined
   if (index.speakers.has(ME)) return ME
   const named = names.some((s) => wasSaid(s, index))
-  const own = new Set(contentWords(task).map(stem))
+  const own = taskWords(task)
   return named || source.some((l) => asksSelf(l, own)) ? shown : undefined
 }
 
@@ -438,7 +469,7 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
  * subject of its own.
  */
 const AGREEING_PHRASES =
-  /\b(sem problemas?|no problems?|no worries|of course|pode deixar|deixa comigo|pode ser|tudo bem|tudo certo|by all means)\b/g
+  /\b(sem problemas?|nao (tem|ha) problemas?|no problems?|no worries|of course|pode deixar|deixa comigo|pode ser|tudo bem|tudo certo|by all means)\b/g
 const AGREEING = new Set(
   (
     'sure fine deal done agreed absolutely right perfect alright great good sounds yep fechado ' +
@@ -475,14 +506,19 @@ const POINTING = new Set(
     .map(stem),
 )
 
-/** A "no" on the line: the deadline said there may be the one refused ("Não, até sexta não dá"). */
+/**
+ * A "no" in a reply: the deadline said there may be the one refused ("Não, até sexta não dá"). The
+ * English "no" counts only said apart ("No, not by Friday"): in Portuguese it is "em + o" ("entrego
+ * no sábado").
+ */
 const NEGATION =
-  /\b(no|nao|not|nope|never|nunca|cannot)\b|\b(can|won|don|didn|isn|couldn|wouldn)\s?t\b/
+  /\b(nao|nem|nunca|not|nope|never|cannot)\b|\b(can|won|don|didn|isn|couldn|wouldn)\s?t\b/
+const NO_APART = /(^|[.!?]\s*)no\s*[,.!]/i
 
 /**
- * Whether the line holding a deadline talks about this task. A line that says no anywhere is not
- * ("Não, até sexta não dá", "No, not by Friday"): the deadline may be the one refused. Otherwise it
- * says some of the task's words, or it is a reply that adds nothing of its own: every other word agrees ("Great, by Friday", "Tá bom,
+ * Whether the line holding a deadline talks about this task: it says some of the task's words, or
+ * it is a reply that adds nothing of its own and says no "no" ("Não, até sexta não dá", "No, not by
+ * Friday" may refuse that very deadline): every other word agrees ("Great, by Friday", "Tá bom,
  * até sexta"), takes the asked work on ("consigo entregar"), or points back at it ("esse aqui").
  * Any other word may be other work ("Beleza, o deploy até sexta"), so the deadline is dropped: a
  * missing deadline is better than a wrong one. "On Friday we pick the band for the party?" after
@@ -493,9 +529,9 @@ function aboutTask(line: Segment, said: string, task: string): boolean {
   // "I’ll" with a curly apostrophe is "I'll": normalize would split it into "i ll".
   const text = line.text.replace(said, ' ').replace(/’/g, "'")
   const kept = normalize(text).replace(AGREEING_PHRASES, ' ')
-  if (NEGATION.test(kept)) return false
   const rest = contentWords(kept).map(stem)
   if (rest.some((w) => own.has(w))) return true
+  if (NEGATION.test(kept) || NO_APART.test(text)) return false
   return rest.every((w) => AGREEING.has(w) || TAKING_ON.has(w) || POINTING.has(w))
 }
 

@@ -307,10 +307,26 @@ describe('groundMinutes', () => {
         ['Send me the deck tomorrow.', 'Send the deck tomorrow'],
         ['Amanhã, você pode mandar o contrato?', 'Mandar o contrato'],
         ['Can you send the invoice, by Friday?', 'Send the invoice'],
+        ['Can you send the invoice to Bia?', 'Send the invoice'],
+        ['Can you check the invoice in Excel?', 'Check the invoice'],
+        ['Can you send the invoice Friday?', 'Send the invoice'],
       ]
       expect(asked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
         asked.map(() => 'Rafael'),
       )
+      // A request for other work, cited with the line of this one: the invoice is not asked.
+      const other = {
+        ...unnamedWith('Can you send the deck?'),
+        segments: [
+          ...unnamedWith('Can you send the deck?').segments,
+          { id: 4, start: 12, end: 14, speaker: 'Speaker', text: 'Pedro sends the invoice.' },
+        ],
+      }
+      expect(
+        groundMinutes(one('Send the invoice', 'Rafael', 'sends the invoice', [2, 4]), other, 't', {
+          self,
+        }).actionItems[0]?.owner,
+      ).toBe('Unassigned')
       // The request and the reply cited together: the request is enough.
       const replied = {
         ...unnamedWith('Could you print the price list?'),
@@ -367,6 +383,10 @@ describe('groundMinutes', () => {
         // Said to someone else by name after the request.
         ['Can you send the invoice, Bia?', 'Send the invoice'],
         ['Pode mandar o contrato, Bia?', 'Mandar o contrato'],
+        ['So, Bia, can you send the invoice?', 'Send the invoice'],
+        ['Olha, Bia, você pode mandar o contrato?', 'Mandar o contrato'],
+        ['Bia? Can you send the invoice?', 'Send the invoice'],
+        ['Can you send the invoice Bia?', 'Send the invoice'],
         // "Que você" and "você fica com" only with work after them.
         ['Quero que você saiba que o fornecedor manda a nota.', 'Mandar a nota'],
         ['Você fica com raiva quando o fornecedor atrasa a nota.', 'Mandar a nota'],
@@ -374,6 +394,7 @@ describe('groundMinutes', () => {
         ['Dá pra mandar a nota depois. Alguém viu?', 'Mandar a nota depois'],
         // A request for other work on the same line: the cover is Pedro's.
         ['Can you send the invoice? Also Pedro fixes the cover.', 'Fix the cover'],
+        ['Can you send the deck? Also Pedro sends the invoice.', 'Send the invoice'],
       ]
       expect(notAsked.map(([text = '', task = '']) => onLine(text, task))).toEqual(
         notAsked.map(() => 'Unassigned'),
@@ -773,6 +794,10 @@ describe('groundMinutes', () => {
         'Não, até sexta não dá.',
         'No, not by Friday.',
         "Sure, but I can't by Friday.",
+        'Fechado, entrego no sábado.',
+        'Não tem problema, até sexta.',
+        'A Ana atualiza o cardápio no site até sexta.',
+        'Não esquece de revisar o cardápio até sexta.',
       )
       const menu = (segments: number[], due: string) =>
         run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
@@ -804,6 +829,16 @@ describe('groundMinutes', () => {
       expect(menu([0, 20], 'até sexta')).not.toHaveProperty('due')
       expect(menu([0, 21], 'by Friday')).not.toHaveProperty('due')
       expect(menu([0, 22], 'by Friday')).not.toHaveProperty('due')
+      // In Portuguese "no" is "em + o", and "não tem problema" agrees.
+      expect(menu([0, 23], 'sábado')?.due).toBe('sábado')
+      expect(menu([0, 24], 'até sexta')?.due).toBe('até sexta')
+      // A line that names the task keeps its deadline, with a "não" or a "no" on it.
+      const own = (task: string, quote: string, segment: number) =>
+        run(t, item(task, '', quote, [segment], 'até sexta')).actionItems[0]?.due
+      expect(own('Atualizar o cardápio no site', 'A Ana atualiza o cardápio no site', 25)).toBe(
+        'até sexta',
+      )
+      expect(own('Revisar o cardápio', 'revisar o cardápio', 26)).toBe('até sexta')
     })
 
     it('cuts the deadline from the end of the task with the word that leads into it', () => {
