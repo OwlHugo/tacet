@@ -312,14 +312,16 @@ function namesOn(line: Segment, owners: ReadonlySet<string>): number {
 const REPLY_WORDS = 2
 
 /**
- * Words of agreeing to do something, which bring no subject of their own: "Fechado, consigo
- * entregar isso até sexta sem problema" is still a reply about the task asked just before.
+ * What a reply says to agree, which brings no subject of its own: "Fechado, consigo entregar isso até
+ * sexta sem problema" is still a reply about the task asked just before. Only agreeing: a verb of
+ * doing ("fazer", "deliver") may be about other work ("Fechado, consigo fazer o deploy até sexta").
  */
+const AGREEING_PHRASES =
+  /\b(sem problemas?|no problems?|no worries|of course|pode deixar|deixa comigo|pode ser|tudo bem|tudo certo|by all means)\b/g
 const AGREEING = new Set(
   (
-    'sure fine deal done deliver get finish manage problem worries absolutely course right ' +
-    'that isso fechado beleza combinado certo claro pode deixa consigo entregar entrego faco fazer ' +
-    'termino terminar problema tranquilo boa ai'
+    'sure fine deal done agreed absolutely right perfect alright fechado beleza combinado ' +
+    'certo claro isso tranquilo boa perfeito feito ai'
   )
     .split(' ')
     .map(stem),
@@ -332,7 +334,8 @@ const AGREEING = new Set(
  */
 function aboutTask(line: Segment, said: string, task: string): boolean {
   const own = new Set(contentWords(task).map(stem))
-  const rest = contentWords(line.text.replace(said, ' ')).map(stem)
+  const reply = normalize(line.text.replace(said, ' ')).replace(AGREEING_PHRASES, ' ')
+  const rest = contentWords(reply).map(stem)
   const subject = rest.filter((w) => !AGREEING.has(w))
   return rest.some((w) => own.has(w)) || subject.length <= REPLY_WORDS
 }

@@ -672,6 +672,27 @@ describe('groundMinutes', () => {
       expect(menu([0, 2], 'na sexta')).not.toHaveProperty('due')
     })
 
+    it('drops a deadline on a reply that agrees and then names other work to do', () => {
+      const t = line(
+        'Você pode revisar o cardápio do quiosque?',
+        'Fechado, consigo fazer o deploy até sexta.',
+        'Pode fazer o deploy até sexta?',
+        'Sure, no problem, I can finish the database migration by Friday.',
+        'Combinado, pode deixar, até sexta sem problema.',
+        'Sure, no worries, I will deliver it by Friday.',
+        'Of course, no problem, I will deliver it quickly by Friday.',
+      )
+      const menu = (segments: number[], due: string) =>
+        run(t, item('Revisar o cardápio', '', 'revisar o cardápio do quiosque', segments, due))
+          .actionItems[0]
+      expect(menu([0, 1], 'até sexta')).not.toHaveProperty('due')
+      expect(menu([0, 2], 'até sexta')).not.toHaveProperty('due')
+      expect(menu([0, 3], 'by Friday')).not.toHaveProperty('due')
+      expect(menu([0, 4], 'até sexta')?.due).toBe('até sexta')
+      expect(menu([0, 5], 'by Friday')?.due).toBe('by Friday')
+      expect(menu([0, 6], 'by Friday')?.due).toBe('by Friday')
+    })
+
     it('cuts the deadline from the end of the task with the word that leads into it', () => {
       const t = line(
         'Vou mandar as notas antes de sexta.',
