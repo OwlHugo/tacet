@@ -46,8 +46,17 @@ Tacet uses the best whisper model already in `~/.cache/whisper` (`large-v3-turbo
 pick another in Settings or with `-m`.
 
 **Desktop app (macOS, Apple Silicon).** Download `Tacet-0.1.0-mac-arm64.dmg` from
-[Releases](https://github.com/OwlHugo/tacet/releases), drag Tacet to Applications, then right-click
-→ Open the first time (the build is signed ad-hoc, not notarized). Tacet lives in the menu bar.
+[Releases](https://github.com/OwlHugo/tacet/releases) and drag Tacet to Applications. Tacet lives in
+the menu bar.
+
+> **The app is not signed by Apple.** The .dmg has an ad-hoc signature and is not notarized, so the
+> first launch says Tacet "cannot be opened" or "is damaged". To open it, right-click Tacet in
+> Applications → Open → Open (on macOS 15 and later: try once, then System Settings → Privacy &
+> Security → Open Anyway). Or clear the quarantine flag in Terminal:
+>
+> ```bash
+> xattr -dr com.apple.quarantine /Applications/Tacet.app
+> ```
 
 **CLI (macOS, Linux; Node 22.18+).**
 
@@ -92,12 +101,12 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 - **Me / Others.** Each track is transcribed separately, so speaker labels come for free. Mic echo of the speakers is detected and removed when you are not using headphones.
 - **Timestamps you can trust.** Whisper's timestamps drift on tracks that are mostly silence. Tacet snaps each segment to the speech it actually covers, getting the error down from seconds to about 10 ms on the scripted cases (see the eval). On the 2.5 minute call (case 05) it is still about 6 s: whisper glues a line to the one before it, and a short reply ("Isso.") lands on the wrong segment (see Known limitations).
 - **One request per part, each checked.** The summary, the decisions and the tasks are asked apart, so a small model looks at one thing at a time. Each decision is then confirmed on its own lines (a question, a joke or a complaint is not a decision), and each deadline is checked to be a time said for its task.
-- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said, any deadline not said word for word on a line that only this task stands on and that names at most one of the owners the model gave (a missing deadline is preferred to a wrong one; a second person the model left out is not seen, see Known limitations), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
+- **Grounded minutes.** Summary, decisions and action items with owners and deadlines. Every item cites transcript line ids and quotes the line. A deterministic check then drops anything whose quote is not in the transcript, any owner whose name was never said (except yours when you set it: on a recording your work goes to your "Me" track, and on an imported file work asked of "you" is yours, see *Who you are*), any deadline not said word for word on a line that only this task stands on and that names at most one of the owners the model gave (a missing deadline is preferred to a wrong one; a second person the model left out is not seen, see Known limitations), and any task whose wording is not supported by its source. Timestamps come from the transcript, never from the model.
 - **Obsidian-ready Markdown.** YAML frontmatter, a `^t0003` block id on every transcript line, and every minutes item links to its line: `[[#^t0003|00:14]]`.
 - **Search** across every meeting (titles, minutes, transcripts), accent and case insensitive.
 - **Global shortcut** `⌘⇧M` / `Ctrl+Shift+M` to start and stop from anywhere.
-- **Import audio.** Drop a `.wav`, `.m4a` or `.mp3` on the window (or use *Import audio*) to run the same pipeline on a recording you already have. No microphone or screen permission needed. An imported file is one mixed track, so lines are labelled "Speaker" and tasks only get an owner whose name was said.
-- **Who you are.** Set your name and nicknames in Settings (or `--me`, `--alias` in the CLI). On a recording, work given to you lands on your "Me" track; on an imported file it gets your name when one of your names was said or the line asks it of "you".
+- **Import audio.** Drop a `.wav`, `.m4a` or `.mp3` on the window (or use *Import audio*) to run the same pipeline on a recording you already have. No microphone or screen permission needed. An imported file is one mixed track, so lines are labelled "Speaker" and tasks only get an owner whose name was said, or you when the line asks it of you (see *Who you are*).
+- **Who you are.** Set your name and nicknames in Settings (or `--me`, `--alias` in the CLI). On a recording, work given to you lands on your "Me" track; on an imported file it gets your name when one of your names was said or the line asks it of "you" ("can you…?", "please…"). A "you" that is not a request ("thank you", "I'll send you the deck") gives you nothing.
 - **Your vocabulary.** List the names and terms you expect in Settings (or `--vocab words.txt`), and whisper.cpp spells them your way. The list stays on your machine.
 
 ## Eval
@@ -224,7 +233,8 @@ tacet transcribe <audio...>        one file, or --mic me.wav --system them.wav, 
   -l, --language en|pt|...|auto
   --llm qwen2.5:7b   --no-minutes   -t "Title"   -o ~/notes   --json
   --vocab words.txt  names and terms whisper should expect, one per line (passed as its prompt)
-  --me Ana --alias Aninha   who you are: on a one-track file, work asked of you gets you as owner
+  --me Ana --alias Aninha   who you are: on --mic/--system your tasks go to Me;
+                            on a one-track file, work asked of you gets your name
 tacet search "pricing page" [--dir ~/notes]
 tacet list [--dir ~/notes]
 tacet doctor

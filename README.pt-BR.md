@@ -40,9 +40,18 @@ O Tacet usa o melhor modelo do whisper que já estiver em `~/.cache/whisper`; se
 execução baixa o `base` (142 MB) do Hugging Face.
 
 **App (macOS, Apple Silicon).** Baixe o `Tacet-0.1.0-mac-arm64.dmg` em
-[Releases](https://github.com/OwlHugo/tacet/releases), arraste para Aplicativos e, na primeira vez,
-clique com o botão direito → Abrir (o build é assinado ad-hoc, sem notarização). O Tacet fica na
+[Releases](https://github.com/OwlHugo/tacet/releases) e arraste para Aplicativos. O Tacet fica na
 barra de menus.
+
+> **O app não é assinado pela Apple.** O .dmg tem assinatura ad-hoc e não é notarizado, então na
+> primeira vez o macOS diz que o Tacet "não pode ser aberto" ou "está danificado". Para abrir, clique
+> com o botão direito no Tacet em Aplicativos → Abrir → Abrir (no macOS 15 em diante: tente abrir uma
+> vez e vá em Ajustes do Sistema → Privacidade e Segurança → Abrir Mesmo Assim). Ou tire a quarentena
+> pelo Terminal:
+>
+> ```bash
+> xattr -dr com.apple.quarantine /Applications/Tacet.app
+> ```
 
 **CLI (macOS, Linux; Node 22.18+).**
 
@@ -68,10 +77,10 @@ Os builds de Windows e Linux estão configurados, mas ainda não foram testados 
 ## O que faz
 
 - **Duas faixas, sem driver.** Microfone e áudio do sistema gravados em arquivos separados, então "Eu" e "Outros" vêm de graça. O eco do microfone é removido quando você não usa fone.
-- **Ata ancorada.** Resumo, decisões e tarefas com dono e prazo. Cada item cita as linhas da transcrição; o que não está na transcrição sai da ata, e os horários vêm da transcrição, nunca do modelo.
+- **Ata ancorada.** Resumo, decisões e tarefas com dono e prazo. Cada item cita as linhas da transcrição; o que não está na transcrição sai da ata, um dono cujo nome nunca foi dito também sai (menos você, quando informa seu nome: veja *Quem é você*), e os horários vêm da transcrição, nunca do modelo.
 - **Uma chamada por parte.** Resumo, decisões e tarefas são pedidos separados ao modelo; cada decisão é confirmada nas próprias falas (pergunta, piada ou reclamação não vira decisão) e cada prazo é conferido contra a tarefa dele.
 - **Arquivo de uma faixa só.** Importe um `.wav`, `.m4a` ou `.mp3` e ele passa pelo mesmo fluxo.
-- **Quem é você.** Nos Ajustes, informe seu nome e apelidos (na CLI, `--me` e `--alias`). Numa gravação, o que for pedido a você vai para a sua faixa "Me"; num arquivo importado, sai com seu nome quando um dos seus nomes foi dito ou a fala pede a "você".
+- **Quem é você.** Nos Ajustes, informe seu nome e apelidos (na CLI, `--me` e `--alias`). Numa gravação, o que for pedido a você vai para a sua faixa "Me"; num arquivo importado, sai com seu nome quando um dos seus nomes foi dito ou a fala te pede algo ("você pode…?", "pode mandar…?", "por favor…"). Um "você" que não é pedido ("te mando o contrato", "obrigado") não te dá tarefa.
 - **Seu vocabulário.** Nos Ajustes (ou `--vocab palavras.txt`), liste os nomes e termos que o whisper erra, e ele passa a escrever do seu jeito. A lista fica na sua máquina.
 - **Markdown pronto para o Obsidian**, busca em todas as reuniões, atalho global `⌘⇧M` / `Ctrl+Shift+M`.
 
@@ -83,7 +92,8 @@ tacet transcribe <audio...>        um arquivo, ou --mic eu.wav --system eles.wav
   -l, --language pt|en|...|auto
   --llm qwen2.5:7b   --no-minutes   -t "Título"   -o ~/notas   --json
   --vocab palavras.txt   nomes e termos que o whisper deve esperar, um por linha
-  --me Ana --alias Aninha   quem é você: tarefas pedidas a você saem com você de dono
+  --me Ana --alias Aninha   quem é você: com --mic/--system suas tarefas vão para Me;
+                            num arquivo de uma faixa, o que for pedido a você sai com seu nome
 tacet search "tela de pedido" [--dir ~/notas]
 tacet list [--dir ~/notas]
 tacet doctor
