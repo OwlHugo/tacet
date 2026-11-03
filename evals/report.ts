@@ -85,12 +85,12 @@ function meaningTable(r: Report): string[] {
   if (scored.length === 0) return []
   const rows = scored.map(
     ({ id, m }) =>
-      `| ${id} | ${m.subject ? 'yes' : 'no'} | ${ratio(m.decisions.right, m.decisions.given)} | ${ratio(m.decisions.found, m.decisions.total)} | ${ratio(m.tasks.right, m.tasks.given)} | ${ratio(m.tasks.found, m.tasks.total)} | ${m.wrongOwner} | ${m.invented.length} |`,
+      `| ${id} | ${m.subject ? 'yes' : 'no'} | ${m.summary.points} | ${m.summary.firstIsSubject ? 'yes' : 'no'} | ${m.summary.withSubject} | ${m.summary.total === 0 ? '–' : ratio(m.summary.found, m.summary.total)} | ${ratio(m.decisions.right, m.decisions.given)} | ${ratio(m.decisions.found, m.decisions.total)} | ${ratio(m.tasks.right, m.tasks.given)} | ${ratio(m.tasks.found, m.tasks.total)} | ${m.wrongOwner} | ${m.invented.length} |`,
   )
   return [
     '',
-    '| Case | Main subject in summary | Decisions right (precision) | Decisions found (recall) | Tasks right (precision) | Tasks found (recall) | Wrong owner | Invented items |',
-    '|---|---|---|---|---|---|---|---|',
+    '| Case | Main subject in summary | Summary points | First point is the subject | Points with the subject | Summary points of the key found | Decisions right (precision) | Decisions found (recall) | Tasks right (precision) | Tasks found (recall) | Wrong owner | Invented items |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
   ]
 }

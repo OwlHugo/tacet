@@ -90,4 +90,52 @@ describe('checkAnswerKey', () => {
     )
     expect(r.subject).toBe(false)
   })
+
+  it('counts the summary points, checks the first one is the subject, and the key points covered', () => {
+    const r = checkAnswerKey(
+      minutes({
+        summary: [
+          { text: 'A equipe discutiu a tela de pedidos do portal.', ...cite },
+          { text: 'O portal ganha uma tela de pedido nova.', ...cite },
+          { text: 'O relatório fica para depois.', ...cite },
+        ],
+      }),
+      { ...KEY, summary: [['relatorio'], ['bucket|nuvem']] },
+    )
+    expect(r.summary).toEqual({
+      points: 3,
+      firstIsSubject: true,
+      withSubject: 2,
+      found: 1,
+      total: 2,
+    })
+    const later = checkAnswerKey(
+      minutes({
+        summary: [
+          { text: 'O relatório fica para depois.', ...cite },
+          { text: 'O portal ganha uma tela de pedido nova.', ...cite },
+        ],
+      }),
+      KEY,
+    )
+    expect([later.subject, later.summary.firstIsSubject]).toEqual([true, false])
+    expect(checkAnswerKey(minutes({ summary: [] }), KEY).summary.firstIsSubject).toBe(false)
+    const split = checkAnswerKey(
+      minutes({
+        summary: [
+          { text: 'Tela de pedido', ...cite },
+          { text: 'Portal novo', ...cite },
+        ],
+      }),
+      KEY,
+    )
+    expect(split.subject).toBe(true)
+    expect(checkAnswerKey(minutes(), KEY).summary).toEqual({
+      points: 1,
+      firstIsSubject: true,
+      withSubject: 1,
+      found: 0,
+      total: 0,
+    })
+  })
 })
