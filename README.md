@@ -58,20 +58,13 @@ the menu bar.
 > xattr -dr com.apple.quarantine /Applications/Tacet.app
 > ```
 
-**CLI (macOS, Linux; Node 22.18+).**
-
-```bash
-npm install -g tacet
-tacet doctor                        # checks whisper.cpp, ffmpeg, the model and Ollama
-tacet transcribe meeting.m4a
-```
-
-**From source** (any platform, Node 24.12+ and pnpm 10):
+**CLI and from source** (macOS, Linux; Node 24.12+ and pnpm 10). The CLI is not on npm yet, so it runs from the repository:
 
 ```bash
 git clone https://github.com/OwlHugo/tacet && cd tacet
 pnpm install
-pnpm tacet doctor
+pnpm tacet doctor                   # checks whisper.cpp, ffmpeg, the model and Ollama
+pnpm tacet transcribe meeting.m4a
 pnpm desktop                        # the app in dev mode
 pnpm dist:mac                       # build the .dmg into apps/desktop/release
 ```
@@ -270,7 +263,7 @@ pnpm e2e                        # records 60 s through the real app, runs the wh
 pnpm dist:mac                   # .dmg for Apple Silicon into apps/desktop/release
 ```
 
-Node 24.12+ and pnpm 10 for development. The published CLI and core run on Node 22.18+.
+Node 24.12+ and pnpm 10 for development. The built CLI and core run on Node 22.18+.
 Rules for contributors and coding agents: [AGENTS.md](AGENTS.md).
 
 ## Roadmap
