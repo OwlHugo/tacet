@@ -1,0 +1,1064 @@
+{
+  "whisperModel": "base",
+  "llmModel": "qwen2.5:7b",
+  "transcript": {
+    "segments": [
+      {
+        "start": 0.5,
+        "end": 7.12,
+        "speaker": "Me",
+        "text": "Oi, gente, bom dia! Vocês estão me ouvindo bem? Meu microfone deu problema ontem a tarde.",
+        "id": 0
+      },
+      {
+        "start": 10,
+        "end": 12.18,
+        "speaker": "Others",
+        "text": "Entrei, entrei. Desculpa o atraso, o trânsito estava parado por causa da chuva.",
+        "id": 1
+      },
+      {
+        "start": 13.18,
+        "end": 18.06,
+        "speaker": "Me",
+        "text": "Ótimo, o Marcos já entrou também? Eu vi um momidele na lista agorinha.",
+        "id": 2
+      },
+      {
+        "start": 25.240000000000002,
+        "end": 30.22,
+        "speaker": "Me",
+        "text": "Imagina, aqui também e choveu a noite inteira, a rua de casa virou um rio.",
+        "id": 3
+      },
+      {
+        "start": 31,
+        "end": 35.62,
+        "speaker": "Others",
+        "text": "Lá em casa faltou nos duas vezes, tive que trabalhar pelo celular de manhã.",
+        "id": 4
+      },
+      {
+        "start": 37,
+        "end": 44.86,
+        "speaker": "Me",
+        "text": "Bom, vamos começar então. A reunião de hoje é pra fechar o lançamento do agendamento online da clínica nas três unidades.",
+        "id": 5
+      },
+      {
+        "start": 45.52,
+        "end": 51.9,
+        "speaker": "Others",
+        "text": "Perfeito. Tem bastante coisa pra decidir, principalmente sobre a decepção e os cadastros antigos.",
+        "id": 6
+      },
+      {
+        "start": 53,
+        "end": 61.04,
+        "speaker": "Me",
+        "text": "Isso, eu separei e partes, ou que entra no agendamento, onde começa os lembrets, os cadastros e o treinamento.",
+        "id": 7
+      },
+      {
+        "start": 61.660000000000004,
+        "end": 67,
+        "speaker": "Others",
+        "text": "Beleza. Do lado do siti, a tela de agendamento já está pronta no ambiente de testes.",
+        "id": 8
+      },
+      {
+        "start": 69,
+        "end": 75.28,
+        "speaker": "Me",
+        "text": "Então a primeira pergunta é, qual é serviços o cliente vai poder marcar sozinho pelo site?",
+        "id": 9
+      },
+      {
+        "start": 75.9,
+        "end": 82,
+        "speaker": "Others",
+        "text": "Eu acho que consulta e vacina com certeza. São os atendimentos mais simples de encaixar na agenda.",
+        "id": 10
+      },
+      {
+        "start": 83.32000000000001,
+        "end": 88,
+        "speaker": "Me",
+        "text": "E cirurgia, teve gente pedindo pra marcar cirurgia pelo site também e.",
+        "id": 11
+      },
+      {
+        "start": 88.64,
+        "end": 95,
+        "speaker": "Others",
+        "text": "Cirugia eu não colocaria agora. Precisa de avaliação antes, exame de sami, de junho, não dá pra marcar direto.",
+        "id": 12
+      },
+      {
+        "start": 97.54,
+        "end": 102.7,
+        "speaker": "Me",
+        "text": "Concordo com você, Paulo, isso muda alguma coisa na tela que você fez?",
+        "id": 13
+      },
+      {
+        "start": 103.36,
+        "end": 108,
+        "speaker": "Others",
+        "text": "Não muda quase nada. Essa é a esconder a opção de cirugia da lista de serviços.",
+        "id": 14
+      },
+      {
+        "start": 109.34,
+        "end": 117.78,
+        "speaker": "Me",
+        "text": "Então fica decidido, no agendamento online ou só consultas e vacinas, e cirurgia continua sendo marcada por telefone.",
+        "id": 15
+      },
+      {
+        "start": 118.42,
+        "end": 123.34,
+        "speaker": "Others",
+        "text": "Fechado. Ivânio e tosa, a unidade do soping faz bastante banho.",
+        "id": 16
+      },
+      {
+        "start": 124.34,
+        "end": 131.68,
+        "speaker": "Me",
+        "text": "Banho e tosa fica pra uma segunda fase, a agenda dos tozadores é outra planilha, e eu não quero misturar agora.",
+        "id": 17
+      },
+      {
+        "start": 132.3,
+        "end": 137.3,
+        "speaker": "Others",
+        "text": "Faz sentido. Se misturar tudo agora, a gente atrasa o lançamento inteiro.",
+        "id": 18
+      },
+      {
+        "start": 138.3,
+        "end": 145.84,
+        "speaker": "Me",
+        "text": "Agora, onde a gente começa, eu queria lançar primeiro numa unidade só, como piloto, antes das outras duas.",
+        "id": 19
+      },
+      {
+        "start": 146.48,
+        "end": 152.14000000000001,
+        "speaker": "Others",
+        "text": "Eu sugiro a unidade do centro. É a que tem mais movimento e a recepção mais experiente.",
+        "id": 20
+      },
+      {
+        "start": 153.14000000000001,
+        "end": 158.62,
+        "speaker": "Me",
+        "text": "Mas o centro não é justamente a mais cheia, se der problema, o estrago é maior.",
+        "id": 21
+      },
+      {
+        "start": 159.24,
+        "end": 165.62,
+        "speaker": "Others",
+        "text": "É, mas também a gente aprende mais rápido. Eu estou lá todo dia pra acompanhar de perto.",
+        "id": 22
+      },
+      {
+        "start": 167,
+        "end": 169.4,
+        "speaker": "Me",
+        "text": "O que você acha disso do seu lado?",
+        "id": 23
+      },
+      {
+        "start": 170.02,
+        "end": 175.28,
+        "speaker": "Others",
+        "text": "Do meu lado tanto faz. Eu só preciso saber com a unidade e aparecer primeiro no siti.",
+        "id": 24
+      },
+      {
+        "start": 176.32,
+        "end": 183.38,
+        "speaker": "Me",
+        "text": "Tá bom, você me convenceu, o piloto vai ser na unidade do centro, e as outras duas entram mês depois.",
+        "id": 25
+      },
+      {
+        "start": 184.02,
+        "end": 188.14000000000001,
+        "speaker": "Others",
+        "text": "Combinado. E a data de lançamento do piloto, a gente já tem?",
+        "id": 26
+      },
+      {
+        "start": 189.12,
+        "end": 194.78,
+        "speaker": "Me",
+        "text": "Eu pensei na segunda-feira, dia 3, da tempo de treinar a recepção antes.",
+        "id": 27
+      },
+      {
+        "start": 195.4,
+        "end": 200.94,
+        "speaker": "Others",
+        "text": "Dia 3 dá tranquilo. A tela está pronta, só falta ligar a agenda de verdade.",
+        "id": 28
+      },
+      {
+        "start": 202,
+        "end": 206.9,
+        "speaker": "Me",
+        "text": "Então no dia 3 de manhã o agendamento online entra no ar na unidade do centro.",
+        "id": 29
+      },
+      {
+        "start": 207.54,
+        "end": 212.68,
+        "speaker": "Others",
+        "text": "Perfeito. Eu vou avisar a equipe da unidade hoje mesmo, do grupo da recepção.",
+        "id": 30
+      },
+      {
+        "start": 214,
+        "end": 220.58,
+        "speaker": "Me",
+        "text": "E por último, próximo assunto, os lembretes, a ideia é mandar um lembrete para o tutor antes da consulta.",
+        "id": 31
+      },
+      {
+        "start": 221.20000000000002,
+        "end": 227.24,
+        "speaker": "Others",
+        "text": "Eu consigo mandar por latissap ou por SMS. Uma tissap sai mais barato por mensagem.",
+        "id": 32
+      },
+      {
+        "start": 228.20000000000002,
+        "end": 232.08,
+        "speaker": "Me",
+        "text": "E vocês acham que o pessoal ainda lhe é sem esse hoje em dia?",
+        "id": 33
+      },
+      {
+        "start": 233,
+        "end": 239,
+        "speaker": "Others",
+        "text": "Ninguém mais lhe SMS, sinceramente. Só chega a código de banco e propaganda de loja.",
+        "id": 34
+      },
+      {
+        "start": 240.02,
+        "end": 244.42000000000002,
+        "speaker": "Me",
+        "text": "Verdade, quanto tempo antes vocês acham que o lembrete deve sair?",
+        "id": 35
+      },
+      {
+        "start": 245.04,
+        "end": 251.02,
+        "speaker": "Others",
+        "text": "24 horas antes é bom. Dá tempo do todo desmarcar e a gente encaixar outro animal.",
+        "id": 36
+      },
+      {
+        "start": 252.02,
+        "end": 256.2,
+        "speaker": "Me",
+        "text": "E dá pra mandar mais de um lembrete, Paulo, ou complica muito?",
+        "id": 37
+      },
+      {
+        "start": 257,
+        "end": 262,
+        "speaker": "Others",
+        "text": "Dá pra mandar dois também, um do dia anterior e outro duas horas antes da consulta.",
+        "id": 38
+      },
+      {
+        "start": 263.08,
+        "end": 269.36,
+        "speaker": "Me",
+        "text": "2 eu acho demais, o pessoal reclama de mensagem repetida, vamos de um lembrete só.",
+        "id": 39
+      },
+      {
+        "start": 270,
+        "end": 273,
+        "speaker": "Others",
+        "text": "Tá certo, assim fica mais simples pra mim também.",
+        "id": 40
+      },
+      {
+        "start": 274.26,
+        "end": 282.12,
+        "speaker": "Me",
+        "text": "Então tá decidido, um lembrete só, por WhatsApp, 24 horas antes da consulta, CSNES.",
+        "id": 41
+      },
+      {
+        "start": 282.76,
+        "end": 283,
+        "speaker": "Others",
+        "text": "Fechado. E se eu to torre responder o lembrete e crer em vocacilar a consulta?",
+        "id": 42
+      },
+      {
+        "start": 288.14,
+        "end": 292.28000000000003,
+        "speaker": "Me",
+        "text": "Boa pergunta, Paulo, como o tutor cancela pelo lembrete?",
+        "id": 43
+      },
+      {
+        "start": 292.88,
+        "end": 296,
+        "speaker": "Others",
+        "text": "Na mensagem vai um link. Foi o link e lica-sella ou remarca sem precisar ligar.",
+        "id": 44
+      },
+      {
+        "start": 299,
+        "end": 304.6,
+        "speaker": "Me",
+        "text": "E até quando ele pode cancelar pelo link, se cancelar e sim uma da hora, o horário fica vazio.",
+        "id": 45
+      },
+      {
+        "start": 305.22,
+        "end": 310.36,
+        "speaker": "Others",
+        "text": "Eu colocaria até duas horas antes. Depois disso, só ligando pra recepção.",
+        "id": 46
+      },
+      {
+        "start": 311.36,
+        "end": 314.06,
+        "speaker": "Me",
+        "text": "Paulo, dá pra travar o link nesse horário?",
+        "id": 47
+      },
+      {
+        "start": 314.68,
+        "end": 320.12,
+        "speaker": "Others",
+        "text": "Dá pra fazer, sim. O link para de funcionar duas horas antes do horário marcado.",
+        "id": 48
+      },
+      {
+        "start": 321.12,
+        "end": 326.42,
+        "speaker": "Me",
+        "text": "Combinar do então, o cancelamento pelo link vale até 2 horas antes da consulta.",
+        "id": 49
+      },
+      {
+        "start": 327.04,
+        "end": 334,
+        "speaker": "Others",
+        "text": "A, só uma coisa rapidinho, fora do assunto. Meu gato de roubou café no teclado ontem, por isso estou com esse teclado emprestado.",
+        "id": 50
+      },
+      {
+        "start": 336.54,
+        "end": 340.26,
+        "speaker": "Me",
+        "text": "Aranão, coitado do teclado, e o gato, está bem?",
+        "id": 51
+      },
+      {
+        "start": 341,
+        "end": 344.56,
+        "speaker": "Others",
+        "text": "O gato está ótimo, dormindo em cima do monitor agora mesmo. Quem sofreu foi eu.",
+        "id": 52
+      },
+      {
+        "start": 347,
+        "end": 353.64,
+        "speaker": "Me",
+        "text": "Pelo jeito a gente precisa de um agendamento pros nossos bichos também e marcos, e o seu cachorro?",
+        "id": 53
+      },
+      {
+        "start": 354.26,
+        "end": 359,
+        "speaker": "Others",
+        "text": "O meu cachorro com meu carregador do motor walk semana passada. Então nem me fala.",
+        "id": 54
+      },
+      {
+        "start": 360.32,
+        "end": 364.76,
+        "speaker": "Me",
+        "text": "Bom, voltando, agora aos cadastros, que é a parte mais chata.",
+        "id": 55
+      },
+      {
+        "start": 365.38,
+        "end": 368,
+        "speaker": "Others",
+        "text": "É, essa parte me preocupa um pouco, confesso.",
+        "id": 56
+      },
+      {
+        "start": 369.5,
+        "end": 376.3,
+        "speaker": "Me",
+        "text": "Hoje os cadastros dos tutores e dos animais estão numa planilha antiga, e o sistema novo precisa deles.",
+        "id": 57
+      },
+      {
+        "start": 377,
+        "end": 383.94,
+        "speaker": "Others",
+        "text": "No planilha tem uns 8 anos de cadastro. Tem animal que já morreu, tutor que mudou de cidade, telefone errado.",
+        "id": 58
+      },
+      {
+        "start": 385,
+        "end": 388.42,
+        "speaker": "Me",
+        "text": "E se a gente importar tudo, Paulo, o que acontece?",
+        "id": 59
+      },
+      {
+        "start": 389.04,
+        "end": 395,
+        "speaker": "Others",
+        "text": "Se eu importar tudo, vai vir muito lixo junto. E cadastro duplicado também, que é o pior.",
+        "id": 60
+      },
+      {
+        "start": 396.02,
+        "end": 403.56,
+        "speaker": "Me",
+        "text": "E se a gente importar só os cadastros dos últimos dois anos, quem não aparece a mais tempo faz o cadastro de novo?",
+        "id": 61
+      },
+      {
+        "start": 404.18,
+        "end": 409,
+        "speaker": "Others",
+        "text": "Passou ótimo. Quem não vem há dois anos praticamente virou cliente novo mesmo.",
+        "id": 62
+      },
+      {
+        "start": 410.28000000000003,
+        "end": 413.42,
+        "speaker": "Me",
+        "text": "Paulo, pra você fica mais fácil desse jeito?",
+        "id": 63
+      },
+      {
+        "start": 414.08,
+        "end": 419,
+        "speaker": "Others",
+        "text": "Pra mim, fica bem mais fácil. Eu só preciso da planilha limpa sem cadastro duplicado.",
+        "id": 64
+      },
+      {
+        "start": 421,
+        "end": 426.86,
+        "speaker": "Me",
+        "text": "Então fica assim, a gente importa só os cadastros dos últimos dois anos da planilha antiga.",
+        "id": 65
+      },
+      {
+        "start": 427.48,
+        "end": 432,
+        "speaker": "Others",
+        "text": "E quem limpa os duplicados, eu conheço bem a planilha, posso fazer isso.",
+        "id": 66
+      },
+      {
+        "start": 433.24,
+        "end": 439.5,
+        "speaker": "Me",
+        "text": "Marcos, então você fica com a limpeza dos duplicados da planilha, até quando você consegue?",
+        "id": 67
+      },
+      {
+        "start": 440,
+        "end": 440.12,
+        "speaker": "Others",
+        "text": "Eu limpo os duplicados da planilha até sexta-feira.",
+        "id": 68
+      },
+      {
+        "start": 444.18,
+        "end": 450.1,
+        "speaker": "Me",
+        "text": "Ótimo, Paulo, depois que o marcos entregar, você faz a importação no sistema novo?",
+        "id": 69
+      },
+      {
+        "start": 456.3,
+        "end": 463.7,
+        "speaker": "Me",
+        "text": "Perfeito, agora o telefone, muita gente vai continuar ligando, principalmente os clientes mais velhos.",
+        "id": 70
+      },
+      {
+        "start": 464.34000000000003,
+        "end": 470.62,
+        "speaker": "Others",
+        "text": "Com certeza, a decepção continua atendendo o telefone normalmente, o sítio é só mais um caminho.",
+        "id": 71
+      },
+      {
+        "start": 472,
+        "end": 476.94,
+        "speaker": "Me",
+        "text": "E a recepção ou vê os agendamentos do site na mesma agenda que ela já usa, Paulo?",
+        "id": 72
+      },
+      {
+        "start": 477.58,
+        "end": 483,
+        "speaker": "Others",
+        "text": "Vê sim. Eu bloqueio o horário assim que alguém marca pelo sítio, isso já está pronto.",
+        "id": 73
+      },
+      {
+        "start": 484.04,
+        "end": 487.1,
+        "speaker": "Me",
+        "text": "Ótimo, isso já ajuda bastante a recepção.",
+        "id": 74
+      },
+      {
+        "start": 487.72,
+        "end": 493.16,
+        "speaker": "Others",
+        "text": "E o contrário, se a decepção marcar por telefone o horário som do sítio na hora,",
+        "id": 75
+      },
+      {
+        "start": 494.16,
+        "end": 497.82,
+        "speaker": "Me",
+        "text": "Boa pergunta, Paulo, e nesse caso, como fica?",
+        "id": 76
+      },
+      {
+        "start": 498.44,
+        "end": 502.2,
+        "speaker": "Others",
+        "text": "som na hora também, agenda uma só para os dois lados.",
+        "id": 77
+      },
+      {
+        "start": 503.22,
+        "end": 507.96000000000004,
+        "speaker": "Me",
+        "text": "Ótimo, isso tira um peso grande, agora o treinamento da recepção.",
+        "id": 78
+      },
+      {
+        "start": 508.58,
+        "end": 513.78,
+        "speaker": "Others",
+        "text": "A decepção do centro são quatro pessoas, duas de manhã e duas atarde.",
+        "id": 79
+      },
+      {
+        "start": 515,
+        "end": 519.3,
+        "speaker": "Me",
+        "text": "Eu queria fazer um treinamento só, com as quatro juntas, numa manhã.",
+        "id": 80
+      },
+      {
+        "start": 519.94,
+        "end": 525,
+        "speaker": "Others",
+        "text": "Pode ser na quarta de manhã. Quarta é o dia mais tranquilo da semana lá na unidade.",
+        "id": 81
+      },
+      {
+        "start": 526.22,
+        "end": 531.12,
+        "speaker": "Me",
+        "text": "Quarta de manhã, então, eu prepare o material do treinamento até ter safeira.",
+        "id": 82
+      },
+      {
+        "start": 531.76,
+        "end": 536,
+        "speaker": "Others",
+        "text": "Se quiser, eu gravo um vídeo curto mostrado à tela para a decepção de ver depois.",
+        "id": 83
+      },
+      {
+        "start": 538.02,
+        "end": 543.32,
+        "speaker": "Me",
+        "text": "Quero sim, Paulo, você grava esse vídeo da tela pra gente usar no treinamento?",
+        "id": 84
+      },
+      {
+        "start": 543.94,
+        "end": 545,
+        "speaker": "Others",
+        "text": "Gravo sim, deixa comigo.",
+        "id": 85
+      },
+      {
+        "start": 546.7,
+        "end": 550.52,
+        "speaker": "Me",
+        "text": "Obrigada, Paulo, isso vai ajudar muito a recepção.",
+        "id": 86
+      },
+      {
+        "start": 551.12,
+        "end": 555,
+        "speaker": "Others",
+        "text": "E quem fica de pletão do dia do lançamento, caso o sítio trabe?",
+        "id": 87
+      },
+      {
+        "start": 556.28,
+        "end": 560.66,
+        "speaker": "Me",
+        "text": "Paulo, você consegue ficar de sobreaviso na manhã do lançamento?",
+        "id": 88
+      },
+      {
+        "start": 561.28,
+        "end": 566,
+        "speaker": "Others",
+        "text": "Consego. Eu deixo o celular ligado e fico olhando os erros do sítio e avanhar toda.",
+        "id": 89
+      },
+      {
+        "start": 567.38,
+        "end": 573.22,
+        "speaker": "Me",
+        "text": "Agora, uma coisa que a diretoria perguntou, cobrar a consulta antecipada pelo site.",
+        "id": 90
+      },
+      {
+        "start": 573.84,
+        "end": 578.64,
+        "speaker": "Others",
+        "text": "Claro, e a gente também cobra o tutor por respirar dentro da clínica, né?",
+        "id": 91
+      },
+      {
+        "start": 579.62,
+        "end": 584.94,
+        "speaker": "Me",
+        "text": "Eu sei, eu sei, mas sério, tem clínica que cobra um sinal pra evitar falta.",
+        "id": 92
+      },
+      {
+        "start": 585.6,
+        "end": 592,
+        "speaker": "Others",
+        "text": "Fagamento pelo sítio dá bastante trabalho. Precisa de contrato com operadora, teste, devolução.",
+        "id": 93
+      },
+      {
+        "start": 593.3000000000001,
+        "end": 597.98,
+        "speaker": "Me",
+        "text": "E no piloto a gente nem sabe se as faltas vão aumentar, né, marcos?",
+        "id": 94
+      },
+      {
+        "start": 598.64,
+        "end": 603.6,
+        "speaker": "Others",
+        "text": "Exato. No piloto a gente nem sabe ainda se as faltas vão aumentar ou diminuir.",
+        "id": 95
+      },
+      {
+        "start": 604.62,
+        "end": 612.1800000000001,
+        "speaker": "Me",
+        "text": "Então vamos deixar o pagamento antecipado pra depois do piloto, primeiro a gente mede quantas faltas acontecem.",
+        "id": 96
+      },
+      {
+        "start": 612.8000000000001,
+        "end": 617.48,
+        "speaker": "Others",
+        "text": "Concordo. Se as faltas subirém, a gente volta nesse assunto depois.",
+        "id": 97
+      },
+      {
+        "start": 618.5,
+        "end": 623.42,
+        "speaker": "Me",
+        "text": "Marcos, você fica com o controle das faltas da unidade no primeiro mês?",
+        "id": 98
+      },
+      {
+        "start": 624.1,
+        "end": 628.8000000000001,
+        "speaker": "Others",
+        "text": "Fico sim. Eu anoto as faltas numa planíria simples durante o primeiro mês.",
+        "id": 99
+      },
+      {
+        "start": 630,
+        "end": 634.42,
+        "speaker": "Me",
+        "text": "É ótimo, Paulo, mais alguma coisa do site antes da gente fechar?",
+        "id": 100
+      },
+      {
+        "start": 635.0600000000001,
+        "end": 640.52,
+        "speaker": "Others",
+        "text": "Mais uma coisa. Hoje a página inicial tem um botão de agendar, só o telefone.",
+        "id": 101
+      },
+      {
+        "start": 641.52,
+        "end": 646.86,
+        "speaker": "Me",
+        "text": "Verdade, isso é importante, o botão tem que aparecer logo no topo da página.",
+        "id": 102
+      },
+      {
+        "start": 647.48,
+        "end": 651.84,
+        "speaker": "Others",
+        "text": "Eu coloco um botão de agendar no topo da página inicial até quinta-feira.",
+        "id": 103
+      },
+      {
+        "start": 653,
+        "end": 656.28,
+        "speaker": "Me",
+        "text": "Perfeito, isso resolve a página inicial do site.",
+        "id": 104
+      },
+      {
+        "start": 656.9,
+        "end": 661,
+        "speaker": "Others",
+        "text": "E nas redes sociais, o pessoal da clínica posta bastante foto de bicho.",
+        "id": 105
+      },
+      {
+        "start": 662.66,
+        "end": 669.52,
+        "speaker": "Me",
+        "text": "Nas redes a gente só divulga quando as três unidades estiverem no ar, no piloto, nada de divulgação.",
+        "id": 106
+      },
+      {
+        "start": 670.16,
+        "end": 676,
+        "speaker": "Others",
+        "text": "Faz sentido. Se divulgar agora, o pessoal das outras unidades vai tentar marcar e não vai conseguir.",
+        "id": 107
+      },
+      {
+        "start": 678,
+        "end": 679.24,
+        "speaker": "Me",
+        "text": "Paulo, você concorda?",
+        "id": 108
+      },
+      {
+        "start": 679.86,
+        "end": 683.82,
+        "speaker": "Others",
+        "text": "Concordo. Melhor lessar a silêncio e ver se tudo funciona.",
+        "id": 109
+      },
+      {
+        "start": 685,
+        "end": 689.86,
+        "speaker": "Me",
+        "text": "O site não ficou decidido, se divulgação nas redes sociais durante o piloto.",
+        "id": 110
+      },
+      {
+        "start": 690.5,
+        "end": 697,
+        "speaker": "Others",
+        "text": "Fechado. A Juliana, urário de funcionamento no sítio, o centro abre sábado, as outras não.",
+        "id": 111
+      },
+      {
+        "start": 699,
+        "end": 704.76,
+        "speaker": "Me",
+        "text": "Boa lembrança, o site tem que mostrar o horário certo de cada unidade, né, Paulo?",
+        "id": 112
+      },
+      {
+        "start": 705.4,
+        "end": 710.78,
+        "speaker": "Others",
+        "text": "Isso já está certo. Cada unidade tem a sua agenda com os dias e horários dela.",
+        "id": 113
+      },
+      {
+        "start": 712,
+        "end": 715.6800000000001,
+        "speaker": "Me",
+        "text": "É ótimo, deixa eu repassar tudo pra ninguém sair com dúvida.",
+        "id": 114
+      },
+      {
+        "start": 716.32,
+        "end": 718.98,
+        "speaker": "Others",
+        "text": "Pode falar, eu estou anotando aqui também.",
+        "id": 115
+      },
+      {
+        "start": 720,
+        "end": 727.6800000000001,
+        "speaker": "Me",
+        "text": "Agendamento online só com consultas e vacinas, piloto na unidade do centro, começando segunda, dia 3.",
+        "id": 116
+      },
+      {
+        "start": 728.32,
+        "end": 732.12,
+        "speaker": "Others",
+        "text": "Isso. E as outras duas unidades entram no mês depois.",
+        "id": 117
+      },
+      {
+        "start": 733.14,
+        "end": 741.96,
+        "speaker": "Me",
+        "text": "Lembre-te por WhatsApp 24 horas antes, cancelamento pelo link até 2 horas antes, e só cadastros dos últimos 2 anos.",
+        "id": 118
+      },
+      {
+        "start": 742.6,
+        "end": 746.62,
+        "speaker": "Others",
+        "text": "E nada de pagamento antecipado vem de divulgação durante o piloto.",
+        "id": 119
+      },
+      {
+        "start": 748,
+        "end": 750.92,
+        "speaker": "Me",
+        "text": "Exato, alguém tem e mais alguma coisa pra hoje?",
+        "id": 120
+      },
+      {
+        "start": 751.5600000000001,
+        "end": 754.4,
+        "speaker": "Others",
+        "text": "Por mim é isso. Bom trabalho, pessoal!",
+        "id": 121
+      },
+      {
+        "start": 755.4,
+        "end": 758.5,
+        "speaker": "Me",
+        "text": "Valeu, gente, obrigada e até a próxima.",
+        "id": 122
+      },
+      {
+        "start": 759.12,
+        "end": 760.66,
+        "speaker": "Others",
+        "text": "Até mais, tchau tchau!",
+        "id": 123
+      }
+    ],
+    "duration": 760.66,
+    "language": "pt",
+    "model": "base"
+  },
+  "raw": {
+    "summary": [
+      {
+        "text": "Lançamento do agendamento online na clínica",
+        "segments": [5, 15, 25, 29]
+      },
+      {
+        "text": "Serviços disponíveis no site",
+        "segments": [9, 10, 11, 12, 15]
+      },
+      {
+        "text": "Unidade piloto para o lançamento",
+        "segments": [19, 20, 25]
+      },
+      {
+        "text": "Lembrete para os tutores",
+        "segments": [31, 32, 36]
+      },
+      {
+        "text": "Implementar um lembrete de consulta por WhatsApp 24 horas antes, com cancelamento até duas horas antes.",
+        "segments": [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+      },
+      {
+        "text": "Importar cadastros dos últimos dois anos, limpando duplicados, e atualizar o sistema.",
+        "segments": [56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68]
+      },
+      {
+        "text": "Manter atendimento telefônico para clientes mais velhos, com sincronização de agendamentos entre site e telefone.",
+        "segments": [70, 71, 72, 73, 74, 75, 76, 77, 78]
+      },
+      {
+        "text": "Realizar um treinamento conjunto para resolver problemas no centro",
+        "segments": [79, 80, 82]
+      },
+      {
+        "text": "Decidir sobre a disponibilidade de um funcionário durante o lançamento do site",
+        "segments": [87, 88, 90, 91]
+      },
+      {
+        "text": "Determinar a estratégia para o pagamento antecipado de consultas",
+        "segments": [90, 93, 96, 97]
+      },
+      {
+        "text": "Discutir a estratégia de divulgação do site e das redes sociais",
+        "segments": [101, 106, 110, 111]
+      },
+      {
+        "text": "Despedida",
+        "segments": [123]
+      }
+    ],
+    "decisions": [
+      {
+        "text": "No agendamento online só consultas e vacinas, e cirurgia continua sendo marcada por telefone.",
+        "quote": "Então fica decidido, no agendamento online ou só consultas e vacinas, e cirurgia continua sendo marcada por telefone.",
+        "segments": [15]
+      },
+      {
+        "text": "O piloto vai ser na unidade do centro, e as outras duas entram mês depois.",
+        "quote": "Tá bom, você me convenceu, o piloto vai ser na unidade do centro, e as outras duas entram mês depois.",
+        "segments": [25]
+      },
+      {
+        "text": "O agendamento online entra no ar na unidade do centro na segunda-feira, dia 3.",
+        "quote": "Então no dia 3 de manhã o agendamento online entra no ar na unidade do centro.",
+        "segments": [29]
+      },
+      {
+        "text": "O lembrete deve sair 24 horas antes da consulta.",
+        "quote": "E dá pra mandar mais de um lembrete, Paulo, ou complica muito?",
+        "segments": [37]
+      },
+      {
+        "text": "Importar cadastros dos últimos dois anos da planilha antiga e limpar duplicados.",
+        "quote": "Então fica assim, a gente importa só os cadastros dos últimos dois anos da planilha antiga.",
+        "segments": [65]
+      },
+      {
+        "text": "Limpeza dos duplicados feita por Marcos até sexta-feira.",
+        "quote": "Eu limpo os duplicados da planilha até sexta-feira.",
+        "segments": [68]
+      },
+      {
+        "text": "Recepção vê os agendamentos do site na mesma agenda.",
+        "quote": "Eu bloqueio o horário assim que alguém marca pelo sítio, isso já está pronto.",
+        "segments": [73]
+      },
+      {
+        "text": "Se a recepção marcar horário por telefone, o horário é bloqueado no site.",
+        "quote": "som na hora também, agenda uma só para os dois lados.",
+        "segments": [77]
+      },
+      {
+        "text": "Treinamento com as quatro pessoas juntas na quarta de manhã",
+        "quote": "Pode ser na quarta de manhã. Quarta é o dia mais tranquilo da semana lá na unidade.",
+        "segments": [80, 81]
+      },
+      {
+        "text": "Paulo grava vídeo para treinamento",
+        "quote": "Se quiser, eu gravo um vídeo curto mostrado à tela para a decepção de ver depois.",
+        "segments": [83]
+      },
+      {
+        "text": "Paulo fica de sobreaviso no lançamento",
+        "quote": "Consego. Eu deixo o celular ligado e fico olhando os erros do sítio e avanhar toda.",
+        "segments": [89]
+      },
+      {
+        "text": "Pagamento antecipado do site fica para depois do piloto",
+        "quote": "Então vamos deixar o pagamento antecipado pra depois do piloto, primeiro a gente mede quantas faltas acontecem.",
+        "segments": [96, 97]
+      },
+      {
+        "text": "Botão de agendar no topo da página inicial",
+        "quote": "Eu coloco um botão de agendar no topo da página inicial até quinta-feira.",
+        "segments": [103]
+      },
+      {
+        "text": "Divulgação nas redes sociais só após o piloto",
+        "quote": "Se divulgar agora, o pessoal das outras unidades vai tentar marcar e não vai conseguir.",
+        "segments": [107, 109]
+      },
+      {
+        "text": "Site mostra horário certo de cada unidade",
+        "quote": "Isso já está certo. Cada unidade tem a sua agenda com os dias e horários dela.",
+        "segments": [113]
+      },
+      {
+        "text": "Agendamento online só com consultas e vacinas, piloto na unidade do centro",
+        "quote": "Agendamento online só com consultas e vacinas, piloto na unidade do centro, começando segunda, dia 3.",
+        "segments": [116]
+      }
+    ],
+    "action_items": [
+      {
+        "task": "limpar os duplicados da planilha",
+        "owner": "Marcos",
+        "due": "até sexta-feira",
+        "quote": "Eu limpo os duplicados da planilha até sexta-feira.",
+        "segments": [67, 68]
+      },
+      {
+        "task": "fazer a importação no sistema novo",
+        "owner": "Others",
+        "due": "",
+        "quote": "Depois que o marcos entregar, você faz a importação no sistema novo?",
+        "segments": [69]
+      },
+      {
+        "task": "preparar o material do treinamento",
+        "owner": "Me",
+        "due": "até quarta-feira",
+        "quote": "Eu prepare o material do treinamento até ter safeira.",
+        "segments": [82]
+      },
+      {
+        "task": "gravar um vídeo da tela",
+        "owner": "Others",
+        "due": "",
+        "quote": "Gravo sim, deixa comigo.",
+        "segments": [85, 86]
+      },
+      {
+        "task": "ficar de sobreaviso na manhã do lançamento",
+        "owner": "Others",
+        "due": "",
+        "quote": "Consego. Eu deixo o celular ligado e fico olhando os erros do sítio e avanhar toda.",
+        "segments": [88, 89]
+      },
+      {
+        "task": "controlar as faltas da unidade no primeiro mês",
+        "owner": "Marcos",
+        "due": "",
+        "quote": "Eu anoto as faltas numa planíria simples durante o primeiro mês.",
+        "segments": [96, 99]
+      },
+      {
+        "task": "colocar um botão de agendar no topo da página inicial do site",
+        "owner": "Others",
+        "due": "até quinta-feira",
+        "quote": "Eu coloco um botão de agendar no topo da página inicial até quinta-feira.",
+        "segments": [101, 103]
+      }
+    ]
+  }
+}

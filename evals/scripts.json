@@ -194,5 +194,531 @@
         { "keywords": ["price"], "owner": ["Me"] }
       ]
     }
+  },
+  {
+    "id": "08-agendamento-longo-pt",
+    "title": "Lançamento do agendamento online de uma clínica veterinária (call longa simulada, três pessoas, vozes do macOS)",
+    "language": "pt",
+    "voices": { "Me": "Luciana", "Others": "Eddy (Portuguese (Brazil))" },
+    "audio": "mp3",
+    "lines": [
+      {
+        "speaker": "Me",
+        "text": "Oi, gente, bom dia. Vocês estão me ouvindo bem? Meu microfone deu problema ontem à tarde."
+      },
+      { "speaker": "Others", "text": "Bom dia, Juliana. Tô ouvindo sim, aqui está tudo certo." },
+      {
+        "speaker": "Me",
+        "text": "Ótimo. O Marcos já entrou também? Eu vi o nome dele na lista agorinha."
+      },
+      {
+        "speaker": "Others",
+        "text": "Entrei, entrei. Desculpa o atraso, o trânsito estava parado por causa da chuva.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Imagina. Aqui também choveu a noite inteira, a rua de casa virou um rio."
+      },
+      {
+        "speaker": "Others",
+        "text": "Lá em casa faltou luz duas vezes, tive que trabalhar pelo celular de manhã."
+      },
+      {
+        "speaker": "Me",
+        "text": "Bom, vamos começar então. A reunião de hoje é pra fechar o lançamento do agendamento online da clínica nas três unidades."
+      },
+      {
+        "speaker": "Others",
+        "text": "Perfeito. Tem bastante coisa pra decidir, principalmente sobre a recepção e os cadastros antigos.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Isso. Eu separei em partes: o que entra no agendamento, onde começa, os lembretes, os cadastros e o treinamento."
+      },
+      {
+        "speaker": "Others",
+        "text": "Beleza. Do lado do site, a tela de agendamento já está pronta no ambiente de testes."
+      },
+      {
+        "speaker": "Me",
+        "text": "Que bom. Então a primeira pergunta é: quais serviços o cliente vai poder marcar sozinho pelo site?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Eu acho que consulta e vacina com certeza. São os atendimentos mais simples de encaixar na agenda.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "E cirurgia? Teve gente pedindo pra marcar cirurgia pelo site também."
+      },
+      {
+        "speaker": "Others",
+        "text": "Cirurgia eu não colocaria agora. Precisa de avaliação antes, exame de sangue, jejum, não dá pra marcar direto.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Concordo com você. Paulo, isso muda alguma coisa na tela que você fez?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Não muda quase nada. É só esconder a opção de cirurgia da lista de serviços."
+      },
+      {
+        "speaker": "Me",
+        "text": "Então fica decidido: no agendamento online entram só consultas e vacinas, e cirurgia continua sendo marcada por telefone."
+      },
+      {
+        "speaker": "Others",
+        "text": "Fechado. E banho e tosa? A unidade do shopping faz bastante banho.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Banho e tosa fica pra uma segunda fase. A agenda dos tosadores é outra planilha, e eu não quero misturar agora."
+      },
+      {
+        "speaker": "Others",
+        "text": "Faz sentido. Se misturar tudo agora, a gente atrasa o lançamento inteiro."
+      },
+      {
+        "speaker": "Me",
+        "text": "Agora, onde a gente começa. Eu queria lançar primeiro numa unidade só, como piloto, antes das outras duas."
+      },
+      {
+        "speaker": "Others",
+        "text": "Eu sugiro a unidade do centro. É a que tem mais movimento e a recepção mais experiente.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Mas o centro não é justamente a mais cheia? Se der problema, o estrago é maior."
+      },
+      {
+        "speaker": "Others",
+        "text": "É, mas também é onde a gente aprende mais rápido. E eu estou lá todo dia pra acompanhar de perto.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Paulo, o que você acha disso do seu lado?" },
+      {
+        "speaker": "Others",
+        "text": "Do meu lado tanto faz. Eu só preciso saber qual unidade aparece primeiro no site."
+      },
+      {
+        "speaker": "Me",
+        "text": "Tá bom, você me convenceu. O piloto vai ser na unidade do centro, e as outras duas entram um mês depois."
+      },
+      {
+        "speaker": "Others",
+        "text": "Combinado. E a data de lançamento do piloto, a gente já tem?",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Eu pensei na segunda-feira, dia três. Dá tempo de treinar a recepção antes."
+      },
+      {
+        "speaker": "Others",
+        "text": "Dia três dá tranquilo. A tela está pronta, só falta ligar a agenda de verdade."
+      },
+      {
+        "speaker": "Me",
+        "text": "Então no dia três de manhã o agendamento online entra no ar na unidade do centro."
+      },
+      {
+        "speaker": "Others",
+        "text": "Perfeito. Eu vou avisar a equipe da unidade hoje mesmo, no grupo da recepção.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Ótimo. Próximo assunto: os lembretes. A ideia é mandar um lembrete pro tutor antes da consulta."
+      },
+      {
+        "speaker": "Others",
+        "text": "Eu consigo mandar por WhatsApp ou por SMS. O WhatsApp sai mais barato por mensagem."
+      },
+      { "speaker": "Me", "text": "E vocês acham que o pessoal ainda lê SMS hoje em dia?" },
+      {
+        "speaker": "Others",
+        "text": "Ninguém mais lê SMS, sinceramente. Só chega código de banco e propaganda de loja.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Verdade. Quanto tempo antes vocês acham que o lembrete deve sair?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Vinte e quatro horas antes é bom. Dá tempo do tutor desmarcar e a gente encaixar outro animal.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "E dá pra mandar mais de um lembrete, Paulo, ou complica muito?" },
+      {
+        "speaker": "Others",
+        "text": "Dá pra mandar dois também, um no dia anterior e outro duas horas antes da consulta."
+      },
+      {
+        "speaker": "Me",
+        "text": "Dois eu acho demais, o pessoal reclama de mensagem repetida. Vamos de um lembrete só."
+      },
+      { "speaker": "Others", "text": "Tá certo, assim fica mais simples pra mim também." },
+      {
+        "speaker": "Me",
+        "text": "Então tá decidido: um lembrete só, por WhatsApp, vinte e quatro horas antes da consulta. Sem SMS."
+      },
+      {
+        "speaker": "Others",
+        "text": "Fechado. E se o tutor responder o lembrete querendo cancelar a consulta?",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Boa pergunta. Paulo, como o tutor cancela pelo lembrete?" },
+      {
+        "speaker": "Others",
+        "text": "Na mensagem vai um link. Pelo link ele cancela ou remarca sem precisar ligar."
+      },
+      {
+        "speaker": "Me",
+        "text": "E até quando ele pode cancelar pelo link? Se cancelar em cima da hora, o horário fica vazio."
+      },
+      {
+        "speaker": "Others",
+        "text": "Eu colocaria até duas horas antes. Depois disso, só ligando pra recepção.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Paulo, dá pra travar o link nesse horário?" },
+      {
+        "speaker": "Others",
+        "text": "Dá pra fazer, sim. O link para de funcionar duas horas antes do horário marcado."
+      },
+      {
+        "speaker": "Me",
+        "text": "Combinado então: o cancelamento pelo link vale até duas horas antes da consulta."
+      },
+      {
+        "speaker": "Others",
+        "text": "Ah, só uma coisa rapidinho, fora do assunto. Meu gato derrubou café no teclado ontem, por isso estou com esse teclado emprestado."
+      },
+      { "speaker": "Me", "text": "Ah não, coitado do teclado. E o gato, está bem?" },
+      {
+        "speaker": "Others",
+        "text": "O gato está ótimo, dormindo em cima do monitor agora mesmo. Quem sofreu fui eu."
+      },
+      {
+        "speaker": "Me",
+        "text": "Pelo jeito a gente precisa de um agendamento pros nossos bichos também. Marcos, e o seu cachorro?"
+      },
+      {
+        "speaker": "Others",
+        "text": "O meu cachorro comeu o carregador do notebook semana passada. Então nem me fala.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Bom, voltando. Agora os cadastros, que é a parte mais chata." },
+      {
+        "speaker": "Others",
+        "text": "É, essa parte me preocupa um pouco, confesso.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Hoje os cadastros dos tutores e dos animais estão numa planilha antiga, e o sistema novo precisa deles."
+      },
+      {
+        "speaker": "Others",
+        "text": "A planilha tem uns oito anos de cadastro. Tem animal que já morreu, tutor que mudou de cidade, telefone errado.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "E se a gente importar tudo, Paulo, o que acontece?" },
+      {
+        "speaker": "Others",
+        "text": "Se eu importar tudo, vai vir muito lixo junto. E cadastro duplicado também, que é o pior."
+      },
+      {
+        "speaker": "Me",
+        "text": "E se a gente importar só os cadastros dos últimos dois anos? Quem não aparece há mais tempo faz o cadastro de novo."
+      },
+      {
+        "speaker": "Others",
+        "text": "Acho ótimo. Quem não vem há dois anos praticamente virou cliente novo mesmo.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Paulo, pra você fica mais fácil desse jeito?" },
+      {
+        "speaker": "Others",
+        "text": "Pra mim fica bem mais fácil. Eu só preciso da planilha limpa, sem cadastro duplicado."
+      },
+      {
+        "speaker": "Me",
+        "text": "Então fica assim: a gente importa só os cadastros dos últimos dois anos da planilha antiga."
+      },
+      {
+        "speaker": "Others",
+        "text": "E quem limpa os duplicados? Eu conheço bem a planilha, posso fazer isso.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Marcos, então você fica com a limpeza dos duplicados da planilha? Até quando você consegue?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Eu limpo os duplicados da planilha até sexta-feira.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Ótimo. Paulo, depois que o Marcos entregar, você faz a importação no sistema novo?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Faço sim. Eu importo os cadastros assim que ele me mandar a planilha limpa."
+      },
+      {
+        "speaker": "Me",
+        "text": "Perfeito. Agora o telefone. Muita gente vai continuar ligando, principalmente os clientes mais velhos."
+      },
+      {
+        "speaker": "Others",
+        "text": "Com certeza. A recepção continua atendendo telefone normalmente, o site é só mais um caminho.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "E a recepção vê os agendamentos do site na mesma agenda que ela já usa, Paulo?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Vê sim. Eu bloqueio o horário assim que alguém marca pelo site, isso já está pronto."
+      },
+      { "speaker": "Me", "text": "Ótimo, isso já ajuda bastante a recepção." },
+      {
+        "speaker": "Others",
+        "text": "E o contrário? Se a recepção marcar por telefone, o horário some do site na hora?",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Boa pergunta. Paulo, e nesse caso, como fica?" },
+      { "speaker": "Others", "text": "Some na hora também. A agenda é uma só pros dois lados." },
+      {
+        "speaker": "Me",
+        "text": "Ótimo, isso tira um peso grande. Agora o treinamento da recepção."
+      },
+      {
+        "speaker": "Others",
+        "text": "A recepção do centro são quatro pessoas. Duas de manhã e duas à tarde.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Eu queria fazer um treinamento só, com as quatro juntas, numa manhã."
+      },
+      {
+        "speaker": "Others",
+        "text": "Pode ser na quarta de manhã. Quarta é o dia mais tranquilo da semana lá na unidade.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Quarta de manhã então. Eu preparo o material do treinamento até terça-feira."
+      },
+      {
+        "speaker": "Others",
+        "text": "Se quiser, eu gravo um vídeo curto mostrando a tela, pra recepção rever depois."
+      },
+      {
+        "speaker": "Me",
+        "text": "Quero sim, Paulo. Você grava esse vídeo da tela pra gente usar no treinamento?"
+      },
+      { "speaker": "Others", "text": "Gravo sim, deixa comigo." },
+      { "speaker": "Me", "text": "Obrigada, Paulo, isso vai ajudar muito a recepção." },
+      {
+        "speaker": "Others",
+        "text": "E quem fica de plantão no dia do lançamento, caso o site trave?",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Paulo, você consegue ficar de sobreaviso na manhã do lançamento?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Consigo. Eu deixo o celular ligado e fico olhando os erros do site a manhã toda."
+      },
+      {
+        "speaker": "Me",
+        "text": "Agora, uma coisa que a diretoria perguntou: cobrar a consulta antecipada pelo site."
+      },
+      {
+        "speaker": "Others",
+        "text": "Ah, claro, e a gente também cobra o tutor por respirar dentro da clínica, né?",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Eu sei, eu sei. Mas sério, tem clínica que cobra um sinal pra evitar falta."
+      },
+      {
+        "speaker": "Others",
+        "text": "Pagamento pelo site dá bastante trabalho. Precisa de contrato com operadora, teste, devolução."
+      },
+      {
+        "speaker": "Me",
+        "text": "E no piloto a gente nem sabe se as faltas vão aumentar, né, Marcos?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Exato. No piloto a gente nem sabe ainda se as faltas vão aumentar ou diminuir.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Então vamos deixar o pagamento antecipado pra depois do piloto. Primeiro a gente mede quantas faltas acontecem."
+      },
+      {
+        "speaker": "Others",
+        "text": "Concordo. Se as faltas subirem, a gente volta nesse assunto depois."
+      },
+      {
+        "speaker": "Me",
+        "text": "Marcos, você fica com o controle das faltas da unidade no primeiro mês?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Fico sim. Eu anoto as faltas numa planilha simples durante o primeiro mês.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Ótimo. Paulo, mais alguma coisa do site antes da gente fechar?" },
+      {
+        "speaker": "Others",
+        "text": "Mais uma coisa. Hoje a página inicial nem tem um botão de agendar, só o telefone."
+      },
+      {
+        "speaker": "Me",
+        "text": "Verdade, isso é importante. O botão tem que aparecer logo no topo da página."
+      },
+      {
+        "speaker": "Others",
+        "text": "Eu coloco um botão de agendar no topo da página inicial até quinta-feira."
+      },
+      { "speaker": "Me", "text": "Perfeito, isso resolve a página inicial do site." },
+      {
+        "speaker": "Others",
+        "text": "E nas redes sociais? O pessoal da clínica posta bastante foto de bicho.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Nas redes a gente só divulga quando as três unidades estiverem no ar. No piloto, nada de divulgação."
+      },
+      {
+        "speaker": "Others",
+        "text": "Faz sentido. Se divulgar agora, o pessoal das outras unidades vai tentar marcar e não vai conseguir.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      { "speaker": "Me", "text": "Paulo, você concorda?" },
+      {
+        "speaker": "Others",
+        "text": "Concordo. Melhor lançar em silêncio e ver se tudo funciona."
+      },
+      {
+        "speaker": "Me",
+        "text": "Então ficou decidido: sem divulgação nas redes sociais durante o piloto."
+      },
+      {
+        "speaker": "Others",
+        "text": "Fechado. Ah, Juliana, e o horário de funcionamento no site? O centro abre sábado, as outras não.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Boa lembrança. O site tem que mostrar o horário certo de cada unidade, né, Paulo?"
+      },
+      {
+        "speaker": "Others",
+        "text": "Isso já está certo. Cada unidade tem a sua agenda, com os dias e horários dela."
+      },
+      { "speaker": "Me", "text": "Ótimo. Deixa eu repassar tudo pra ninguém sair com dúvida." },
+      { "speaker": "Others", "text": "Pode falar, eu estou anotando aqui também." },
+      {
+        "speaker": "Me",
+        "text": "Agendamento online só com consultas e vacinas. Piloto na unidade do centro, começando segunda, dia três."
+      },
+      {
+        "speaker": "Others",
+        "text": "Isso. E as outras duas unidades entram um mês depois.",
+        "voice": "Reed (Portuguese (Brazil))"
+      },
+      {
+        "speaker": "Me",
+        "text": "Lembrete por WhatsApp vinte e quatro horas antes, cancelamento pelo link até duas horas antes, e só cadastros dos últimos dois anos."
+      },
+      {
+        "speaker": "Others",
+        "text": "E nada de pagamento antecipado nem de divulgação durante o piloto."
+      },
+      { "speaker": "Me", "text": "Exato. Alguém tem mais alguma coisa pra hoje?" },
+      { "speaker": "Others", "text": "Por mim é isso. Bom trabalho, pessoal." },
+      { "speaker": "Me", "text": "Valeu, gente. Obrigada e até a próxima." },
+      {
+        "speaker": "Others",
+        "text": "Até mais, tchau tchau.",
+        "voice": "Reed (Portuguese (Brazil))"
+      }
+    ],
+    "expected_actions": [
+      ["duplicados"],
+      ["importacao"],
+      ["material", "treinamento"],
+      ["video"],
+      ["sobreaviso"],
+      ["faltas"],
+      ["botao"]
+    ],
+    "expected_due": [
+      { "task": ["duplicados"], "due": "sexta" },
+      { "task": ["material"], "due": "terca" },
+      { "task": ["botao"], "due": "quinta" },
+      { "task": ["piloto"], "due": "segunda", "optional": true }
+    ],
+    "answer_key": {
+      "subject": ["agendamento", "online|site|lancamento|lancar"],
+      "summary": [
+        ["consulta|consultas|vacina|vacinas|cirurgia|servicos"],
+        ["piloto|unidade centro"],
+        ["lembrete|lembretes|whatsapp"],
+        ["cadastro|cadastros|planilha|importacao|importar"],
+        ["treinamento|recepcao"],
+        ["pagamento|divulgacao|redes"]
+      ],
+      "decisions": [
+        { "keywords": ["consulta|consultas|vacina|vacinas|cirurgia"] },
+        { "keywords": ["piloto|unidade centro"] },
+        { "keywords": ["lembrete|whatsapp|sms"] },
+        { "keywords": ["cancelamento|cancelar|link"] },
+        { "keywords": ["cadastros|cadastro|importa|importar|importacao", "anos"] },
+        { "keywords": ["pagamento"] },
+        { "keywords": ["divulgacao|divulgar|redes"] },
+        { "keywords": ["banho|tosa"], "optional": true },
+        { "keywords": ["tres|lancamento|segunda"], "optional": true },
+        { "keywords": ["treinamento|quarta"], "optional": true },
+        { "keywords": ["telefone"], "optional": true }
+      ],
+      "tasks": [
+        { "keywords": ["duplicados"], "owner": ["Marcos", "Others"] },
+        { "keywords": ["importacao|importo|importar|importa"], "owner": ["Paulo", "Others"] },
+        { "keywords": ["material|treinamento"], "owner": ["Me", "Juliana"] },
+        { "keywords": ["video"], "owner": ["Paulo", "Others"] },
+        { "keywords": ["sobreaviso|plantao|erros|celular"], "owner": ["Paulo", "Others"] },
+        { "keywords": ["faltas"], "owner": ["Marcos", "Others"] },
+        { "keywords": ["botao"], "owner": ["Paulo", "Others"] },
+        {
+          "keywords": ["avisar|aviso|equipe|grupo"],
+          "owner": ["Marcos", "Others"],
+          "optional": true
+        }
+      ]
+    }
   }
 ]

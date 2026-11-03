@@ -55,6 +55,18 @@ jobs:
       - name: whisper.cpp (Homebrew)
         if: runner.os == 'macOS'
         run: brew install whisper-cpp
+      # Case 08 is MP3: ffmpeg turns it into PCM, which timestamp snapping needs.
+      - name: ffmpeg
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            macOS) brew install ffmpeg ;;
+            Linux) sudo apt-get update && sudo apt-get install -y ffmpeg ;;
+            Windows) choco install ffmpeg -y --no-progress ;;
+          esac
+      - name: ffmpeg on PATH
+        shell: bash
+        run: ffmpeg -version | head -1
       - name: whisper.cpp (official release build)
         if: runner.os != 'macOS'
         shell: bash
