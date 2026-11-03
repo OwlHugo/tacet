@@ -53,13 +53,21 @@ barra de menus.
 > xattr -dr com.apple.quarantine /Applications/Tacet.app
 > ```
 
-**CLI e pelo código** (macOS, Linux; Node 24.12+ e pnpm 10). A CLI ainda não está no npm, então roda a partir do repositório:
+**CLI (macOS, Linux; Node 22.18+).** O pacote é `@hugoowl/tacet` (o npm recusou o nome curto por ser
+parecido com outros); o comando continua `tacet`.
+
+```bash
+npm install -g @hugoowl/tacet
+tacet doctor                        # confere whisper.cpp, ffmpeg, modelo e Ollama
+tacet transcribe reuniao.m4a
+```
+
+**Pelo código** (Node 24.12+ e pnpm 10):
 
 ```bash
 git clone https://github.com/OwlHugo/tacet && cd tacet
 pnpm install
-pnpm tacet doctor                   # confere whisper.cpp, ffmpeg, modelo e Ollama
-pnpm tacet transcribe reuniao.m4a
+pnpm tacet doctor
 pnpm desktop                        # app em modo dev
 pnpm dist:mac                       # gera o .dmg em apps/desktop/release
 ```

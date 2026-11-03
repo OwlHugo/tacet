@@ -32,7 +32,7 @@ const RULES: readonly Rule[] = [
   },
   {
     from: /^packages\/core\//,
-    allowed: (t) => !t.startsWith('@tacet/desktop') && t !== 'tacet',
+    allowed: (t) => !t.startsWith('@tacet/desktop') && t !== '@hugoowl/tacet',
     reason: 'the core never imports an app',
   },
   {
@@ -50,7 +50,7 @@ const RULES: readonly Rule[] = [
   },
   {
     from: /^apps\/desktop\//,
-    allowed: (t) => t !== 'tacet',
+    allowed: (t) => t !== '@hugoowl/tacet',
     reason: 'apps do not import other apps',
   },
 ]

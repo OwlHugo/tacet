@@ -1,5 +1,5 @@
 {
-  "name": "tacet",
+  "name": "@hugoowl/tacet",
   "version": "0.1.0",
   "description": "Local meeting transcription and grounded minutes from your terminal. whisper.cpp + Ollama, nothing leaves your machine.",
   "license": "MIT",
@@ -38,5 +38,8 @@
     "@tacet/core": "workspace:*"
   },
   "homepage": "https://github.com/OwlHugo/tacet",
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "Hugo Adriano de Oliveira"
 }
