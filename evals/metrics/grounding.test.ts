@@ -38,6 +38,21 @@ describe('checkGrounding', () => {
     expect(r).toMatchObject({ items: 1, grounded: 1, expectedFound: 1, expectedTotal: 2 })
   })
 
+  it('checks a summary point against its lines and the ones next to them', () => {
+    const point = (text: string, segments: number[], at: number): Minutes => ({
+      summary: [{ text, segments: segments as [number, ...number[]], at }],
+      decisions: [],
+      actionItems: [],
+      rejected: [],
+      model: 'x',
+    })
+    const ok = (m: Minutes) => checkGrounding(m, T, []).grounded === 1
+    expect(ok(point('Release notes go out Thursday', [0], 0))).toBe(true)
+    expect(ok(point('Release notes go out Thursday', [1], 0))).toBe(false)
+    expect(ok(point('The office moves to Lisbon', [0], 0))).toBe(false)
+    expect(ok(point('Release notes go out Thursday', [7], 0))).toBe(false)
+  })
+
   it('flags an item with a wrong timestamp or a quote that is not there', () => {
     const forged: Minutes = {
       summary: [],
