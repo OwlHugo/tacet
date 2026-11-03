@@ -3,6 +3,9 @@
 Local meeting transcription and grounded minutes from your terminal. whisper.cpp transcribes,
 a local LLM on Ollama writes the minutes, and nothing leaves your machine.
 
+Not on npm yet. Until it is, run it from a clone of the repository with `pnpm tacet <command>`
+(see the [main README](https://github.com/OwlHugo/tacet#install)). Once published:
+
 ```bash
 npm install -g tacet
 tacet doctor
