@@ -118,15 +118,15 @@ One run on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama (the minutes
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |
 |---|---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.20 | 69.82 | 5/5 | 3/3 | 2/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.44 | 54.17 | 3/3 | 2/2 | 1/1 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.38 | 52.20 | 3/3 | 1/2 | 1/1 |
-| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.22 | 35.12 | 5/5 | 3/3 | 2/2 |
-| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.45 | 29.34 | 9/9 | 4/4 | 2/4 |
-| 06-bakery-self-en | 28.8s | 0.0% | 100.0% | 0.03s | 2.52 | 81.77 | 7/7 | 3/3 | 2/2 |
-| 07-print-shop-self-en | 28.6s | 6.5% | 100.0% | 0.01s | 2.45 | 56.69 | 4/4 | 3/3 | 2/2 |
-| 08-agendamento-longo-pt | 760.7s | 10.8% | 99.2% | 0.12s | 1.31 | 17.24 | 22/22 | 7/7 | 2/3 |
-| **Total** | 1108.1s | 10.3% | | | 1.45 | 25.45 | 58/58 | 96.3% | 14/18 |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.04 | 70.23 | 9/9 | 3/3 | 2/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.87 | 52.74 | 6/6 | 2/2 | 1/1 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.36 | 51.51 | 6/6 | 1/2 | 1/1 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.30 | 34.04 | 9/9 | 3/3 | 2/2 |
+| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.44 | 28.68 | 13/13 | 4/4 | 2/4 |
+| 06-bakery-self-en | 28.8s | 0.0% | 100.0% | 0.03s | 2.48 | 86.79 | 11/11 | 3/3 | 2/2 |
+| 07-print-shop-self-en | 28.6s | 6.5% | 100.0% | 0.01s | 2.34 | 58.20 | 7/7 | 3/3 | 2/2 |
+| 08-agendamento-longo-pt | 760.7s | 10.8% | 99.2% | 0.12s | 1.35 | 18.83 | 33/33 | 7/7 | 2/3 |
+| **Total** | 1108.1s | 10.3% | | | 1.48 | 26.53 | 94/94 | 96.3% | 14/18 |
 
 Hallucination guard: **106/106** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
 
@@ -150,7 +150,7 @@ What the columns mean:
 - **WER**: word error rate per track against the script, pooled over all words.
 - **Speaker attribution**: share of script lines that land on the right track (two-track cases only; the one-track import has nothing to attribute).
 - **Timestamp error**: mean distance between when a line was spoken and the start of the segment holding it.
-- **Grounded items**: decisions and action items that cite real lines, carry the timestamp of the first cited line and whose quote is found there; a task's owner must be a track of that meeting, a name that was said, your own name on a one-track file when the case sets one (`--me`), or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output. CI fails if any item is ungrounded or any injected item survives.
+- **Grounded items**: summary points, decisions and action items that cite real lines and carry the timestamp of the first cited line; a decision's or task's quote must be found there, and a third of a summary point's words in those lines or the next ones; a task's owner must be a track of that meeting, a name that was said, your own name on a one-track file when the case sets one (`--me`), or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output; for summary points it uses the guard's own one-third rule, so there it mostly checks the line ids and timestamps. CI fails if any item is ungrounded or any injected item survives.
 - **Deadlines right**: deadlines said in the script that reach the right task, in the words that were said. A task carrying a deadline other than the one said, or one the script gives no deadline, fails the eval; a missing one only lowers this count.
 - **Expected tasks found**: recall of the action items written in the script. The miss in the Portuguese case is on purpose kept visible: whisper `base` heard "como fornecedor" as "como for necedor", and Tacet would rather drop a task than write one the transcript does not say.
 
