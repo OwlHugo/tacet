@@ -31,6 +31,8 @@ const Task = Decision.extend({
 export const AnswerKeySchema = z.object({
   /** Words the summary must hold, so the main subject of the meeting is not lost. */
   subject: Keywords,
+  /** The points a person would write in the summary, each as keywords. */
+  summary: z.array(Keywords).optional(),
   /** What was really decided. */
   decisions: z.array(Decision),
   /** What someone really took on. */
@@ -48,8 +50,21 @@ interface Score {
   readonly total: number
 }
 
+/** How the summary reads: how long it is, whether it opens on the subject, what it covers. */
+interface SummaryScore {
+  readonly points: number
+  /** Whether the first point, the one read as the main subject, holds the subject's keywords. */
+  readonly firstIsSubject: boolean
+  /** Points that hold the subject's keywords: more than one is the main subject said again. */
+  readonly withSubject: number
+  /** Points of the key's `summary` found in it, out of `total` (0 when the key lists none). */
+  readonly found: number
+  readonly total: number
+}
+
 export interface AnswerKeyReport {
   readonly subject: boolean
+  readonly summary: SummaryScore
   readonly decisions: Score
   readonly tasks: Score
   /** Tasks that match one of the key but carry an owner that is not right for it. */
@@ -97,8 +112,17 @@ export function checkAnswerKey(minutes: Minutes, key: AnswerKey): AnswerKeyRepor
     const owners = tasks.match[i]?.owner
     return owners !== undefined && !owners.some((o) => normalize(o) === normalize(a.owner))
   }).length
+  const points = minutes.summary.map((s) => s.text)
+  const expected = key.summary ?? []
   return {
-    subject: holds(key.subject, minutes.summary.map((s) => s.text).join(' ')),
+    subject: holds(key.subject, points.join(' ')),
+    summary: {
+      points: points.length,
+      firstIsSubject: points.slice(0, 1).some((p) => holds(key.subject, p)),
+      withSubject: points.filter((p) => holds(key.subject, p)).length,
+      found: expected.filter((k) => points.some((p) => holds(k, p))).length,
+      total: expected.length,
+    },
     decisions: decisions.score,
     tasks: tasks.score,
     wrongOwner,

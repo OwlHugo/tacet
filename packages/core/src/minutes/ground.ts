@@ -375,6 +375,28 @@ const cite = (lines: Lines) => ({
 const byTime = <T extends { at: number }>(xs: T[]): T[] => xs.sort((a, b) => a.at - b.at)
 const isDuplicate = (text: string, seen: readonly string[]) =>
   seen.some((s) => similarity(s, text) > DUPLICATE_SIMILARITY)
+/**
+ * Whether a summary point says what `kept` already says: the same words in the same order, maybe
+ * starting at another one ("Lançamento do agendamento online na clínica" and "Agendamento online
+ * na clínica, lançamento"). Case, punctuation, articles and prepositions may differ. Similarity of
+ * word sets, as decisions use, would also take "sai" for "entra", "sem SMS" for "SMS", or two
+ * people swapping tasks for a repeat, and drop what was said. "no" is kept: in English it is "no".
+ * A point with a "no" word must say it in the same place: "X, not Y" turned around is not "X".
+ */
+const samePoint = (text: string, kept: string) => {
+  const t = pointWords(text).join(' ')
+  const k = pointWords(kept)
+  if (k.some((w) => NEGATION.test(w) || NO_WORD.test(w))) return k.join(' ') === t
+  return k.some((_, i) => [...k.slice(i), ...k.slice(0, i)].join(' ') === t)
+}
+const pointWords = (text: string) =>
+  words(text.replace(/’/g, "'")).filter((w) => !POINT_FILLER.has(w))
+const POINT_FILLER = new Set(
+  (
+    'a an the of to in on at for and ' + 'o os as um uma de da do das dos em na nas nos ao aos e'
+  ).split(' '),
+)
+const NO_WORD = /^(no|sem|without|(does|should|are|was|were|have|has|had|must|need)nt)$/
 const wordingSupported = (text: string, lines: Lines, index: TranscriptIndex) =>
   coverage(text, textOf(index.around(lines))) >= WORDING_THRESHOLD
 
@@ -384,14 +406,16 @@ function groundSummary(
   threshold: number,
   rejected: Rejected[],
 ) {
-  return raw.summary.flatMap((p) => {
+  const kept: Minutes['summary'][number][] = []
+  for (const p of raw.summary) {
     const text = p.text.trim()
-    if (!text) return []
+    if (!text) continue
     const a = anchor(text, p.segments, index, threshold)
-    if (a) return [{ text, ...cite(a.lines) }]
-    rejected.push({ kind: 'summary', text, reason: 'not supported by the cited lines' })
-    return []
-  })
+    if (!a) rejected.push({ kind: 'summary', text, reason: 'not supported by the cited lines' })
+    // A long call is summarized chunk by chunk, and each chunk may open with the main subject again.
+    else if (!kept.some((x) => samePoint(text, x.text))) kept.push({ text, ...cite(a.lines) })
+  }
+  return kept
 }
 
 function groundDecisions(

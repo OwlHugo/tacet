@@ -110,7 +110,7 @@ tacet doctor
 
 ## Limitações conhecidas (v0.1)
 
-- **Resumo de call longa.** Resumo e decisões são pedidos em pedaços de uns 4000 caracteres, então uma call de 30 minutos pode ganhar muitos pontos de resumo e mais de um "assunto principal". Ainda não são juntados.
+- **Resumo e decisões de call longa.** Resumo e decisões são pedidos em pedaços de uns 4000 caracteres, e um ponto de resumo que outro pedaço já deu com as mesmas palavras sai ([ADR 0005](docs/adr/0005-long-call-summary-deduplicated.md)). Um pedaço que repete o assunto principal com outras palavras, ou com uma palavra trocada, ainda o acrescenta, então uma call de 30 minutos pode mostrar mais de um "assunto principal".
 - **Horários em call longa e rápida.** O whisper às vezes cola uma fala na anterior da mesma faixa, e essa fala perde o próprio início (uns 6 s de erro médio no caso 05, contra 10 ms nos casos roteirizados).
 - **Prazo numa fala que cita duas pessoas.** "A Ana revisa o contrato e o Pedro sobe até sexta": se o modelo devolver só a tarefa da Ana, ela pode ficar com o prazo do Pedro.
 - **Suas tarefas num arquivo importado.** Com `--me`, uma tarefa que o modelo te dá num arquivo de uma faixa só fica sua quando um dos seus nomes foi dito ou a fala te pede algo de um jeito conhecido ("você pode revisar…", "pode mandar…?", "por favor…", "can you send…") e o pedido cita palavras da tarefa. Um pedido feito a outra pessoa pelo nome ("Bia, consegue…?", "Pode mandar, Bia?") não é seu, um pedido que o whisper escreveu sem o "?" ("pode mandar o contrato.") não é lido como pedido, e o resto fica sem dono: dono faltando é melhor que dono errado.

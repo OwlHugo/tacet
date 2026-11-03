@@ -3,7 +3,8 @@
  * Linux and Windows runs the same files without TTS.
  *
  * Each case has two tracks on one timeline, like a real call: me.wav (microphone) and others.wav
- * (system audio), 16 kHz mono PCM. Lines alternate between the tracks with a short gap.
+ * (system audio), 16 kHz mono PCM, or me.mp3 and others.mp3 at 32 kbps for a script with
+ * `"audio": "mp3"`. Lines alternate between the tracks with a short gap.
  *
  *   node evals/gerar-audio.ts [case-id] && pnpm eval:gravar
  */
@@ -22,9 +23,20 @@ const Script = z.object({
   language: z.string(),
   voices: z.record(z.string(), z.string()),
   rate: z.number().optional(),
-  lines: z.array(z.object({ speaker: z.string(), text: z.string() })),
+  /** `mp3` keeps a long call small in the repository; whisper reads it through ffmpeg. */
+  audio: z.enum(['wav', 'mp3']).default('wav'),
+  lines: z.array(
+    z.object({
+      speaker: z.string(),
+      text: z.string(),
+      /** A second person on the same track ("Others" is everyone heard through the computer). */
+      voice: z.string().optional(),
+    }),
+  ),
   expected_actions: z.array(z.array(z.string())),
-  expected_due: z.array(z.object({ task: z.array(z.string()), due: z.string() })),
+  expected_due: z.array(
+    z.object({ task: z.array(z.string()), due: z.string(), optional: z.boolean().optional() }),
+  ),
   /** Copied as is to case.json; `loadCases` validates them. */
   self: z.unknown().optional(),
   answer_key: z.unknown().optional(),
@@ -51,8 +63,19 @@ interface Placed {
   readonly at: number
 }
 
+/** How a track is written: 16-bit PCM, or a small mono MP3 for a long call. */
+const ENCODING = {
+  wav: ['-sample_fmt', 's16'],
+  mp3: ['-c:a', 'libmp3lame', '-b:a', '32k'],
+} as const
+
 /** Mix the clips of one speaker onto a silent track of the meeting's length. */
-function mixTrack(parts: readonly Placed[], total: number, out: string): void {
+function mixTrack(
+  parts: readonly Placed[],
+  total: number,
+  out: string,
+  audio: keyof typeof ENCODING,
+): void {
   const inputs = parts.flatMap((p) => ['-i', p.wav])
   const delays = parts.map((p, i) => `[${i + 1}]adelay=${Math.round(p.at * 1000)}:all=1[d${i}]`)
   const mix = `[0]${parts.map((_, i) => `[d${i}]`).join('')}amix=inputs=${parts.length + 1}:normalize=0,atrim=0:${total}[out]`
@@ -75,8 +98,7 @@ function mixTrack(parts: readonly Placed[], total: number, out: string): void {
     '16000',
     '-ac',
     '1',
-    '-sample_fmt',
-    's16',
+    ...ENCODING[audio],
     out,
   ])
 }
@@ -93,8 +115,8 @@ for (const script of z
   const placed = new Map<string, Placed[]>()
   const reference: { speaker: string; text: string; start: number }[] = []
   let t = 0.5
-  script.lines.forEach((line, i) => {
-    const voice = script.voices[line.speaker]
+  script.lines.forEach(({ voice: own, ...line }, i) => {
+    const voice = own ?? script.voices[line.speaker]
     if (!voice) throw new Error(`${script.id}: no voice for ${line.speaker}`)
     const aiff = join(work, `${i}.aiff`)
     const wav = join(work, `${i}.wav`)
@@ -106,8 +128,8 @@ for (const script of z
   })
   const total = t + 0.5
   const tracks = [...placed].map(([speaker, parts]) => {
-    const file = speaker === 'Me' ? 'me.wav' : 'others.wav'
-    mixTrack(parts, total, join(dir, file))
+    const file = `${speaker === 'Me' ? 'me' : 'others'}.${script.audio}`
+    mixTrack(parts, total, join(dir, file), script.audio)
     return { file, speaker }
   })
   const kase = {

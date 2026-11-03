@@ -54,6 +54,7 @@ describe('eval report', () => {
   it('fails on a task whose owner the answer key does not allow', () => {
     const meaning = {
       subject: true,
+      summary: { points: 1, firstIsSubject: true, withSubject: 1, found: 0, total: 0 },
       decisions: { given: 1, right: 1, found: 1, total: 1 },
       tasks: { given: 2, right: 2, found: 2, total: 2 },
       wrongOwner: 1,
@@ -94,13 +95,41 @@ describe('eval report', () => {
   it('adds the answer key table only for cases that have one', () => {
     const meaning = {
       subject: false,
+      summary: { points: 7, firstIsSubject: false, withSubject: 3, found: 2, total: 4 },
       decisions: { given: 3, right: 1, found: 1, total: 2 },
       tasks: { given: 2, right: 2, found: 2, total: 3 },
       wrongOwner: 1,
       invented: ['decision: x', 'decision: y'],
     }
     const md = toMarkdown(report([c(), c({ id: 'k', meaning })]))
-    expect(md).toContain('| k | no | 1/3 | 1/2 | 2/2 | 2/3 | 1 | 2 |')
+    expect(md).toContain('| k | no | 7 | no | 3 | 2/4 | 1/3 | 1/2 | 2/2 | 2/3 | 1 | 2 |')
+    expect(
+      toMarkdown(
+        report([
+          c({ id: 'k', meaning: { ...meaning, summary: { ...meaning.summary, total: 0 } } }),
+        ]),
+      ),
+    ).toContain('| k | no | 7 | no | 3 | – |')
+    expect(
+      toMarkdown(
+        report([
+          c({
+            id: 'k',
+            meaning: {
+              ...meaning,
+              subject: true,
+              summary: { ...meaning.summary, firstIsSubject: true },
+            },
+          }),
+        ]),
+      ),
+    ).toContain('| k | yes | 7 | yes | 3 | 2/4 |')
+    expect(md).toContain(
+      '| Summary points | First point is the subject | Points with the subject | Summary points of the key found |',
+    )
+    expect(md.split('Invented items |')[1]?.split('\n')[1]).toBe(
+      '|---|---|---|---|---|---|---|---|---|---|---|---|',
+    )
     expect(md.split('Invented items')[1]).not.toContain('| a | ')
     expect(toMarkdown(report([c()]))).not.toContain('Invented items')
   })

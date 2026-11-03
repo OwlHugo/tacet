@@ -533,6 +533,75 @@ describe('groundMinutes', () => {
     expect(r.rejected[0]?.reason).toMatch(/wording/)
   })
 
+  it("keeps one of a summary point said again by another chunk, in the chunks' order", () => {
+    const r = groundMinutes(
+      {
+        summary: [
+          { text: 'The agenda today: the beta launch.', segments: [0] },
+          { text: 'Ship the beta on Friday.', segments: [1] },
+          { text: 'Agenda today, the beta launch', segments: [0] },
+          { text: 'Ship the beta Friday', segments: [2] },
+          { text: 'Agenda: zeppelin, quokka, walrus.', segments: [0] },
+          { text: 'Agenda: zeppelin, quokka, walrus', segments: [0] },
+        ],
+        decisions: [],
+        action_items: [],
+      },
+      TRANSCRIPT,
+      't',
+    )
+    expect(r.summary.map((s) => [s.text, s.segments])).toEqual([
+      ['The agenda today: the beta launch.', [0]],
+      ['Ship the beta on Friday.', [1]],
+    ])
+    // a point grounding rejects is not one to repeat: each is checked on its own
+    expect(r.rejected.map((x) => x.text)).toEqual([
+      'Agenda: zeppelin, quokka, walrus.',
+      'Agenda: zeppelin, quokka, walrus',
+    ])
+  })
+
+  it('keeps a summary point that says other words, or its words in another order', () => {
+    const r = groundMinutes(
+      {
+        summary: [
+          { text: 'Ship the beta on Friday.', segments: [1] },
+          { text: 'Do not ship the beta on Friday.', segments: [1] },
+          { text: 'Can’t ship the beta on Friday.', segments: [1] },
+          { text: 'Won’t ship the beta on Friday', segments: [1] },
+          { text: 'Drop the dark mode toggle for now.', segments: [4] },
+          { text: 'No dark mode toggle for now.', segments: [4] },
+          { text: 'Without the dark mode toggle for now.', segments: [4] },
+          { text: 'Maria updates the pricing page, not the release notes.', segments: [2, 3] },
+          { text: 'Maria updates the release notes, not the pricing page.', segments: [2, 3] },
+          { text: 'The release notes, Maria updates the pricing page, not', segments: [2, 3] },
+          { text: "Maria shouldn't update the pricing page, send the notes", segments: [2, 3] },
+          { text: "Send the notes, Maria shouldn't update the pricing page", segments: [2, 3] },
+          { text: 'Friday, ship the beta', segments: [1] },
+          { text: 'Ship the beta, Friday', segments: [1] },
+        ],
+        decisions: [],
+        action_items: [],
+      },
+      TRANSCRIPT,
+      't',
+    )
+    expect(r.summary.map((s) => s.text)).toEqual([
+      'Ship the beta on Friday.',
+      'Do not ship the beta on Friday.',
+      'Can’t ship the beta on Friday.',
+      'Won’t ship the beta on Friday',
+      'Drop the dark mode toggle for now.',
+      'No dark mode toggle for now.',
+      'Without the dark mode toggle for now.',
+      'Maria updates the pricing page, not the release notes.',
+      'Maria updates the release notes, not the pricing page.',
+      'The release notes, Maria updates the pricing page, not',
+      "Maria shouldn't update the pricing page, send the notes",
+      "Send the notes, Maria shouldn't update the pricing page",
+    ])
+  })
+
   it('drops duplicates and blank items', () => {
     const r = groundMinutes(
       {

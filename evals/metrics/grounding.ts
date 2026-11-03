@@ -12,7 +12,8 @@ export interface GroundingReport {
  * Independent check, written apart from groundMinutes: an item is grounded only if it cites real
  * segments, its timestamp is the start of the first one, its quote is in them, and (for tasks) its
  * owner is a track of this transcript, a name that was said, the user's own name on a one-track
- * file (set with --me, it may be theirs without being said), or nobody.
+ * file (set with --me, it may be theirs without being said), or nobody. A summary point has no
+ * quote: a third of its words must be in its lines or the lines next to them.
  */
 export function checkGrounding(
   minutes: Minutes,
@@ -22,6 +23,14 @@ export function checkGrounding(
 ): GroundingReport {
   const byId = new Map(transcript.segments.map((s) => [s.id, s]))
   const items = [
+    ...minutes.summary.map((p) => ({
+      kind: 'summary',
+      text: p.text,
+      quote: p.text,
+      segments: p.segments,
+      at: p.at,
+      owner: 'Unassigned',
+    })),
     ...minutes.decisions.map((d) => ({
       kind: 'decision',
       text: d.text,
@@ -55,12 +64,13 @@ export function checkGrounding(
       : speakers.has(owner) || coverage(owner, spoken) === 1)
   const ungrounded = items.filter((it) => {
     const segs = it.segments.map((id) => byId.get(id))
-    const text = segs.map((s) => s?.text ?? '').join(' ')
+    const near = it.kind === 'summary' ? it.segments.flatMap((id) => [id - 1, id, id + 1]) : []
+    const text = [...segs, ...near.map((id) => byId.get(id))].map((s) => s?.text ?? '').join(' ')
     const ok =
       segs.length > 0 &&
       segs.every((s) => s !== undefined) &&
       Math.abs((segs[0]?.start ?? -1) - it.at) < 0.001 &&
-      coverage(it.quote, text) >= 0.6 &&
+      coverage(it.quote, text) >= (it.kind === 'summary' ? 0.3 : 0.6) &&
       ownerGrounded(it.owner)
     return !ok
   })

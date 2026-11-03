@@ -112,22 +112,23 @@ That last part is the one Tacet takes seriously. **If it is not in the transcrip
 
 ## Eval
 
-`pnpm eval:sem-ia` replays the recorded outputs and is one of the gates (`./scripts/verificar.sh`, and [`ci.yml`](.github/workflows/ci.yml) for macOS, Windows and Linux runners). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), a one-track sprint meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), and two two-track calls recorded by someone who set their name, scored for who owns each task ([`06-bakery-self-en`](evals/cases/06-bakery-self-en/case.json), and [`07-print-shop-self-en`](evals/cases/07-print-shop-self-en/case.json), where the model writes that person's name as the owner and the minutes must say "Me"). A task whose owner the answer key does not allow fails the eval.
+`pnpm eval:sem-ia` replays the recorded outputs and is one of the gates (`./scripts/verificar.sh`, and [`ci.yml`](.github/workflows/ci.yml) for macOS, Windows and Linux runners). The dataset is three synthetic two-track meetings (two in English, one in Brazilian Portuguese) generated with `say` from scripts with known text, timing and expected action items ([`evals/scripts.json`](evals/scripts.json)), a one-track sprint meeting as an imported file ([`04-sprint-import-en`](evals/cases/04-sprint-import-en/case.json)), where no line says who spoke, a 2.5 minute Portuguese sprint planning between three people with neural voices ([`05-sprint-pix-pt`](evals/cases/05-sprint-pix-pt/case.json)), two two-track calls recorded by someone who set their name, scored for who owns each task ([`06-bakery-self-en`](evals/cases/06-bakery-self-en/case.json), and [`07-print-shop-self-en`](evals/cases/07-print-shop-self-en/case.json), where the model writes that person's name as the owner and the minutes must say "Me"), and a 12.7 minute Portuguese call between three people that spans four summary chunks ([`08-agendamento-longo-pt`](evals/cases/08-agendamento-longo-pt/case.json), MP3 tracks to keep the repository small), with an answer key for the summary too. A task whose owner the answer key does not allow fails the eval.
 
-Measured on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama:
+One run on a MacBook Pro M4, whisper `base`, `qwen2.5:7b` on Ollama (the minutes move a little from run to run, see below):
 
 | Case | Audio | WER | Speaker attribution | Timestamp error | Transcribe (s / audio min) | Minutes (s / audio min) | Grounded items | Expected tasks found | Deadlines right |
 |---|---|---|---|---|---|---|---|---|---|
-| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 3.05 | 85.77 | 5/5 | 3/3 | 2/3 |
-| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 3.43 | 71.03 | 3/3 | 2/2 | 1/1 |
-| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.90 | 69.90 | 3/3 | 1/2 | 1/1 |
-| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.52 | 44.73 | 5/5 | 3/3 | 2/2 |
-| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.75 | 38.36 | 9/9 | 4/4 | 2/4 |
-| 06-bakery-self-en | 28.8s | 0.0% | 100.0% | 0.03s | 3.04 | 105.82 | 7/7 | 3/3 | 2/2 |
-| 07-print-shop-self-en | 28.6s | 6.5% | 100.0% | 0.01s | 2.78 | 52.27 | 4/4 | 3/3 | 2/2 |
-| **Total** | 347.4s | 9.1% | | | 2.18 | 54.32 | 36/36 | 95.0% | 12/15 |
+| 01-launch-sync-en | 30.2s | 1.2% | 100.0% | 0.01s | 2.04 | 70.23 | 9/9 | 3/3 | 2/3 |
+| 02-hiring-en | 19.4s | 3.4% | 100.0% | 0.00s | 2.87 | 52.74 | 6/6 | 2/2 | 1/1 |
+| 03-planejamento-pt | 22.7s | 15.1% | 100.0% | 0.01s | 2.36 | 51.51 | 6/6 | 1/2 | 1/1 |
+| 04-sprint-import-en | 65.9s | 4.1% | – | 0.02s | 1.30 | 34.04 | 9/9 | 3/3 | 2/2 |
+| 05-sprint-pix-pt | 151.8s | 15.0% | 89.3% | 5.92s | 1.44 | 28.68 | 13/13 | 4/4 | 2/4 |
+| 06-bakery-self-en | 28.8s | 0.0% | 100.0% | 0.03s | 2.48 | 86.79 | 11/11 | 3/3 | 2/2 |
+| 07-print-shop-self-en | 28.6s | 6.5% | 100.0% | 0.01s | 2.34 | 58.20 | 7/7 | 3/3 | 2/2 |
+| 08-agendamento-longo-pt | 760.7s | 10.8% | 99.2% | 0.12s | 1.35 | 18.83 | 33/33 | 7/7 | 2/3 |
+| **Total** | 1108.1s | 10.3% | | | 1.48 | 26.53 | 94/94 | 96.3% | 14/18 |
 
-Hallucination guard: **89/89** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
+Hallucination guard: **106/106** fabricated items rejected (four made-up items citing real line ids are injected into every case, and every real task with a deadline is attacked three ways: a deadline nobody said, a deadline said for another task, both in the field and in the task's wording, and a second task citing the same line).
 
 With `large-v3-turbo` (the default when it is downloaded), the WER drops to **6.5%** overall (0.0% / 3.4% / 5.7% / 3.5% / 9.6%) at 10.9 s per audio minute. That figure was measured with the minutes written in two requests (before [ADR 0004](docs/adr/0004-minutes-one-request-per-list.md)); the minutes columns above are the current pipeline.
 
@@ -149,7 +150,7 @@ What the columns mean:
 - **WER**: word error rate per track against the script, pooled over all words.
 - **Speaker attribution**: share of script lines that land on the right track (two-track cases only; the one-track import has nothing to attribute).
 - **Timestamp error**: mean distance between when a line was spoken and the start of the segment holding it.
-- **Grounded items**: decisions and action items that cite real lines, carry the timestamp of the first cited line and whose quote is found there; a task's owner must be a track of that meeting, a name that was said, your own name on a one-track file when the case sets one (`--me`), or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output. CI fails if any item is ungrounded or any injected item survives.
+- **Grounded items**: summary points, decisions and action items that cite real lines and carry the timestamp of the first cited line; a decision's or task's quote must be found there, and a third of a summary point's words in those lines or the next ones; a task's owner must be a track of that meeting, a name that was said, your own name on a one-track file when the case sets one (`--me`), or nobody. Checked by an independent function ([`grounding.ts`](evals/metrics/grounding.ts)), separate from the guard that filters the output; for summary points it uses the guard's own one-third rule, so there it mostly checks the line ids and timestamps. CI fails if any item is ungrounded or any injected item survives.
 - **Deadlines right**: deadlines said in the script that reach the right task, in the words that were said. A task carrying a deadline other than the one said, or one the script gives no deadline, fails the eval; a missing one only lowers this count.
 - **Expected tasks found**: recall of the action items written in the script. The miss in the Portuguese case is on purpose kept visible: whisper `base` heard "como fornecedor" as "como for necedor", and Tacet would rather drop a task than write one the transcript does not say.
 
@@ -250,7 +251,7 @@ tacet doctor
 
 ## Known limitations (v0.1)
 
-- **Summary on long calls.** The summary and decisions are asked on chunks of about 4000 characters ([ADR 0004](docs/adr/0004-minutes-one-request-per-list.md)), so a 30-minute call can get many summary points and more than one "main subject". They are not merged yet.
+- **Summary and decisions on long calls.** The summary and decisions are asked on chunks of about 4000 characters ([ADR 0004](docs/adr/0004-minutes-one-request-per-list.md)), and a summary point another chunk already gave in the same words is dropped ([ADR 0005](docs/adr/0005-long-call-summary-deduplicated.md)). A chunk that says the main subject again in other words, or with one word changed, still adds it, so a 30-minute call can show more than one "main subject".
 - **Timestamps on long, fast calls.** whisper sometimes glues a line to the one before it on the same track, and that line loses its own start (about 6 s mean error on case 05, against 10 ms on the scripted cases).
 - **A deadline on a line that names two people.** "Ana reviews the contract and Pedro deploys by Friday": if the model returns only Ana's task, she can get Pedro's deadline. Deadlines are otherwise kept only on a line that a single task stands on.
 - **Your tasks on an imported file.** With `--me`, a task the model gives you on a one-track file stays yours only when one of your names was said or the line asks it of "you" in a known form ("can you send…", "please…", "você pode revisar…", "pode mandar…?") and the request names some of the task's words. A request said to someone else by name ("Bia, can you…", "Can you send it, Bia?") is not yours, a request whisper wrote without its "?" ("pode mandar o contrato.") is not read as one, and anything else stays Unassigned: a missing owner is preferred to a wrong one.
