@@ -675,12 +675,13 @@
   "answer_key": {
     "subject": ["agendamento", "online|site|lancamento|lancar"],
     "summary": [
-      ["consulta|consultas|vacina|vacinas|cirurgia|servicos"],
-      ["piloto|unidade centro"],
+      ["vacina|vacinas|cirurgia|servicos"],
+      ["piloto", "unidade|centro"],
       ["lembrete|lembretes|whatsapp"],
-      ["cadastro|cadastros|planilha|importacao|importar"],
-      ["treinamento|recepcao"],
-      ["pagamento|divulgacao|redes"]
+      ["cadastro|cadastros", "importacao|importar|importa|importado|importada"],
+      ["treinamento|treinar"],
+      ["pagamento|cobranca|cobrar"],
+      ["divulgacao|divulgar|redes"]
     ],
     "decisions": [
       {
